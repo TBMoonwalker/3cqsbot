@@ -85,7 +85,7 @@ class SingleBot:
 
             if new_bot:
                 if (self.tg_data['action'] == "START" and
-                    self.deal_data < self.config['trading'].getint('mad')):
+                    self.deal_data < self.config['dcabot'].getint('mad')):
                     print ("No single dcabot for this pair found")
                     self.create()
                 else:
@@ -94,7 +94,7 @@ class SingleBot:
                 print ("Pair: " + self.tg_data['pair'])
                 print ("Bot-Name: " + bot['name'])
                 if self.tg_data['action'] == "START":
-                    if self.deal_data < self.config['trading'].getint('mad'):
+                    if self.deal_data < self.config['dcabot'].getint('mad'):
                         self.enable(bot)
                 else:
                     self.delete(bot)
