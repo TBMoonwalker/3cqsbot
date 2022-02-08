@@ -48,7 +48,7 @@ class SingleBot:
                 "max_safety_orders": self.config['dcabot'].getint('mstc'),
                 "safety_order_step_percentage": self.config['dcabot'].getfloat('sos'),
                 "take_profit_type": "total",
-                "active_safety_orders_count": self.config['dcabot'].getint('mad'),
+                "active_safety_orders_count": self.config['dcabot'].getint('max'),
                 "strategy_list": [{"strategy":"nonstop"}]
             }
         )
@@ -85,7 +85,7 @@ class SingleBot:
 
             if new_bot:
                 if (self.tg_data['action'] == "START" and
-                    self.deal_data < self.config['trading'].getint('max_deals')):
+                    self.deal_data < self.config['trading'].getint('mad')):
                     print ("No single dcabot for this pair found")
                     self.create()
                 else:
@@ -94,7 +94,7 @@ class SingleBot:
                 print ("Pair: " + self.tg_data['pair'])
                 print ("Bot-Name: " + bot['name'])
                 if self.tg_data['action'] == "START":
-                    if self.deal_data < self.config['trading'].getint('max_deals'):
+                    if self.deal_data < self.config['trading'].getint('mad'):
                         self.enable(bot)
                 else:
                     self.delete(bot)
