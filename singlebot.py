@@ -23,7 +23,7 @@ class SingleBot:
         print ("Disabling bot")
         error, data = self.p3cw.request(
             entity="bots",
-            action="delete",
+            action="disable",
             action_id=str(bot['id']),
             additional_headers={'Forced-Mode': self.config['trading']['trade_mode']},
         )
@@ -63,7 +63,7 @@ class SingleBot:
             print ("Delete single bot with pair " + self.tg_data['pair'])
             error, data = self.p3cw.request(
                 entity="bots",
-                action="disable",
+                action="delete",
                 action_id=str(bot['id']),
                 additional_headers={'Forced-Mode': self.config['trading']['trade_mode']},
             )
