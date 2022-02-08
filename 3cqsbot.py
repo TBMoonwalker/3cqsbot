@@ -30,9 +30,9 @@ def tg_data(text_lines):
         data = {
             "pair": config['trading']['market'] + "_" + token,
             "action": action,
-            "volatility": volatility_score,
-            "price_action": priceaction_score,
-            "symrank": symrank
+            "volatility": float(volatility_score),
+            "price_action": float(priceaction_score),
+            "symrank": int(symrank)
         }
         
     return data
@@ -57,7 +57,7 @@ def account_data():
 
     for accounts in data:
         if accounts['exchange_name'] == config['trading']['exchange']:
-            account = accounts['id']
+            account = str(accounts['id'])
 
     return account
 
@@ -82,12 +82,19 @@ async def my_event_handler(event):
     bot_output = bot_data()
     account_output = account_data()
     deal_output = deal_data()
-    bot = MultiBot(tg_output, bot_output, account_output, deal_output, config, p3cw)
 
-    if config['dcabot'].getboolean('single'):
-        bot = SingleBot(tg_output, bot_output, account_output, deal_output, config, p3cw)
+    if (tg_output['volatility'] <= config['trading'].getfloat('volatility_limit') and 
+        tg_output['price_action'] <= config['trading'].getfloat('price_action_limit') and
+        tg_output['symrank'] <= config['trading'].getint('symrank_limit') ):
 
-    bot.trigger()
+        bot = MultiBot(tg_output, bot_output, account_output, deal_output, config, p3cw)
+
+        if config['dcabot'].getboolean('single'):
+            bot = SingleBot(tg_output, bot_output, account_output, deal_output, config, p3cw)
+
+        bot.trigger()
+    else:
+        print("Trading limits reached. Deal not placed.")
 
 
 async def main():
