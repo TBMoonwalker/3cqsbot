@@ -83,9 +83,10 @@ async def my_event_handler(event):
     account_output = account_data()
     deal_output = deal_data()
 
-    if (tg_output['volatility'] <= config['trading'].getfloat('volatility_limit') and 
+    if ((tg_output['volatility'] <= config['trading'].getfloat('volatility_limit') and 
         tg_output['price_action'] <= config['trading'].getfloat('price_action_limit') and
-        tg_output['symrank'] <= config['trading'].getint('symrank_limit') ):
+        tg_output['symrank'] <= config['trading'].getint('symrank_limit')) or
+        tg_output['action'] == 'STOP'):
 
         bot = MultiBot(tg_output, bot_output, account_output, deal_output, config, p3cw)
 

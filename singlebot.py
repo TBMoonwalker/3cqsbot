@@ -48,7 +48,8 @@ class SingleBot:
                 "safety_order_step_percentage": self.config['dcabot'].getfloat('sos'),
                 "take_profit_type": "total",
                 "active_safety_orders_count": self.config['dcabot'].getint('max'),
-                "strategy_list": [{"strategy":"nonstop"}]
+                "strategy_list": [{"strategy":"nonstop"}],
+                "min_volume_btc_24h": self.config['dcabot'].getfloat('btc_min_vol')
             }
         )
 

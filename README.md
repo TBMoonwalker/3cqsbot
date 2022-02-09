@@ -61,6 +61,7 @@ max | integer | YES | | Max active safety trades count (Example: 1)
 mstc | integer | YES | | Max safety trades count (Example: 25)
 sdsp | integer | NO | | Simultaneous deals per same pair (only Multibot)
 single | boolean | YES | false (true) | Type of Bot creation (Example: true for Single DCA Bots)
+btc_min_vol | number | YES |  | Minimum 24h volume trading calculated in BTC (Example: 100)
 
 Configure the 'dcabot' section in the `config.ini` according to your favourite bot configuration. If you don't have any, please take a look at [this site](https://www.buymeacoffee.com/Ribsy/posts) for published settings.
 
