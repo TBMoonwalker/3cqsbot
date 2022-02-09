@@ -54,7 +54,7 @@ class SingleBot:
         )
 
         if not error:
-            self.enable(self, bot)
+            self.enable(bot)
 
 
     def delete(self, bot):

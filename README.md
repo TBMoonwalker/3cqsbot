@@ -39,7 +39,7 @@ secret | string | YES | | 3Commas API Secret
 
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
-name | string | YES | (3CQSBOT)  | The name suffix of the created bot
+suffix | string | YES | (3CQSBOT)  | The name suffix of the created bot
 tp | number | YES |   | Take profit in percent (Example: 1.5)
 bo | number | YES |    | Base order volume (Example: 10)
 so | number | YES | | Safety order volume (Example: 10)
