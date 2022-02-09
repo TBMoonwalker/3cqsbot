@@ -31,7 +31,6 @@ class SingleBot:
     def create(self):
         # Creates a single bot with start signal
         print ("Create single bot with pair " + self.tg_data['pair'])
-        bot = self.config['dcabot']['suffix'] + "_" + self.tg_data['pair']
         error, data = self.p3cw.request(
             entity="bots",
             action="create_bot",
@@ -54,7 +53,7 @@ class SingleBot:
         )
 
         if not error:
-            self.enable(bot)
+            self.enable(data)
 
 
     def delete(self, bot):
