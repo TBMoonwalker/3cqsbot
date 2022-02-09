@@ -27,13 +27,23 @@ Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
 api_id | string | YES |   | Telegram API ID
 api_hash | string | YES |   | Telegram API Hash
+sessionfile | string | YES | (tgsession) | Telegram sessionfile location
 key | string | YES |    | 3Commas API Key
 secret | string | YES | | 3Commas API Secret
 
-- Join the telegram channel [telegram channel](https://t.me/The3CQSBot) according to the official Telegram [documentation](https://core.telegram.org/api/obtaining_api_id) 
-- Wait for the Signals. Actually the signals are in a beta phase and you have to be chosen to get them. Be patient if they not arrive after joining
-- In the meantime create your [telegram api account](https://my.telegram.org/apps) and insert them into `api_id` and `api_hash` fields in the *'telegram'* section of the `config.ini`
-- Create a [3commas api account](https://3commas.io/api_access_tokens) too and insert the values in the `key` and `secret` fields in the *'commas'* section of the `config.ini`
+### 3CQS Signals
+
+Join the telegram channel [telegram channel](https://t.me/The3CQSBot) according to the official Telegram [documentation](https://core.telegram.org/api/obtaining_api_id)
+
+Wait for the Signals. Actually the signals are in a beta phase and you have to be chosen to get them. Be patient if they not arrive after joining
+
+### Telegram API
+In the meantime create your [telegram api account](https://my.telegram.org/apps) and insert them into `api_id` and `api_hash` fields in the *'telegram'* section of the `config.ini`
+
+### 3Commas API
+Create a [3commas api account](https://3commas.io/api_access_tokens) too and insert the values in the `key` and `secret` fields in the *'commas'* section of the `config.ini`
+
+**Permissions needed:** BotsRead, BotsWrite, AccountsRead
 
 ## DCABot configuration
 

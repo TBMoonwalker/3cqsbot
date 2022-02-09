@@ -12,7 +12,7 @@ config.read('config.ini')
 
 # Main code
 p3cw = Py3CW(key=config['commas']['key'], secret=config['commas']['secret'])
-client = TelegramClient('session/anon', config['telegram']['api_id'], config['telegram']['api_hash'])
+client = TelegramClient(config['telegram']['sessionfile'], config['telegram']['api_id'], config['telegram']['api_hash'])
 
 def parse_tg(raw_text):
     return raw_text.split('\n')
