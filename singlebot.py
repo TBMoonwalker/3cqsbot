@@ -36,7 +36,7 @@ class SingleBot:
             action="create_bot",
             additional_headers={'Forced-Mode': self.config['trading']['trade_mode']},
             payload={
-                "name": self.config['dcabot']['suffix'] + "_" + self.tg_data['pair'],
+                "name": self.config['dcabot']['prefix'] + "_" + self.tg_data['pair'],
                 "account_id": self.account_data,
                 "pairs": self.tg_data['pair'],
                 "base_order_volume": self.config['dcabot'].getfloat('bo'),
@@ -55,6 +55,8 @@ class SingleBot:
 
         if not error:
             self.enable(data)
+        else:
+            print(error)
 
 
     def delete(self, bot):

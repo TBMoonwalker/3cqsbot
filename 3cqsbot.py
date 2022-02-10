@@ -1,4 +1,5 @@
 import configparser
+import re
 
 from venv import create
 from telethon import TelegramClient, events
@@ -18,10 +19,9 @@ def parse_tg(raw_text):
     return raw_text.split('\n')
 
 def tg_data(text_lines):
-    data = {}
-
     # Make sure the message is a signal
     if len(text_lines) == 6:
+        data = {}
         token = text_lines[1].replace('#', '')
         action = text_lines[2].replace('BOT_', '')
         volatility_score = text_lines[3].replace('Volatility Score ', '')
@@ -34,6 +34,13 @@ def tg_data(text_lines):
             "price_action": float(priceaction_score),
             "symrank": int(symrank)
         }
+    elif len(text_lines) == 17:
+        data = []
+        for row in text_lines:
+            if ". " in row:
+                pairs = re.findall(r'[a-zA-Z]+', row)
+                for pair in pairs:
+                    data.append(pair)
         
     return data
 
@@ -83,26 +90,37 @@ async def my_event_handler(event):
     account_output = account_data()
     deal_output = deal_data()
 
-    if ((tg_output['volatility'] <= config['trading'].getfloat('volatility_limit') and 
-        tg_output['price_action'] <= config['trading'].getfloat('price_action_limit') and
-        tg_output['symrank'] <= config['trading'].getint('symrank_limit')) or
-        tg_output['action'] == 'STOP'):
-
+    if isinstance(tg_output, list):
+        # Create initial multibot with pairs from "/symrank"
         bot = MultiBot(tg_output, bot_output, account_output, deal_output, config, p3cw)
-
-        if config['dcabot'].getboolean('single'):
-            bot = SingleBot(tg_output, bot_output, account_output, deal_output, config, p3cw)
-
-        bot.trigger()
+        bot.create()
     else:
-        print("Trading limits reached. Deal not placed.")
+        if tg_output['volatility'] != "N/A":
+            if ((tg_output['volatility'] <= config['trading'].getfloat('volatility_limit') and 
+                tg_output['price_action'] <= config['trading'].getfloat('price_action_limit') and
+                tg_output['symrank'] <= config['trading'].getint('symrank_limit')) or
+                tg_output['action'] == 'STOP'):
+
+                bot = MultiBot(tg_output, bot_output, account_output, deal_output, config, p3cw)
+
+                if config['dcabot'].getboolean('single'):
+                    bot = SingleBot(tg_output, bot_output, account_output, deal_output, config, p3cw)
+
+                bot.trigger()
+            else:
+                print("Trading limits reached. Deal not placed.")
 
 
 async def main():
     print('Refreshing cache...')
     async for dialog in client.iter_dialogs():
-        print(dialog.name, 'has ID', dialog.id)
+        if dialog.name == "3C Quick Stats":
+            chatid = dialog.id
+        
     print('\n*** 3CQS Bot started ***')
+    
+    if not config['dcabot'].getboolean('single'):
+        await client.send_message(chatid, '/symrank')
 
 
 with client:
