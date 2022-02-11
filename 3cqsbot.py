@@ -58,11 +58,14 @@ def tg_data(text_lines):
         }
     elif len(text_lines) == 17:
         data = []
-        for row in text_lines:
-            if ". " in row:
-                pairs = re.findall(r'[a-zA-Z]+', row)
-                for pair in pairs:
-                    data.append(pair)
+        if "Volatile" not in text_lines[0]:
+            for row in text_lines:
+                if ". " in row:
+                    pairs = re.findall(r'[a-zA-Z]+', row)
+                    for pair in pairs:
+                        data.append(pair)
+    else:
+        data = []
         
     return data
 
@@ -143,38 +146,41 @@ def deal_data():
     
 @client.on(events.NewMessage(chats="3C Quick Stats"))
 async def my_event_handler(event):
-    logging.debug('New signals incoming...')
     tg_output = tg_data(parse_tg(event.raw_text))
-    bot_output = bot_data()
-    account_output = account_data()
-    pair_output = pair_data()
 
-    if config['dcabot'].getboolean('single'):
-        deal_output = deal_data()
-        bot = SingleBot(tg_output, bot_output, account_output, deal_output, config, p3cw, logging)
-    else:
-        bot = MultiBot(tg_output, bot_output, account_output, pair_output, config, p3cw, logging)
-        # Every signal triggers a new multibot deal
-        bot.trigger(triggeronly=True)
+    if tg_output:
+    
+        logging.debug('New signals incoming...')
+        bot_output = bot_data()
+        account_output = account_data()
+        pair_output = pair_data()
 
-    # Create initial multibot with pairs from "/symrank"
-    if isinstance(tg_output, list):
-        bot.create()
-    # Trigger bot if limits passed
-    else:
-        if (tg_output['volatility'] != 0 and
-            tg_output['pair'] in pair_output):
-            if ((tg_output['volatility'] <= config['trading'].getfloat('volatility_limit') and 
-                tg_output['price_action'] <= config['trading'].getfloat('price_action_limit') and
-                tg_output['symrank'] <= config['trading'].getint('symrank_limit')) or
-                tg_output['action'] == 'STOP'):
-
-                bot.trigger()
-
-            else:
-                logging.debug("Trading limits reached. Deal not placed.")
+        if config['dcabot'].getboolean('single'):
+            deal_output = deal_data()
+            bot = SingleBot(tg_output, bot_output, account_output, deal_output, config, p3cw, logging)
         else:
-            logging.debug("Token is not traded on " + config['trading']['exchange'])
+            bot = MultiBot(tg_output, bot_output, account_output, pair_output, config, p3cw, logging)
+            # Every signal triggers a new multibot deal
+            bot.trigger(triggeronly=True)
+
+        # Create initial multibot with pairs from "/symrank"
+        if isinstance(tg_output, list):
+            bot.create()
+        # Trigger bot if limits passed
+        else:
+            if (tg_output['volatility'] != 0 and
+                tg_output['pair'] in pair_output):
+                if ((tg_output['volatility'] <= config['trading'].getfloat('volatility_limit') and 
+                    tg_output['price_action'] <= config['trading'].getfloat('price_action_limit') and
+                    tg_output['symrank'] <= config['trading'].getint('symrank_limit')) or
+                    tg_output['action'] == 'STOP'):
+
+                    bot.trigger()
+
+                else:
+                    logging.debug("Trading limits reached. Deal not placed.")
+            else:
+                logging.debug("Token is not traded on " + config['trading']['exchange'])
 
 
 async def main():
