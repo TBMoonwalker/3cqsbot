@@ -63,36 +63,36 @@ class MultiBot:
                 if pair in self.pair_data:
                     pairs.append(pair)
 
-                self.logging.info("Create multi bot with pairs " + str(pairs))
-                error, data = self.p3cw.request(
-                    entity="bots",
-                    action="create_bot",
-                    additional_headers={'Forced-Mode': self.config['trading']['trade_mode']},
-                    payload={
-                        "name": self.config['dcabot']['prefix'] + "_" + "MULTIBOT",
-                        "account_id": self.account_data['id'],
-                        "pairs": pairs,
-                        "max_active_deals": self.config['dcabot'].getint('mad'),
-                        "base_order_volume": self.config['dcabot'].getfloat('bo'),
-                        "take_profit": self.config['dcabot'].getfloat('tp'),
-                        "safety_order_volume": self.config['dcabot'].getfloat('so'),
-                        "martingale_volume_coefficient": self.config['dcabot'].getfloat('os'),
-                        "martingale_step_coefficient": self.config['dcabot'].getfloat('ss'),
-                        "max_safety_orders": self.config['dcabot'].getint('mstc'),
-                        "safety_order_step_percentage": self.config['dcabot'].getfloat('sos'),
-                        "take_profit_type": "total",
-                        "active_safety_orders_count": self.config['dcabot'].getint('max'),
-                        "strategy_list": [{"strategy":"manual"}],
-                        "allowed_deals_on_same_pair": 1,
-                        "min_volume_btc_24h": self.config['dcabot'].getfloat('btc_min_vol')
-                    }
-                )
+            self.logging.info("Create multi bot with pairs " + str(pairs))
+            error, data = self.p3cw.request(
+                entity="bots",
+                action="create_bot",
+                additional_headers={'Forced-Mode': self.config['trading']['trade_mode']},
+                payload={
+                    "name": self.config['dcabot']['prefix'] + "_" + "MULTIBOT",
+                    "account_id": self.account_data['id'],
+                    "pairs": pairs,
+                    "max_active_deals": self.config['dcabot'].getint('mad'),
+                    "base_order_volume": self.config['dcabot'].getfloat('bo'),
+                    "take_profit": self.config['dcabot'].getfloat('tp'),
+                    "safety_order_volume": self.config['dcabot'].getfloat('so'),
+                    "martingale_volume_coefficient": self.config['dcabot'].getfloat('os'),
+                    "martingale_step_coefficient": self.config['dcabot'].getfloat('ss'),
+                    "max_safety_orders": self.config['dcabot'].getint('mstc'),
+                    "safety_order_step_percentage": self.config['dcabot'].getfloat('sos'),
+                    "take_profit_type": "total",
+                    "active_safety_orders_count": self.config['dcabot'].getint('max'),
+                    "strategy_list": [{"strategy":"manual"}],
+                    "allowed_deals_on_same_pair": 1,
+                    "min_volume_btc_24h": self.config['dcabot'].getfloat('btc_min_vol')
+                }
+            )
 
-                if not error:
-                    self.enable(data)
-                    self.new_deal(data, triggerpair="")
-                else:
-                    self.logging.error(error['msg'])
+            if not error:
+                self.enable(data)
+                self.new_deal(data, triggerpair="")
+            else:
+                self.logging.error(error['msg'])
 
 
     def trigger(self, triggeronly=False):
