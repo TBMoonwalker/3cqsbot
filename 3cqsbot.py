@@ -1,5 +1,6 @@
 import configparser
 import re
+import logging
 
 from venv import create
 from telethon import TelegramClient, events
@@ -7,16 +8,35 @@ from py3cw.request import Py3CW
 from singlebot import SingleBot
 from multibot import MultiBot
 
-# Read configuration
+######################################################
+#                       Config                       #
+######################################################
 config = configparser.ConfigParser()
 config.read('config.ini')
 
-# Main code
-p3cw = Py3CW(key=config['commas']['key'], secret=config['commas']['secret'])
-client = TelegramClient(config['telegram']['sessionfile'], config['telegram']['api_id'], config['telegram']['api_hash'])
+######################################################
+#                        Init                        #
+######################################################
+p3cw = Py3CW(
+    key=config['commas']['key'], 
+    secret=config['commas']['secret'])
 
+client = TelegramClient(
+    config['telegram']['sessionfile'], 
+    config['telegram']['api_id'], 
+    config['telegram']['api_hash'])
+
+logging.basicConfig(
+    format='%(asctime)s %(levelname)-8s %(message)s',
+    level=logging.INFO,
+    datefmt='%Y-%m-%d %H:%M:%S')
+
+######################################################
+#                     Methods                        #
+######################################################
 def parse_tg(raw_text):
     return raw_text.split('\n')
+
 
 def tg_data(text_lines):
     # Make sure the message is a signal
@@ -25,6 +45,8 @@ def tg_data(text_lines):
         token = text_lines[1].replace('#', '')
         action = text_lines[2].replace('BOT_', '')
         volatility_score = text_lines[3].replace('Volatility Score ', '')
+        if volatility_score == "N/A":
+            volatility_score = 0
         priceaction_score = text_lines[4].replace('Price Action Score ', '')
         symrank = text_lines[5].replace('SymRank #', '')
         data = {
@@ -44,6 +66,7 @@ def tg_data(text_lines):
         
     return data
 
+
 def bot_data():
     # Gets information about existing bot in 3Commas
     error, data = p3cw.request(
@@ -54,8 +77,10 @@ def bot_data():
 
     return data
 
+
 def account_data():
     # Gets information about the used 3commas account (paper or real)
+    account = {}
     error, data = p3cw.request(
         entity="accounts",
         action="",
@@ -64,60 +89,101 @@ def account_data():
 
     for accounts in data:
         if accounts['exchange_name'] == config['trading']['exchange']:
-            account = str(accounts['id'])
+            account.update({'id': str(accounts['id'])})
+            account.update({'market_code': str(accounts['market_code'])})
 
     return account
 
+
+def pair_data():
+    pairs = []
+    account = account_data()
+    error, data = p3cw.request(
+        entity="accounts",
+        action="market_pairs",
+        additional_headers={'Forced-Mode': config['trading']['trade_mode']},
+        payload={
+            "market_code": account['market_code']
+        }
+    )
+
+    for pair in data:
+        if config['trading']['market'] in pair:
+            pairs.append(pair)
+
+    return pairs
+
+
 def deal_data():
+    account = account_data()
+    deals = []
     error, data = p3cw.request(
         entity="deals",
         action="",
-        action_id=account_data(),
+        action_id=account['id'],
         additional_headers={'Forced-Mode': config['trading']['trade_mode']},
         payload={
+            "limit": 1000,
             "scope": "active"
         }
     )
 
-    return len(data)
+    if error:
+        logging.error(error['msg'])
+    else:
+        for deal in data:
+            if (config['dcabot']['prefix'] + "_" +  config['trading']['market']) in deal['bot_name']:
+                deals.append(deal['bot_name'])
+    
+    logging.debug(deals)
+    logging.debug("Deal count: " + str(len(deals)))
+    
+    return len(deals)
     
     
 @client.on(events.NewMessage(chats="3C Quick Stats"))
 async def my_event_handler(event):
-    print('New signals incoming...')
+    logging.debug('New signals incoming...')
     tg_output = tg_data(parse_tg(event.raw_text))
     bot_output = bot_data()
     account_output = account_data()
-    deal_output = deal_data()
+    pair_output = pair_data()
 
-    if isinstance(tg_output, list):
-        # Create initial multibot with pairs from "/symrank"
-        bot = MultiBot(tg_output, bot_output, account_output, deal_output, config, p3cw)
-        bot.create()
+    if config['dcabot'].getboolean('single'):
+        deal_output = deal_data()
+        bot = SingleBot(tg_output, bot_output, account_output, deal_output, config, p3cw, logging)
     else:
-        if tg_output['volatility'] != "N/A":
+        bot = MultiBot(tg_output, bot_output, account_output, pair_output, config, p3cw, logging)
+        # Every signal triggers a new multibot deal
+        bot.trigger(triggeronly=True)
+
+    # Create initial multibot with pairs from "/symrank"
+    if isinstance(tg_output, list):
+        bot.create()
+    # Trigger bot if limits passed
+    else:
+        if (tg_output['volatility'] != 0 and
+            tg_output['pair'] in pair_output):
             if ((tg_output['volatility'] <= config['trading'].getfloat('volatility_limit') and 
                 tg_output['price_action'] <= config['trading'].getfloat('price_action_limit') and
                 tg_output['symrank'] <= config['trading'].getint('symrank_limit')) or
                 tg_output['action'] == 'STOP'):
 
-                bot = MultiBot(tg_output, bot_output, account_output, deal_output, config, p3cw)
-
-                if config['dcabot'].getboolean('single'):
-                    bot = SingleBot(tg_output, bot_output, account_output, deal_output, config, p3cw)
-
                 bot.trigger()
+
             else:
-                print("Trading limits reached. Deal not placed.")
+                logging.debug("Trading limits reached. Deal not placed.")
+        else:
+            logging.debug("Token is not traded on " + config['trading']['exchange'])
 
 
 async def main():
-    print('Refreshing cache...')
+    logging.debug('Refreshing cache...')
     async for dialog in client.iter_dialogs():
         if dialog.name == "3C Quick Stats":
             chatid = dialog.id
         
-    print('\n*** 3CQS Bot started ***')
+    logging.info('\n*** 3CQS Bot started ***')
     
     if not config['dcabot'].getboolean('single'):
         await client.send_message(chatid, '/symrank')

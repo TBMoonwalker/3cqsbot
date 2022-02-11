@@ -1,15 +1,16 @@
 class SingleBot:
-    def __init__(self, tg_data, bot_data, account_data, deal_data, config, p3cw):
+    def __init__(self, tg_data, bot_data, account_data, deal_data, config, p3cw, logging):
         self.tg_data = tg_data
         self.bot_data = bot_data
         self.account_data = account_data
         self.deal_data = deal_data
         self.config = config
         self.p3cw = p3cw
+        self.logging = logging
 
     def enable(self, bot):
         # Enables an existing bot
-        print ("Enabling bot")
+        self.logging.info("Enabling bot " + bot['name'])
         error, data = self.p3cw.request(
             entity="bots",
             action="enable",
@@ -20,7 +21,7 @@ class SingleBot:
 
     def disable(self, bot):
         # Disables an existing bot
-        print ("Disabling bot")
+        self.logging.info("Disabling bot " + bot['name'])
         error, data = self.p3cw.request(
             entity="bots",
             action="disable",
@@ -30,14 +31,14 @@ class SingleBot:
 
     def create(self):
         # Creates a single bot with start signal
-        print ("Create single bot with pair " + self.tg_data['pair'])
+        self.logging.info("Create single bot with pair " + self.tg_data['pair'])
         error, data = self.p3cw.request(
             entity="bots",
             action="create_bot",
             additional_headers={'Forced-Mode': self.config['trading']['trade_mode']},
             payload={
                 "name": self.config['dcabot']['prefix'] + "_" + self.tg_data['pair'],
-                "account_id": self.account_data,
+                "account_id": self.account_data['id'],
                 "pairs": self.tg_data['pair'],
                 "base_order_volume": self.config['dcabot'].getfloat('bo'),
                 "take_profit": self.config['dcabot'].getfloat('tp'),
@@ -56,13 +57,13 @@ class SingleBot:
         if not error:
             self.enable(data)
         else:
-            print(error)
+            self.logging.error(error['msg'])
 
 
     def delete(self, bot):
         if bot['active_deals_count'] == 0:
             # Deletes a single bot with stop signal
-            print ("Delete single bot with pair " + self.tg_data['pair'])
+            self.logging.info("Delete single bot with pair " + self.tg_data['pair'])
             error, data = self.p3cw.request(
                 entity="bots",
                 action="delete",
@@ -70,13 +71,13 @@ class SingleBot:
                 additional_headers={'Forced-Mode': self.config['trading']['trade_mode']},
             )
         else:
-            print("Cannot delete single bot, because of active deals. Disabling it!")
+            self.logging.info("Cannot delete single bot, because of active deals. Disabling it!")
             self.disable(bot)
 
 
     def trigger(self):
         # Triggers a single bot deal
-        print("Start trigger")
+        self.logging.info("Start trigger")
         new_bot = True
 
         if self.bot_data:
@@ -88,13 +89,13 @@ class SingleBot:
             if new_bot:
                 if (self.tg_data['action'] == "START" and
                     self.deal_data < self.config['dcabot'].getint('mad')):
-                    print ("No single dcabot for this pair found")
+                    self.logging.info("No single dcabot for " + self.tg_data['pair'] + " found - creating one")
                     self.create()
                 else:
-                    print("Maximum deals reached or stop command on a non-existing bot!")
+                    self.logging.info("Maximum deals reached or stop command on a non-existing bot!")
             else:
-                print ("Pair: " + self.tg_data['pair'])
-                print ("Bot-Name: " + bot['name'])
+                self.logging.debug("Pair: " + self.tg_data['pair'])
+                self.logging.debug("Bot-Name: " + bot['name'])
                 if self.tg_data['action'] == "START":
                     if self.deal_data < self.config['dcabot'].getint('mad'):
                         self.enable(bot)
@@ -102,5 +103,5 @@ class SingleBot:
                     self.delete(bot)
         
         else:
-            print ("No dcabots found")
+            self.logging.info("No dcabots found")
             self.create()
