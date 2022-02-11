@@ -90,7 +90,7 @@ class MultiBot:
 
                 if not error:
                     self.enable(data)
-                    self.new_deal(data)
+                    self.new_deal(data, triggerpair="")
                 else:
                     self.logging.error(error['msg'])
 
