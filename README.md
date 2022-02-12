@@ -35,7 +35,7 @@ secret | string | YES | | 3Commas API Secret
 
 Join the telegram channel [telegram channel](https://t.me/The3CQSBot) according to the official Telegram [documentation](https://core.telegram.org/api/obtaining_api_id)
 
-Wait for the Signals. Actually the signals are in a beta phase and you have to be chosen to get them. Be patient if they not arrive after joining
+Wait for the signals. Actually the signals are in a beta phase and you have to be chosen to get them. Be patient if they not arrive after joining
 
 ### Telegram API
 In the meantime create your [telegram api account](https://my.telegram.org/apps) and insert them into `api_id` and `api_hash` fields in the *'telegram'* section of the `config.ini`
@@ -67,8 +67,6 @@ Configure the 'dcabot' section in the `config.ini` according to your favourite b
 
 Set the `single` value in the `config.ini` to true. 3cqsbot will create multiple dca bots (according to your max deal size). 
 
-**Support for a DCA multivalue pair bot comes later.**
-
 ## Trading mode
 
 ### Market
@@ -80,6 +78,9 @@ exchange | string | YES | (Paper trading account)  | Exchange of the chosen acco
 symrank_limit | integer | YES | (10000) | Maximum value of bot creation according to the Symrank
 volatility_limit | number | YES | (10000) | Maximum value of bot creation according to the volatility
 price_action_limit | number | YES | (10000) | Maximum value of bot creation according to the price action
+deal_mode | string | YES | (signal)rsi | Method how the script is creating new deals in multipair bot.
+trailing | boolean | YES | (false)true | Trailing profit enabled
+trailing_deviation | number | YES | (0.2) | Deviation of trailing profi
 
 **Again, please use 3cqsbot only on paper trading. Usage with real funds is at your own risk**
 

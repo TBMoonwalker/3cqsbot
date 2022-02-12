@@ -50,6 +50,8 @@ class SingleBot:
                 "take_profit_type": "total",
                 "active_safety_orders_count": self.config['dcabot'].getint('max'),
                 "strategy_list": [{"strategy":"nonstop"}],
+                "trailing_enabled": self.config['trading'].getboolean('trailing'),
+                "trailing_deviation": self.config['trading'].getfloat('trailing_deviation'),
                 "min_volume_btc_24h": self.config['dcabot'].getfloat('btc_min_vol')
             }
         )

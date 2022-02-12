@@ -10,6 +10,15 @@ class MultiBot:
         self.p3cw = p3cw
         self.logging = logging
 
+    
+    def strategy(self):
+        if self.config['trading']['deal_mode'] == "signal":
+            strategy = [{"strategy":"manual"}]
+        else:
+            strategy = [{"options": {"time": "3m", "points": "100"}, "strategy": "rsi"}]
+
+        return strategy
+
 
     def enable(self, bot):
         # Enables an existing bot
@@ -52,6 +61,8 @@ class MultiBot:
         new_bot = True
         pairs = []
 
+        deal_strategy = self.strategy()
+           
         for bot in self.bot_data:
             if (self.config['dcabot']['prefix'] + "_" + "MULTIBOT") in bot['name']:
                 new_bot = False
@@ -82,7 +93,9 @@ class MultiBot:
                     "safety_order_step_percentage": self.config['dcabot'].getfloat('sos'),
                     "take_profit_type": "total",
                     "active_safety_orders_count": self.config['dcabot'].getint('max'),
-                    "strategy_list": [{"strategy":"manual"}],
+                    "strategy_list": deal_strategy,
+                    "trailing_enabled": self.config['trading'].getboolean('trailing'),
+                    "trailing_deviation": self.config['trading'].getfloat('trailing_deviation'),
                     "allowed_deals_on_same_pair": 1,
                     "min_volume_btc_24h": self.config['dcabot'].getfloat('btc_min_vol')
                     # Create a function who automatically reduces the max active deals, if there are less pairs then max active deals or set allow allowed deals
@@ -100,6 +113,8 @@ class MultiBot:
     def trigger(self, triggeronly=False):
         # Updates multi bot with new pairs
         triggerpair = ""
+        deal_strategy = self.strategy()
+        mad = self.config['dcabot'].getint('mad')
 
         for bot in self.bot_data:
             if (self.config['dcabot']['prefix'] + "_" + "MULTIBOT") in bot['name']:
@@ -116,10 +131,24 @@ class MultiBot:
                             self.logging.info("Add pair " + pair)
                             bot['pairs'].append(pair)
                             lastpair = True
+
+                            # Raise max active deals to minimum pairs or mad if possible
+                            if len(bot['pairs']) >= mad:
+                                self.logging.info("Pairs are over 'mad' - nothing to do")
+                            else:
+                                # Pairs are not back to mad - update it to the latest pair count
+                                self.logging.info("Pairs still under 'mad' - Set max active deals to actual pairs")
+                                mad = len(bot['pairs'])
                     else:
                         if pair in bot['pairs']:
                             self.logging.info("Remove pair " + pair)
                             bot['pairs'].remove(pair)
+
+                            # Lower max active deals, when pairs are under mad
+                            if len(bot['pairs']) < mad:
+                                self.logging.info("Pairs are under 'mad' - Lower max active deals to actual pairs")
+                                mad = len(bot['pairs'])
+
                         else:
                             self.logging.info("Pair is not included in the list, not removed")
 
@@ -132,7 +161,7 @@ class MultiBot:
                             "name": self.config['dcabot']['prefix'] + "_" + "MULTIBOT",
                             "account_id": self.account_data['id'],
                             "pairs": bot['pairs'],
-                            "max_active_deals": self.config['dcabot'].getint('mad'),
+                            "max_active_deals": mad,
                             "base_order_volume": self.config['dcabot'].getfloat('bo'),
                             "take_profit": self.config['dcabot'].getfloat('tp'),
                             "safety_order_volume": self.config['dcabot'].getfloat('so'),
@@ -142,7 +171,9 @@ class MultiBot:
                             "safety_order_step_percentage": self.config['dcabot'].getfloat('sos'),
                             "take_profit_type": "total",
                             "active_safety_orders_count": self.config['dcabot'].getint('max'),
-                            "strategy_list": [{"strategy":"manual"}],
+                            "strategy_list": deal_strategy,
+                            "trailing_enabled": self.config['trading'].getboolean('trailing'),
+                            "trailing_deviation": self.config['trading'].getfloat('trailing_deviation'),
                             "allowed_deals_on_same_pair": 1,
                             "min_volume_btc_24h": self.config['dcabot'].getfloat('btc_min_vol')
                         }
@@ -153,6 +184,7 @@ class MultiBot:
                 else:
                     data = bot
 
-                self.logging.info("Got new 3cqs signal")
-                # ToDo - no new deal if we have an error on bot update - see error in Textfile
-                self.new_deal(data, triggerpair)
+                if self.config['trading']['deal_mode'] == "signal":
+                    self.logging.info("Got new 3cqs signal")
+                    # ToDo - no new deal if we have an error on bot update - see error in Textfile
+                    self.new_deal(data, triggerpair)
