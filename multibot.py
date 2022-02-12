@@ -85,6 +85,8 @@ class MultiBot:
                     "strategy_list": [{"strategy":"manual"}],
                     "allowed_deals_on_same_pair": 1,
                     "min_volume_btc_24h": self.config['dcabot'].getfloat('btc_min_vol')
+                    # Create a function who automatically reduces the max active deals, if there are less pairs then max active deals or set allow allowed deals
+                    # on same pair higher then 1
                 }
             )
 
@@ -102,9 +104,10 @@ class MultiBot:
         for bot in self.bot_data:
             if (self.config['dcabot']['prefix'] + "_" + "MULTIBOT") in bot['name']:
 
-                pair = self.tg_data['pair']
-
                 if not triggeronly:
+
+                    pair = self.tg_data['pair']
+
                     if self.tg_data['action'] == "START":
                         triggerpair = pair
                         if pair in bot['pairs']:
@@ -151,4 +154,5 @@ class MultiBot:
                     data = bot
 
                 self.logging.info("Got new 3cqs signal")
+                # ToDo - no new deal if we have an error on bot update - see error in Textfile
                 self.new_deal(data, triggerpair)

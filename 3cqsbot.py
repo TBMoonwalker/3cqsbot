@@ -147,13 +147,12 @@ def deal_data():
 @client.on(events.NewMessage(chats="3C Quick Stats"))
 async def my_event_handler(event):
     tg_output = tg_data(parse_tg(event.raw_text))
+    logging.debug('New signals incoming...')
+    bot_output = bot_data()
+    account_output = account_data()
+    pair_output = pair_data()
 
-    if tg_output:
-    
-        logging.debug('New signals incoming...')
-        bot_output = bot_data()
-        account_output = account_data()
-        pair_output = pair_data()
+    if tg_output and not isinstance(tg_output, list):
 
         if config['dcabot'].getboolean('single'):
             deal_output = deal_data()
@@ -162,25 +161,25 @@ async def my_event_handler(event):
             bot = MultiBot(tg_output, bot_output, account_output, pair_output, config, p3cw, logging)
             # Every signal triggers a new multibot deal
             bot.trigger(triggeronly=True)
-
-        # Create initial multibot with pairs from "/symrank"
-        if isinstance(tg_output, list):
-            bot.create()
+     
         # Trigger bot if limits passed
-        else:
-            if (tg_output['volatility'] != 0 and
-                tg_output['pair'] in pair_output):
-                if ((tg_output['volatility'] <= config['trading'].getfloat('volatility_limit') and 
-                    tg_output['price_action'] <= config['trading'].getfloat('price_action_limit') and
-                    tg_output['symrank'] <= config['trading'].getint('symrank_limit')) or
-                    tg_output['action'] == 'STOP'):
+        if (tg_output['volatility'] != 0 and
+            tg_output['pair'] in pair_output):
+            if ((tg_output['volatility'] <= config['trading'].getfloat('volatility_limit') and 
+                tg_output['price_action'] <= config['trading'].getfloat('price_action_limit') and
+                tg_output['symrank'] <= config['trading'].getint('symrank_limit')) or
+                tg_output['action'] == 'STOP'):
 
-                    bot.trigger()
+                bot.trigger()
 
-                else:
-                    logging.debug("Trading limits reached. Deal not placed.")
             else:
-                logging.debug("Token is not traded on " + config['trading']['exchange'])
+                logging.debug("Trading limits reached. Deal not placed.")
+        else:
+            logging.debug("Token is not traded on " + config['trading']['exchange'])
+    else:
+        # Create initial multibot with pairs from "/symrank"
+        bot = MultiBot(tg_output, bot_output, account_output, pair_output, config, p3cw, logging)
+        bot.create()
 
 
 async def main():
