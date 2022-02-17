@@ -74,6 +74,17 @@ class MultiBot:
                 if pair in self.pair_data:
                     pairs.append(pair)
 
+            if self.config['trading'].getboolean('limit_initial_pairs'):
+                # Limit pairs to the maximal deals (mad)
+                if self.config['dcabot'].getint('mad') == 1:
+                    maxpairs = 2
+                elif self.config['dcabot'].getint('mad') <= len(pairs):
+                    maxpairs = self.config['dcabot'].getint('mad')
+                else:
+                    maxpairs = len(pairs)
+
+                pairs = pairs[0 : maxpairs]
+
             self.logging.info("Create multi bot with pairs " + str(pairs))
             error, data = self.p3cw.request(
                 entity="bots",
@@ -115,6 +126,8 @@ class MultiBot:
         triggerpair = ""
         deal_strategy = self.strategy()
         mad = self.config['dcabot'].getint('mad')
+
+        self.logging.info("Got new 3cqs signal")
 
         for bot in self.bot_data:
             if (self.config['dcabot']['prefix'] + "_" + "MULTIBOT") in bot['name']:
@@ -184,7 +197,5 @@ class MultiBot:
                 else:
                     data = bot
 
-                if self.config['trading']['deal_mode'] == "signal":
-                    self.logging.info("Got new 3cqs signal")
-                    # ToDo - no new deal if we have an error on bot update - see error in Textfile
+                if (self.config['trading']['deal_mode'] == "signal" and data):
                     self.new_deal(data, triggerpair)

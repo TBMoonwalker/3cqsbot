@@ -28,6 +28,7 @@ Name | Type | Mandatory | Values(default) | Description
 api_id | string | YES |   | Telegram API ID
 api_hash | string | YES |   | Telegram API Hash
 sessionfile | string | YES | (tgsession) | Telegram sessionfile location
+chatroom | string | YES | (3C Quick Stats) | Name of the chatroom - on Windows please use the ID 5011413076
 key | string | YES |    | 3Commas API Key
 secret | string | YES | | 3Commas API Secret
 
@@ -49,7 +50,7 @@ Create a [3commas api account](https://3commas.io/api_access_tokens) too and ins
 
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
-suffix | string | YES | (3CQSBOT)  | The name suffix of the created bot
+prefix | string | YES | (3CQSBOT)  | The name prefix of the created bot
 tp | number | YES |   | Take profit in percent (Example: 1.5)
 bo | number | YES |    | Base order volume (Example: 10)
 so | number | YES | | Safety order volume (Example: 10)
@@ -80,7 +81,8 @@ volatility_limit | number | YES | (10000) | Maximum value of bot creation accord
 price_action_limit | number | YES | (10000) | Maximum value of bot creation according to the price action
 deal_mode | string | YES | (signal)rsi | Method how the script is creating new deals in multipair bot.
 trailing | boolean | YES | (false)true | Trailing profit enabled
-trailing_deviation | number | YES | (0.2) | Deviation of trailing profi
+trailing_deviation | number | YES | (0.2) | Deviation of trailing profit
+limit_initial_pairs | boolean | YES | (false) | Limit initial pairs to the max number of deals (MAD) - bot chooses the top pairs
 
 **Again, please use 3cqsbot only on paper trading. Usage with real funds is at your own risk**
 

@@ -1,8 +1,10 @@
 import configparser
 import re
 import logging
+import itertools
 
 from venv import create
+from collections import OrderedDict
 from telethon import TelegramClient, events
 from py3cw.request import Py3CW
 from singlebot import SingleBot
@@ -46,9 +48,13 @@ def tg_data(text_lines):
         action = text_lines[2].replace('BOT_', '')
         volatility_score = text_lines[3].replace('Volatility Score ', '')
         if volatility_score == "N/A":
-            volatility_score = 0
+            volatility_score = 9999999
         priceaction_score = text_lines[4].replace('Price Action Score ', '')
+        if priceaction_score == "N/A":
+            priceaction_score = 9999999
         symrank = text_lines[5].replace('SymRank #', '')
+        if symrank == "N/A":
+            symrank = 9999999
         data = {
             "pair": config['trading']['market'] + "_" + token,
             "action": action,
@@ -56,17 +62,26 @@ def tg_data(text_lines):
             "price_action": float(priceaction_score),
             "symrank": int(symrank)
         }
+
     elif len(text_lines) == 17:
-        data = []
+        pairs = {}
+
         if "Volatile" not in text_lines[0]:
             for row in text_lines:
                 if ". " in row:
-                    pairs = re.findall(r'[a-zA-Z]+', row)
-                    for pair in pairs:
-                        data.append(pair)
+                    # Sort the pair list from Telegram
+                    line = re.split(" +",row)
+                    pairs.update({
+                        int(line[0][:-1]): line[1],
+                        int(line[2][:-1]): line[3]
+                    })
+            
+            allpairs = dict(sorted(pairs.items()))
+            data = list(allpairs.values())
+
     else:
         data = []
-        
+    
     return data
 
 
@@ -84,6 +99,7 @@ def bot_data():
 def account_data():
     # Gets information about the used 3commas account (paper or real)
     account = {}
+
     error, data = p3cw.request(
         entity="accounts",
         action="",
@@ -101,6 +117,7 @@ def account_data():
 def pair_data():
     pairs = []
     account = account_data()
+
     error, data = p3cw.request(
         entity="accounts",
         action="market_pairs",
@@ -120,6 +137,7 @@ def pair_data():
 def deal_data():
     account = account_data()
     deals = []
+
     error, data = p3cw.request(
         entity="deals",
         action="",
@@ -144,7 +162,7 @@ def deal_data():
     return len(deals)
     
     
-@client.on(events.NewMessage(chats="3C Quick Stats"))
+@client.on(events.NewMessage(chats=config['telegram']['chatroom']))
 async def my_event_handler(event):
     tg_output = tg_data(parse_tg(event.raw_text))
     logging.debug('New signals incoming...')
@@ -153,7 +171,6 @@ async def my_event_handler(event):
     pair_output = pair_data()
 
     if tg_output and not isinstance(tg_output, list):
-
         if config['dcabot'].getboolean('single'):
             deal_output = deal_data()
             bot = SingleBot(tg_output, bot_output, account_output, deal_output, config, p3cw, logging)
@@ -177,9 +194,12 @@ async def my_event_handler(event):
         else:
             logging.debug("Token is not traded on " + config['trading']['exchange'])
     else:
-        # Create initial multibot with pairs from "/symrank"
-        bot = MultiBot(tg_output, bot_output, account_output, pair_output, config, p3cw, logging)
-        bot.create()
+        if not config['dcabot'].getboolean('single'):
+            # Create initial multibot with pairs from "/symrank"
+            bot = MultiBot(tg_output, bot_output, account_output, pair_output, config, p3cw, logging)
+            bot.create()
+        else:
+            logging.debug("Ignoring /symrank call, because we're running in single mode!")
 
 
 async def main():
