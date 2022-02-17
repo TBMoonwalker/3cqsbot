@@ -11,6 +11,7 @@ class SingleBot:
     def enable(self, bot):
         # Enables an existing bot
         self.logging.info("Enabling bot " + bot['name'])
+
         error, data = self.p3cw.request(
             entity="bots",
             action="enable",
@@ -18,16 +19,23 @@ class SingleBot:
             additional_headers={'Forced-Mode': self.config['trading']['trade_mode']},
         )
 
+        if error:
+            self.logging.error(error['msg'])
+
 
     def disable(self, bot):
         # Disables an existing bot
         self.logging.info("Disabling bot " + bot['name'])
+
         error, data = self.p3cw.request(
             entity="bots",
             action="disable",
             action_id=str(bot['id']),
             additional_headers={'Forced-Mode': self.config['trading']['trade_mode']},
         )
+
+        if error:
+            self.logging.error(error['msg'])
 
     def create(self):
         # Creates a single bot with start signal
@@ -72,6 +80,9 @@ class SingleBot:
                 action_id=str(bot['id']),
                 additional_headers={'Forced-Mode': self.config['trading']['trade_mode']},
             )
+            
+            if error:
+                self.logging.error(error['msg'])
         else:
             self.logging.info("Cannot delete single bot, because of active deals. Disabling it!")
             self.disable(bot)
