@@ -1,20 +1,33 @@
 import configparser
+import argparse
 import re
 import logging
-import itertools
+import asyncio
 
 from venv import create
-from collections import OrderedDict
+from time import sleep
+from random import randint
 from telethon import TelegramClient, events
 from py3cw.request import Py3CW
 from singlebot import SingleBot
 from multibot import MultiBot
+from signals import Signals
 
 ######################################################
 #                       Config                       #
 ######################################################
 config = configparser.ConfigParser()
 config.read('config.ini')
+
+parser = argparse.ArgumentParser(description='3CQSBot bringing 3CQS signals to 3Commas.')
+parser.add_argument('-l', '--loglevel',
+                       metavar='loglevel',
+                       type=str,
+                       nargs="?",
+                       default="info",
+                       help='loglevel during runtime - use info, debug, warning, ...')
+
+args = parser.parse_args()
 
 ######################################################
 #                        Init                        #
@@ -28,10 +41,17 @@ client = TelegramClient(
     config['telegram']['api_id'], 
     config['telegram']['api_hash'])
 
+loglevel = getattr(logging, args.loglevel.upper(), None)
+
 logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',
-    level=logging.INFO,
+    level=loglevel,
     datefmt='%Y-%m-%d %H:%M:%S')
+
+# Initialize variables
+asyncState = type('', (), {})()
+asyncState.btcbool = True
+asyncState.botswitch = True
 
 ######################################################
 #                     Methods                        #
@@ -47,14 +67,20 @@ def tg_data(text_lines):
         token = text_lines[1].replace('#', '')
         action = text_lines[2].replace('BOT_', '')
         volatility_score = text_lines[3].replace('Volatility Score ', '')
+
         if volatility_score == "N/A":
             volatility_score = 9999999
+        
         priceaction_score = text_lines[4].replace('Price Action Score ', '')
+
         if priceaction_score == "N/A":
             priceaction_score = 9999999
+
         symrank = text_lines[5].replace('SymRank #', '')
+        
         if symrank == "N/A":
             symrank = 9999999
+        
         data = {
             "pair": config['trading']['market'] + "_" + token,
             "action": action,
@@ -65,6 +91,7 @@ def tg_data(text_lines):
 
     elif len(text_lines) == 17:
         pairs = {}
+        data = []
 
         if "Volatile" not in text_lines[0]:
             for row in text_lines:
@@ -80,7 +107,7 @@ def tg_data(text_lines):
             data = list(allpairs.values())
 
     else:
-        data = []
+        data = False
     
     return data
 
@@ -134,88 +161,118 @@ def pair_data():
     return pairs
 
 
-def deal_data():
-    account = account_data()
-    deals = []
+async def symrank():
+    while True:
+        if asyncState.botswitch:
+            logging.info("Calling Symrank to get new pairs")
+            await client.send_message(asyncState.chatid, '/symrank')
+        await asyncio.sleep(randint(1800,3600))
 
-    error, data = p3cw.request(
-        entity="deals",
-        action="",
-        action_id=account['id'],
-        additional_headers={'Forced-Mode': config['trading']['trade_mode']},
-        payload={
-            "limit": 1000,
-            "scope": "active"
-        }
-    )
+async def botswitch():
+    
+    while True:
+        if (not asyncState.btcbool and
+            not asyncState.botswitch):
+            logging.debug("Activate Bot")
+            asyncState.botswitch = True
+            if config['dcabot'].getboolean('single'):
+                logging.info("Not activating old single bots (waiting for new signals.")
+            else:
+                # Send new top 30 for activating the multibot
+                logging.debug("Calling for new symrank stats")
+                await client.send_message(asyncState.chatid, '/symrank')
+        elif (asyncState.btcbool and
+            asyncState.botswitch):
+            logging.debug("Deactivate Bot")
+            asyncState.botswitch = False
+            if config['dcabot'].getboolean('single'):
+                bot = SingleBot([], bot_data(), {}, 0, config, p3cw, logging)
+                bot.disable(bot_data(), True)
+            else:
+                bot = MultiBot([], bot_data(), {}, 0, config, p3cw, logging)
+                bot.disable()
+                  
+        else:
+            logging.debug("Nothing do to")
 
-    if error:
-        logging.error(error['msg'])
-    else:
-        for deal in data:
-            if (config['dcabot']['prefix'] + "_" +  config['trading']['market']) in deal['bot_name']:
-                deals.append(deal['bot_name'])
-    
-    logging.debug(deals)
-    logging.debug("Deal count: " + str(len(deals)))
-    
-    return len(deals)
+        await asyncio.sleep(60)
     
     
 @client.on(events.NewMessage(chats=config['telegram']['chatroom']))
 async def my_event_handler(event):
-    tg_output = tg_data(parse_tg(event.raw_text))
-    logging.debug('New signals incoming...')
-    bot_output = bot_data()
-    account_output = account_data()
-    pair_output = pair_data()
-
-    if tg_output and not isinstance(tg_output, list):
-        if config['dcabot'].getboolean('single'):
-            deal_output = deal_data()
-            bot = SingleBot(tg_output, bot_output, account_output, deal_output, config, p3cw, logging)
-        else:
-            bot = MultiBot(tg_output, bot_output, account_output, pair_output, config, p3cw, logging)
-            # Every signal triggers a new multibot deal
-            bot.trigger(triggeronly=True)
-     
-        # Trigger bot if limits passed
-        if (tg_output['volatility'] != 0 and
-            tg_output['pair'] in pair_output):
-            if ((tg_output['volatility'] <= config['trading'].getfloat('volatility_limit') and 
-                tg_output['price_action'] <= config['trading'].getfloat('price_action_limit') and
-                tg_output['symrank'] <= config['trading'].getint('symrank_limit')) or
-                tg_output['action'] == 'STOP'):
-
-                bot.trigger()
-
-            else:
-                logging.debug("Trading limits reached. Deal not placed.")
-        else:
-            logging.debug("Token is not traded on " + config['trading']['exchange'])
+    
+    if (asyncState.btcbool and
+        config['trading'].getboolean('btc_pulse')):
+        logging.info("Bot stopped - no new signals processed")
     else:
-        if not config['dcabot'].getboolean('single'):
-            # Create initial multibot with pairs from "/symrank"
-            bot = MultiBot(tg_output, bot_output, account_output, pair_output, config, p3cw, logging)
-            bot.create()
-        else:
-            logging.debug("Ignoring /symrank call, because we're running in single mode!")
+
+        logging.debug('New signals incoming...')
+
+        tg_output = tg_data(parse_tg(event.raw_text))
+        bot_output = bot_data()
+        account_output = account_data()
+        pair_output = pair_data()
+
+        if tg_output and not isinstance(tg_output, list):
+            if config['dcabot'].getboolean('single'):
+                bot = SingleBot(tg_output, bot_output, account_output, config, p3cw, logging)
+            else:
+                bot = MultiBot(tg_output, bot_output, account_output, pair_output, config, p3cw, logging)
+                # Every signal triggers a new multibot deal
+                bot.trigger(triggeronly=True)
+        
+            # Trigger bot if limits passed
+            if (tg_output['volatility'] != 0 and
+                tg_output['pair'] in pair_output):
+                if ((tg_output['volatility'] <= config['trading'].getfloat('volatility_limit') and 
+                    tg_output['price_action'] <= config['trading'].getfloat('price_action_limit') and
+                    tg_output['symrank'] <= config['trading'].getint('symrank_limit')) or
+                    tg_output['action'] == 'STOP'):
+
+                    bot.trigger()
+
+                else:
+                    logging.info("Trading limits reached. Deal not placed.")
+            else:
+                logging.info("Token " + tg_output['pair'] + " is not traded on " + config['trading']['exchange'])
+        elif tg_output and isinstance(tg_output, list):
+            if not config['dcabot'].getboolean('single'):
+                # Create or update multibot with pairs from "/symrank"
+                bot = MultiBot(tg_output, bot_output, account_output, pair_output, config, p3cw, logging)
+                bot.create()
+            else:
+                logging.debug("Ignoring /symrank call, because we're running in single mode!")
 
 
 async def main():
+    signals = Signals(logging)
+    
     logging.debug('Refreshing cache...')
+    
     async for dialog in client.iter_dialogs():
         if dialog.name == "3C Quick Stats":
-            chatid = dialog.id
+            asyncState.chatid = dialog.id
         
-    logging.info('\n*** 3CQS Bot started ***')
+    logging.info('*** 3CQS Bot started ***')
     
-    if not config['dcabot'].getboolean('single'):
-        await client.send_message(chatid, '/symrank')
+    
+    if config['trading'].getboolean('btc_pulse'):
+        btcbooltask =  client.loop.create_task(signals.getbtcbool(asyncState))
+        switchtask = client.loop.create_task(botswitch())
 
+    if not config['dcabot'].getboolean('single'):
+        symranktask = client.loop.create_task(symrank())
+
+    while True:
+        if not config['dcabot'].getboolean('single'):
+            await symranktask
+        
+        if config['trading'].getboolean('btc_pulse'):
+            await btcbooltask
+            await switchtask
+            
 
 with client:
     client.loop.run_until_complete(main())
 
 client.start()
-client.run_until_disconnected()

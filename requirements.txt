@@ -1,0 +1,6 @@
+telethon
+py3cw
+pycoingecko
+yfinance
+ta-lib
+numby
