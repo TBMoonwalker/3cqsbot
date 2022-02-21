@@ -3,4 +3,4 @@ py3cw
 pycoingecko
 yfinance
 ta-lib
-numby
+numpy

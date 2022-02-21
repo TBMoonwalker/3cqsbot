@@ -12,7 +12,7 @@ The 3cqsbot can be used to start and stop [3commas](https://3commas.io) dca bots
 - py3cw module (pip3 install py3cw)
 - telethon module (pip3 install telethon)
 - yfinance module
-- numby module
+- numpy module
 
 ## Operating Systems
 - MacOS
