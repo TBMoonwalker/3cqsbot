@@ -118,7 +118,8 @@ class SingleBot:
             
 
     def delete(self, bot):
-        if bot['active_deals_count'] == 0:
+        if (bot['active_deals_count'] == 0 and
+            self.config['trading'].getboolean('delete_single_bots')):
             # Deletes a single bot with stop signal
             self.logging.info("Delete single bot with pair " + self.tg_data['pair'])
             error, data = self.p3cw.request(
@@ -131,7 +132,7 @@ class SingleBot:
             if error:
                 self.logging.error(error['msg'])
         else:
-            self.logging.info("Cannot delete single bot, because of active deals. Disabling it!")
+            self.logging.info("Cannot delete single bot, because of active deals or configuration. Disabling it!")
             self.disable(bot, False)
 
 

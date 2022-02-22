@@ -2,6 +2,7 @@ import yfinance as yf
 import numpy as np
 import talib
 import asyncio
+import math
 
 from pycoingecko import CoinGeckoAPI
 
@@ -11,12 +12,19 @@ class Signals:
         self.cg = CoinGeckoAPI()
         self.logging = logging
     
+
     def topcoin(self, symbol, rank):
-        market = self.cg.get_coins_markets(vs_currency='usd', page=1, per_page=rank)
         coin = False
-        for coins in market:
-            if symbol.lower() in coins['symbol']:
-                coin = True
+        pages = math.ceil(rank / 250)
+        
+        for page in range(1,pages +1):        
+            market = self.cg.get_coins_markets(vs_currency='usd', page=page, per_page=250)
+            
+            for coins in market:
+                if symbol.lower() in coins['symbol']:
+                    coin = True
+                    break
+            if coin:
                 break
 
         return coin

@@ -86,7 +86,6 @@ Default configuration is based on Trade Alts Safer settings: https://discord.gg/
 
 ## Trading mode
 
-### Market
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
 market | string | YES | (USDT)  | Trading market (Example: BUSD, USDT, USDC)
@@ -102,6 +101,19 @@ btc_pulse | boolean | YES | (false) | Activates or deactivates the bots accord
 trailing | boolean | YES | (false) true | Trailing profit enabled
 trailing_deviation | number | YES | (0.2) | Deviation of trailing profit
 
+## Filter
+
+### BTC Pulse
+BTCPulse is a simple strategy which monitors BTC Price Action to start new deals or just put the bot to sleep ( no new deals but active deals keep running) based on:-
+If BTC is in upswing new deals are started 
+If BTC is dumping no new deals are started
+
+BTCPulse hence is determined using the 2 factors :-
+% price change of BTC in the last 15 minutes or
+Fast and Slow moving EMAs crossses
+
+Please test this strategy on paper before putting real money on it.
+TBMoonWalker or IamtheOnewhoKnocks take no responsibility for losses occurred due to the script/strategy
 
 **Again, please use 3cqsbot only on paper trading. Usage with real funds is at your own risk**
 
