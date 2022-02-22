@@ -20,6 +20,8 @@ The 3cqsbot can be used to start and stop [3commas](https://3commas.io) dca bots
     - Ubuntu
 - Windows
     - untested (please let me know if it works)
+- Docker
+  - Added Dockerfile to create the image or use the pvdochtend/3cqsbot from the Docker Hub repository
 
 ## Installation
 ### TA-Lib
@@ -112,6 +114,13 @@ If you get signals, you can run the script with the command:
 python3 3cqsbot.py
 ```
 When running for the first time, you will be asked for your Telegram phonenumber and you will get a code you have to insert!
+
+# Docker Build
+In the folder run the following command:
+
+docker build --progress=plain -t "your repo name"/3cqsbot:"your version number" .
+
+Still work in progress to make the config file configurable through a external volume (on the host) for easy maintenance
 
 # Bug reports
 Please submit bugs or problems through the Github [issues page](https://github.com/TBMoonwalker/3cqsbot/issues).
