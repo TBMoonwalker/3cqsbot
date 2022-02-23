@@ -34,7 +34,7 @@ class SingleBot:
             self.logging.error(error['msg'])
         else:
             for deal in data:
-                if (self.prefix + "_" +  self.subprefix + "_" + self.config['trading']['market'] + self.suffix) in deal['bot_name']:
+                if (self.prefix + "_" +  self.subprefix + "_" + self.config['trading']['market']) in deal['bot_name']:
                     deals.append(deal['bot_name'])
         
         self.logging.debug(deals)

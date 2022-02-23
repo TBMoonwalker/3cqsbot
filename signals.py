@@ -1,6 +1,5 @@
 import yfinance as yf
 import numpy as np
-import talib
 import asyncio
 import math
 
@@ -31,14 +30,28 @@ class Signals:
 
     # Credits going to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts
+    def ema(self, data, period, smoothing=2):
+        # Calculate EMA without dependency for TA-Lib
+        ema = [sum(data[:period]) / period]
+        
+        for price in data[period:]:
+            ema.append((price * (smoothing / (1 + period))) + ema[-1] * (1 - (smoothing / (1 + period))))
+        
+        for i in range(period-1):
+            ema.insert(0, np.nan)
+        
+        return ema
+
+    # Credits going to @IamtheOnewhoKnocks from
+    # https://discord.gg/tradealts
     def btctechnical(self, symbol):
         btcusdt = yf.download(tickers=symbol, period = '6h', interval = '5m', progress= False)
         if len(btcusdt) > 0:
             btcusdt = btcusdt.iloc[:,:5]
             btcusdt.columns = ['Time','Open','High','Low','Close']
             btcusdt = btcusdt.astype(float)
-            btcusdt["EMA9"] = talib.EMA(btcusdt["Close"], timeperiod=9)
-            btcusdt["EMA50"] = talib.EMA(btcusdt["Close"], timeperiod=50)
+            btcusdt["EMA9"] = self.ema(btcusdt["Close"], 9)
+            btcusdt["EMA50"] = self.ema(btcusdt["Close"], 50)
             btcusdt['per_5mins'] = (np.log(btcusdt['Close'].pct_change() + 1))*100
             btcusdt['percentchange_15mins'] = (np.log(btcusdt['Close'].pct_change(3) + 1))*100
             

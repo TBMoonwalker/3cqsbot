@@ -256,23 +256,31 @@ async def main():
     logging.info('*** 3CQS Bot started ***')
     
     
-    if config['trading'].getboolean('btc_pulse'):
+    if (config['trading'].getboolean('btc_pulse') and
+        not config['dcabot'].getboolean('single')):
         btcbooltask =  client.loop.create_task(signals.getbtcbool(asyncState))
         switchtask = client.loop.create_task(botswitch())
-
-    if not config['dcabot'].getboolean('single'):
         symranktask = client.loop.create_task(symrank())
 
-    while True:
-        if not config['dcabot'].getboolean('single'):
+        while True:
             await symranktask
-        
-        if config['trading'].getboolean('btc_pulse'):
             await btcbooltask
             await switchtask
+    
+    elif (not config['dcabot'].getboolean('single') and
+          not config['trading'].getboolean('btc_pulse')):
+        
+        symranktask = client.loop.create_task(symrank())
+        
+        while True:
+            await symranktask
             
 
 with client:
     client.loop.run_until_complete(main())
 
 client.start()
+
+if (not config['trading'].getboolean('btc_pulse') and
+    config['dcabot'].getboolean('single')):
+    client.run_until_disconnected()

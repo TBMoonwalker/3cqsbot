@@ -6,14 +6,6 @@ The 3cqsbot can be used to start and stop [3commas](https://3commas.io) dca bots
 
 # Prerequisites/Installation
 
-## Python
-
-- Python3
-- py3cw module (pip3 install py3cw)
-- telethon module (pip3 install telethon)
-- yfinance module
-- numpy module
-
 ## Operating Systems
 - MacOS
 - Linux
@@ -22,15 +14,10 @@ The 3cqsbot can be used to start and stop [3commas](https://3commas.io) dca bots
     - untested (please let me know if it works)
 
 ## Installation
-### TA-Lib
-Before the ta-lib python module can be installed, you need the library of ta-lib for your system. This link show you how do to that (under Dependencies):
-
-https://mrjbq7.github.io/ta-lib/install.html
-
 ### Python modules
 pip3 install requirements.txt
 
-# Setup
+# Setup (config.ini)
 First of all, the value type doesn't matter, because Pythons configparser is taking care of the types. So you don't need '' or "" around the values.
 
 ## API configuration
@@ -98,6 +85,7 @@ topcoin_limit | integer | YES | (10000) | Maximum number of coins according to
 deal_mode | string | YES | (rsi) signal | Method how the script is creating new deals in multipair bot.
 limit_initial_pairs | boolean | YES | (false) | Limit initial pairs to the max number of deals (MAD) - bot chooses the top pairs
 btc_pulse | boolean | YES | (false) | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled.
+delete_single_bots | boolean | YES | (false) | If set to yes, bots without an active deal will be deleted in single bot configuration
 trailing | boolean | YES | (false) true | Trailing profit enabled
 trailing_deviation | number | YES | (0.2) | Deviation of trailing profit
 
