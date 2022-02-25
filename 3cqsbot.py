@@ -7,9 +7,9 @@ import asyncio
 from random import randint
 from telethon import TelegramClient, events
 from py3cw.request import Py3CW
-from singlebot import SingleBot
-from multibot import MultiBot
-from signals import Signals
+from helpers.singlebot import SingleBot
+from helpers.multibot import MultiBot
+from helpers.signals import Signals
 
 ######################################################
 #                       Config                       #
