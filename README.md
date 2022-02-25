@@ -6,14 +6,6 @@ The 3cqsbot can be used to start and stop [3commas](https://3commas.io) dca bots
 
 # Prerequisites/Installation
 
-## Python
-
-- Python3
-- py3cw module (pip3 install py3cw)
-- telethon module (pip3 install telethon)
-- yfinance module
-- numpy module
-
 ## Operating Systems
 - MacOS
 - Linux
@@ -24,15 +16,10 @@ The 3cqsbot can be used to start and stop [3commas](https://3commas.io) dca bots
   - Added Dockerfile to create the image or use the pvdochtend/3cqsbot from the Docker Hub repository
 
 ## Installation
-### TA-Lib
-Before the ta-lib python module can be installed, you need the library of ta-lib for your system. This link show you how do to that (under Dependencies):
-
-https://mrjbq7.github.io/ta-lib/install.html
-
 ### Python modules
 pip3 install requirements.txt
 
-# Setup
+# Setup (config.ini)
 First of all, the value type doesn't matter, because Pythons configparser is taking care of the types. So you don't need '' or "" around the values.
 
 ## API configuration
@@ -88,7 +75,6 @@ Default configuration is based on Trade Alts Safer settings: https://discord.gg/
 
 ## Trading mode
 
-### Market
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
 market | string | YES | (USDT)  | Trading market (Example: BUSD, USDT, USDC)
@@ -101,9 +87,23 @@ topcoin_limit | integer | YES | (10000) | Maximum number of coins according to
 deal_mode | string | YES | (rsi) signal | Method how the script is creating new deals in multipair bot.
 limit_initial_pairs | boolean | YES | (false) | Limit initial pairs to the max number of deals (MAD) - bot chooses the top pairs
 btc_pulse | boolean | YES | (false) | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled.
+delete_single_bots | boolean | YES | (false) | If set to yes, bots without an active deal will be deleted in single bot configuration
 trailing | boolean | YES | (false) true | Trailing profit enabled
 trailing_deviation | number | YES | (0.2) | Deviation of trailing profit
 
+## Filter
+
+### BTC Pulse
+BTCPulse is a simple strategy which monitors BTC Price Action to start new deals or just put the bot to sleep ( no new deals but active deals keep running) based on:-
+If BTC is in upswing new deals are started 
+If BTC is dumping no new deals are started
+
+BTCPulse hence is determined using the 2 factors :-
+% price change of BTC in the last 15 minutes or
+Fast and Slow moving EMAs crossses
+
+Please test this strategy on paper before putting real money on it.
+TBMoonWalker or IamtheOnewhoKnocks take no responsibility for losses occurred due to the script/strategy
 
 **Again, please use 3cqsbot only on paper trading. Usage with real funds is at your own risk**
 
