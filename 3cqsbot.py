@@ -4,20 +4,18 @@ import re
 import logging
 import asyncio
 
-from venv import create
-from time import sleep
 from random import randint
 from telethon import TelegramClient, events
 from py3cw.request import Py3CW
-from singlebot import SingleBot
-from multibot import MultiBot
-from signals import Signals
+from helpers.singlebot import SingleBot
+from helpers.multibot import MultiBot
+from helpers.signals import Signals
 
 ######################################################
 #                       Config                       #
 ######################################################
 config = configparser.ConfigParser()
-config.read('config.ini')
+config.read('config/config.ini')
 
 parser = argparse.ArgumentParser(description='3CQSBot bringing 3CQS signals to 3Commas.')
 parser.add_argument('-l', '--loglevel',

@@ -120,7 +120,5 @@ In the folder run the following command:
 
 docker build --progress=plain -t "your repo name"/3cqsbot:"your version number" .
 
-Still work in progress to make the config file configurable through a external volume (on the host) for easy maintenance
-
 # Bug reports
 Please submit bugs or problems through the Github [issues page](https://github.com/TBMoonwalker/3cqsbot/issues).

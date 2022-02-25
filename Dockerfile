@@ -19,7 +19,9 @@ RUN apt-get update && apt-get install -y build-essential libffi-dev tzdata wget 
 VOLUME /config
 
 WORKDIR /app
-COPY *.py .
-COPY config.ini .
+COPY helpers helpers/
+COPY config config/
+COPY 3cqsbot.py .
+
 
 CMD [ "python", "-u", "./3cqsbot.py" ]
