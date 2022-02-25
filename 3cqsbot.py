@@ -267,6 +267,8 @@ async def main():
         
     logging.info('*** 3CQS Bot started ***')
 
+    if not config['dcabot'].getboolean('single'):
+        await symrank()
     
     if (config['filter'].getboolean('btc_pulse') and
         not config['dcabot'].getboolean('single')):
@@ -278,9 +280,7 @@ async def main():
         while True:
             await btcbooltask
             await switchtask
-    elif (not config['filter'].getboolean('btc_pulse') and
-        not config['dcabot'].getboolean('single')):
-        await symrank()
+
 
     
 with client:
