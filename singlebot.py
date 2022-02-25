@@ -1,6 +1,6 @@
 import re
 
-from helpers.signals import Signals
+from signals import Signals
 
 class SingleBot:
     def __init__(self, tg_data, bot_data, account_data, config, p3cw, logging):

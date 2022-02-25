@@ -1,7 +1,7 @@
 import random
 import re
 
-from helpers.signals import Signals
+from signals import Signals
 
 class MultiBot:
     def __init__(self, tg_data, bot_data, account_data, pair_data, config, p3cw, logging):
