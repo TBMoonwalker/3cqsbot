@@ -4,6 +4,7 @@ import asyncio
 import math
 
 from pycoingecko import CoinGeckoAPI
+from tenacity import retry
 
 class Signals:
 
@@ -44,6 +45,7 @@ class Signals:
 
     # Credits going to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts
+    @retry
     def btctechnical(self, symbol):
         btcusdt = yf.download(tickers=symbol, period = '6h', interval = '5m', progress= False)
         if len(btcusdt) > 0:
@@ -54,8 +56,10 @@ class Signals:
             btcusdt["EMA50"] = self.ema(btcusdt["Close"], 50)
             btcusdt['per_5mins'] = (np.log(btcusdt['Close'].pct_change() + 1))*100
             btcusdt['percentchange_15mins'] = (np.log(btcusdt['Close'].pct_change(3) + 1))*100
+        else:
+            raise IOError("Downloading YFinance chart broken, retry....")
             
-            return btcusdt
+        return btcusdt
         
     # Credits going to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts
@@ -81,6 +85,7 @@ class Signals:
                     self.logging.info('Bot awake')
                     asyncState.btcbool =  False
                 else:
+                    self.logging.info('Bot sleep')
                     asyncState.btcbool = True
                 
             else:

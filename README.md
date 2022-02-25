@@ -6,6 +6,20 @@ The 3cqsbot can be used to start and stop [3commas](https://3commas.io) dca bots
 
 # Prerequisites/Installation
 
+## 3CQS Signals Bot
+
+Join the telegram channel [telegram channel](https://t.me/The3CQSBot) according to the official Telegram [documentation](https://core.telegram.org/api/obtaining_api_id)
+
+Wait for the signals. Actually the signals are in a beta phase and you have to be chosen to get them. Be patient if they not arrive after joining
+
+## Telegram API
+In the meantime create your [telegram api account](https://my.telegram.org/apps) and insert them into `api_id` and `api_hash` fields in the *'telegram'* section of the `config.ini`
+
+## 3Commas API
+Create a [3commas api account](https://3commas.io/api_access_tokens) too and insert the values in the `key` and `secret` fields in the *'commas'* section of the `config.ini`
+
+**Permissions needed:** BotsRead, BotsWrite, AccountsRead
+
 ## Operating Systems
 - MacOS
 - Linux
@@ -17,32 +31,25 @@ The 3cqsbot can be used to start and stop [3commas](https://3commas.io) dca bots
 ### Python modules
 pip3 install requirements.txt
 
-# Setup (config.ini)
+# Configuration (config.ini)
 First of all, the value type doesn't matter, because Pythons configparser is taking care of the types. So you don't need '' or "" around the values.
 
-## API configuration
+## Telegram
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
 api_id | string | YES |   | Telegram API ID
 api_hash | string | YES |   | Telegram API Hash
 sessionfile | string | YES | (tgsession) | Telegram sessionfile location
+
+## 3Commas
+Name | Type | Mandatory | Values(default) | Description
+------------ | ------------ | ------------ | ------------ | ------------
 chatroom | string | YES | (3C Quick Stats) | Name of the chatroom - on Windows please use the ID 5011413076
 key | string | YES |    | 3Commas API Key
 secret | string | YES | | 3Commas API Secret
-
-### 3CQS Signals
-
-Join the telegram channel [telegram channel](https://t.me/The3CQSBot) according to the official Telegram [documentation](https://core.telegram.org/api/obtaining_api_id)
-
-Wait for the signals. Actually the signals are in a beta phase and you have to be chosen to get them. Be patient if they not arrive after joining
-
-### Telegram API
-In the meantime create your [telegram api account](https://my.telegram.org/apps) and insert them into `api_id` and `api_hash` fields in the *'telegram'* section of the `config.ini`
-
-### 3Commas API
-Create a [3commas api account](https://3commas.io/api_access_tokens) too and insert the values in the `key` and `secret` fields in the *'commas'* section of the `config.ini`
-
-**Permissions needed:** BotsRead, BotsWrite, AccountsRead
+timeout | integer | YES | (3) | Timeout waiting for a 3Commas api response
+retries | integer | YES | (5) | Number of retries after a 3Commas api call was not successful
+delay_between_retries | number | YES | (2.0) | Waiting time factor between unsuccessful retries 
 
 ## DCABot configuration
 
@@ -50,7 +57,7 @@ Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
 prefix | string | YES | (3CQSBOT)  | The name prefix of the created bot
 subprefix | string | YES | (MULTI) | Subprefix of the bot (Best would be SINGLE or MULTI)
-suffix | string | YES | (TA_SAFE) | Suffix in the bot name - could be the used bot configuration
+suffix | string | YES | (TA_SAFE) | Suffix in the bot name - could be the used bot configuration
 tp | number | YES | (1.5)  | Take profit in percent
 bo | number | YES | (11)   | Base order volume
 so | number | YES | (11) | Safety order volume
@@ -70,7 +77,6 @@ If you don't have any, please take a look at [this site](https://www.buymeacoffe
 
 Default configuration is based on Trade Alts Safer settings: https://discord.gg/tradealts
 
-
 ## Trading mode
 
 Name | Type | Mandatory | Values(default) | Description
@@ -82,14 +88,25 @@ symrank_limit | integer | YES | (10000) | Maximum value of bot creation accordin
 volatility_limit | number | YES | (10000) | Maximum value of bot creation according to the volatility
 price_action_limit | number | YES | (10000) | Maximum value of bot creation according to the price action
 topcoin_limit | integer | YES | (10000) | Maximum number of coins according to the CoinGecko toplist
-deal_mode | string | YES | (rsi) signal | Method how the script is creating new deals in multipair bot.
+deal_mode | string | YES | (rsi) signal | Method how the script is creating new deals in multipair bot
 limit_initial_pairs | boolean | YES | (false) | Limit initial pairs to the max number of deals (MAD) - bot chooses the top pairs
-btc_pulse | boolean | YES | (false) | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled.
+btc_pulse | boolean | YES | (false) | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
 delete_single_bots | boolean | YES | (false) | If set to yes, bots without an active deal will be deleted in single bot configuration
-trailing | boolean | YES | (false) true | Trailing profit enabled
+trailing | boolean | YES | (false) true | Trailing profit enabled
 trailing_deviation | number | YES | (0.2) | Deviation of trailing profit
 
 ## Filter
+
+Name | Type | Mandatory | Values(default) | Description
+------------ | ------------ | ------------ | ------------ | ------------
+symrank_limit | integer | YES | (10000) | Bots will be created when the symrank value is under this limit
+volatility_limit | number | YES | (10000) | Bots will be created when the volatility value is under this limit
+price_action_limit | number | YES | (10000) | Bots will be created when the price_action value is under this limit
+topcoin_limit | integer | YES | (10000) | Token pair has to be in the configured topcoin limit to be traded by the bot
+deal_mode | string | YES | ([{"options": {"time": "3m", "points": "100"}, "strategy": "rsi"}]) signal | Deal strategy how the script is creating new deals in multipair bot - for more see the "Deal Modes" section
+limit_initial_pairs | boolean | YES | (false) | Limit initial pairs to the max number of deals (MAD) - bot chooses the top pairs
+btc_pulse | boolean | YES | (false) | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
+token_denylist | array | NO | ([BTC_USDT, ETH_USDT, BUSD_USDT, USDC_USDT, USDT_USDT]) | Denylist of pairs which not be used by the bot for new deals
 
 ### BTC Pulse
 BTCPulse is a simple strategy which monitors BTC Price Action to start new deals or just put the bot to sleep ( no new deals but active deals keep running) based on:-
@@ -105,6 +122,15 @@ TBMoonWalker or IamtheOnewhoKnocks take no responsibility for losses occurred du
 
 **Again, please use 3cqsbot only on paper trading. Usage with real funds is at your own risk**
 
+
+### Deal Modes
+This section is all about the deal start signals. Tested are the following modes:
+
+- `signal` --> starting the bot after a 3CQS signal
+- `[{"options": {"time": "3m", "points": "100"}, "strategy": "rsi"}]` --> start the bot when the RSI-7 value is under 100 in the 3 minute view
+
+More modes are possible, but not tested. You can minimize the value of the RSI-7 entry point for example. A whole list of deal signals can be found with the api call `GET /ver1/bots/strategy_list`. Details can be found under: https://github.com/3commas-io/3commas-official-api-docs/blob/master/bots_api.md
+
 # Run
 If you get signals, you can run the script with the command: 
 
@@ -112,6 +138,15 @@ If you get signals, you can run the script with the command:
 python3 3cqsbot.py
 ```
 When running for the first time, you will be asked for your Telegram phonenumber and you will get a code you have to insert!
+
+# Debugging
+The script can be started with
+
+```
+python3 3cqsbot.py -l debug
+```
+
+do show debug logging
 
 # Bug reports
 Please submit bugs or problems through the Github [issues page](https://github.com/TBMoonwalker/3cqsbot/issues).

@@ -2,5 +2,5 @@ telethon
 py3cw
 pycoingecko
 yfinance
-ta-lib
 numpy
+tenacity

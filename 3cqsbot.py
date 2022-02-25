@@ -4,9 +4,6 @@ import re
 import logging
 import asyncio
 
-from venv import create
-from time import sleep
-from random import randint
 from telethon import TelegramClient, events
 from py3cw.request import Py3CW
 from singlebot import SingleBot
@@ -34,7 +31,12 @@ args = parser.parse_args()
 ######################################################
 p3cw = Py3CW(
     key=config['commas']['key'], 
-    secret=config['commas']['secret'])
+    secret=config['commas']['secret'],
+    request_options={
+        'request_timeout': config['commas'].getint('timeout'),
+        'nr_of_retries': config['commas'].getint('retries'),
+        'retry_backoff_factor': config['commas'].getfloat('delay_between_retries')
+    })
 
 client = TelegramClient(
     config['telegram']['sessionfile'], 
@@ -156,17 +158,15 @@ def pair_data():
 
     for pair in data:
         if config['trading']['market'] in pair:
-            pairs.append(pair)
+            if not pair in config['filter']['token_denylist']:
+                pairs.append(pair)
 
     return pairs
 
 
 async def symrank():
-    while True:
-        if asyncState.botswitch:
-            logging.info("Calling Symrank to get new pairs")
-            await client.send_message(asyncState.chatid, '/symrank')
-        await asyncio.sleep(randint(1800,3600))
+    logging.info("Calling Symrank to get new pairs")
+    await client.send_message(asyncState.chatid, '/symrank')
 
 async def botswitch():
     
@@ -174,16 +174,19 @@ async def botswitch():
         if (not asyncState.btcbool and
             not asyncState.botswitch):
             logging.debug("Activate Bot")
+            logging.debug("Botswitch: " + str(asyncState.botswitch))
             asyncState.botswitch = True
             if config['dcabot'].getboolean('single'):
                 logging.info("Not activating old single bots (waiting for new signals.")
             else:
                 # Send new top 30 for activating the multibot
-                logging.debug("Calling for new symrank stats")
-                await client.send_message(asyncState.chatid, '/symrank')
+                #logging.debug("Calling for new symrank stats")
+                #await client.send_message(asyncState.chatid, '/symrank')
+                await symrank()
         elif (asyncState.btcbool and
             asyncState.botswitch):
             logging.debug("Deactivate Bot")
+            logging.debug("Botswitch: " + str(asyncState.botswitch))
             asyncState.botswitch = False
             if config['dcabot'].getboolean('single'):
                 bot = SingleBot([], bot_data(), {}, 0, config, p3cw, logging)
@@ -193,16 +196,25 @@ async def botswitch():
                 bot.disable()
                   
         else:
+            logging.debug("Botswitch: " + str(asyncState.botswitch))
             logging.debug("Nothing do to")
 
         await asyncio.sleep(60)
+
+def _handle_task_result(task: asyncio.Task) -> None:
+    try:
+        task.result()
+    except asyncio.CancelledError:
+        pass  # Task cancellation should not be logged as an error.
+    except Exception:  # pylint: disable=broad-except
+        logging.exception('Exception raised by task = %r', task)
     
     
 @client.on(events.NewMessage(chats=config['telegram']['chatroom']))
 async def my_event_handler(event):
     
     if (asyncState.btcbool and
-        config['trading'].getboolean('btc_pulse')):
+        config['filter'].getboolean('btc_pulse')):
         logging.info("Bot stopped - no new signals processed")
     else:
 
@@ -224,9 +236,9 @@ async def my_event_handler(event):
             # Trigger bot if limits passed
             if (tg_output['volatility'] != 0 and
                 tg_output['pair'] in pair_output):
-                if ((tg_output['volatility'] <= config['trading'].getfloat('volatility_limit') and 
-                    tg_output['price_action'] <= config['trading'].getfloat('price_action_limit') and
-                    tg_output['symrank'] <= config['trading'].getint('symrank_limit')) or
+                if ((tg_output['volatility'] <= config['filter'].getfloat('volatility_limit') and 
+                    tg_output['price_action'] <= config['filter'].getfloat('price_action_limit') and
+                    tg_output['symrank'] <= config['filter'].getint('symrank_limit')) or
                     tg_output['action'] == 'STOP'):
 
                     bot.trigger()
@@ -254,33 +266,27 @@ async def main():
             asyncState.chatid = dialog.id
         
     logging.info('*** 3CQS Bot started ***')
+
     
-    
-    if (config['trading'].getboolean('btc_pulse') and
+    if (config['filter'].getboolean('btc_pulse') and
         not config['dcabot'].getboolean('single')):
         btcbooltask =  client.loop.create_task(signals.getbtcbool(asyncState))
+        btcbooltask.add_done_callback(_handle_task_result)
         switchtask = client.loop.create_task(botswitch())
-        symranktask = client.loop.create_task(symrank())
+        switchtask.add_done_callback(_handle_task_result)
 
         while True:
-            await symranktask
             await btcbooltask
             await switchtask
-    
-    elif (not config['dcabot'].getboolean('single') and
-          not config['trading'].getboolean('btc_pulse')):
-        
-        symranktask = client.loop.create_task(symrank())
-        
-        while True:
-            await symranktask
-            
+    elif (not config['filter'].getboolean('btc_pulse') and
+        not config['dcabot'].getboolean('single')):
+        await symrank()
 
+    
 with client:
     client.loop.run_until_complete(main())
 
 client.start()
 
-if (not config['trading'].getboolean('btc_pulse') and
-    config['dcabot'].getboolean('single')):
+if not config['filter'].getboolean('btc_pulse'):
     client.run_until_disconnected()

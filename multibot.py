@@ -18,7 +18,7 @@ class MultiBot:
         self.suffix = self.config['dcabot']['suffix']
 
     def strategy(self):
-        if self.config['trading']['deal_mode'] == "signal":
+        if self.config['filter']['deal_mode'] == "signal":
             strategy = [{"strategy":"manual"}]
         else:
             strategy = [{"options": {"time": "3m", "points": "100"}, "strategy": "rsi"}]
@@ -143,7 +143,7 @@ class MultiBot:
         # Create pair list        
         for pair in self.tg_data:
             # Filter topcoins (if set)
-            if self.signal.topcoin(pair, self.config['trading'].getint('topcoin_limit')):           
+            if self.signal.topcoin(pair, self.config['filter'].getint('topcoin_limit')):           
                 pair = self.config['trading']['market'] + "_" + pair
                 if pair in self.pair_data:
                     self.logging.debug("Pair " + pair + " added to the list.")
@@ -152,7 +152,7 @@ class MultiBot:
                 self.logging.debug("Pair " + pair + " is not in the top coin list!")
 
         # Run filters to adapt pair list
-        if self.config['trading'].getboolean('limit_initial_pairs'):
+        if self.config['filter'].getboolean('limit_initial_pairs'):
             # Limit pairs to the maximal deals (mad)
             if self.config['dcabot'].getint('mad') == 1:
                 maxpairs = 2
@@ -219,7 +219,7 @@ class MultiBot:
                         if pair in bot['pairs']:
                             self.logging.info("Pair " + pair + " is already included in the list")
                         else:
-                            if self.signal.topcoin(re.search('(\w+)_(\w+)', pair).group(2), self.config['trading'].getint('topcoin_limit')):
+                            if self.signal.topcoin(re.search('(\w+)_(\w+)', pair).group(2), self.config['filter'].getint('topcoin_limit')):
                                 
                                 self.logging.info("Add pair " + pair)
                                 bot['pairs'].append(pair)
@@ -250,5 +250,5 @@ class MultiBot:
                 else:
                     data = bot
 
-                if (self.config['trading']['deal_mode'] == "signal" and data):
+                if (self.config['filter']['deal_mode'] == "signal" and data):
                     self.new_deal(data, triggerpair)

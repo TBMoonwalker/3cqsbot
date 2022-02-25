@@ -62,7 +62,7 @@ class SingleBot:
         # Disable all bots
         if allbots:
             for bot in self.bot_data:
-                if (self.prefix + "_" +  self.subprefix + "_" + self.config['trading']['market'] + self.suffix) in deal['bot_name']:
+                if (self.prefix + "_" +  self.subprefix + "_" + self.config['trading']['market'] + self.suffix) in bot['name']:
                     error, data = self.p3cw.request(
                         entity="bots",
                         action="disable",
@@ -152,7 +152,7 @@ class SingleBot:
                 if (self.tg_data['action'] == "START" and
                     self.deal_data() < self.config['dcabot'].getint('mad')):
                     
-                    if self.signal.topcoin(re.search('(\w+)_(\w+)', pair).group(2), self.config['trading'].getint('topcoin_limit')):
+                    if self.signal.topcoin(re.search('(\w+)_(\w+)', pair).group(2), self.config['filter'].getint('topcoin_limit')):
                         self.logging.info("No single dcabot for " + pair + " found - creating one")
                         self.create()
                     else:
