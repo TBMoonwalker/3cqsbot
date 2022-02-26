@@ -21,7 +21,7 @@ class MultiBot:
         if self.config['filter']['deal_mode'] == "signal":
             strategy = [{"strategy":"manual"}]
         else:
-            strategy = [{"options": {"time": "3m", "points": "100"}, "strategy": "rsi"}]
+            strategy = self.config['filter']['deal_mode']
 
         return strategy
 
@@ -77,7 +77,7 @@ class MultiBot:
 
             if error:
                 self.logging.error(error['msg'])
-                self.debug("Error enabling bot: " + bot['name'])
+                self.logging.debug("Error enabling bot: " + bot['name'])
             else:
                 self.logging.info("Enabling bot: " + bot['name'])
 
@@ -97,7 +97,7 @@ class MultiBot:
                 )
 
                 if error:
-                    self.logging(error['msg'])
+                    self.logging.error(error['msg'])
                 else:
                     self.logging.info("Disabling bot: " + bot['name'])
 
