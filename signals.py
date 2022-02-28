@@ -4,7 +4,7 @@ import asyncio
 import math
 
 from pycoingecko import CoinGeckoAPI
-from tenacity import retry
+from tenacity import retry,wait_fixed
 
 class Signals:
 
@@ -13,21 +13,20 @@ class Signals:
         self.logging = logging
     
 
-    def topcoin(self, symbol, rank):
-        coin = False
+    def topcoin(self, coins, rank):
         pages = math.ceil(rank / 250)
+        coinlist = []
         
         for page in range(1,pages +1):        
             market = self.cg.get_coins_markets(vs_currency='usd', page=page, per_page=250)
             
-            for coins in market:
-                if symbol.lower() in coins['symbol']:
-                    coin = True
-                    break
-            if coin:
-                break
-
-        return coin
+            for coin in coins:
+                for symbol in market:
+                    if coin.lower() in symbol['symbol']:
+                        coinlist.append(coin)
+                        break
+                    
+        return coinlist
 
     # Credits going to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts
@@ -45,7 +44,7 @@ class Signals:
 
     # Credits going to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts
-    @retry
+    @retry(wait=wait_fixed(2))
     def btctechnical(self, symbol):
         btcusdt = yf.download(tickers=symbol, period = '6h', interval = '5m', progress= False)
         if len(btcusdt) > 0:

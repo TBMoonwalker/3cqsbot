@@ -141,16 +141,15 @@ class MultiBot:
                 new_bot = False
                 break
 
-        # Create pair list        
-        for pair in self.tg_data:
-            # Filter topcoins (if set)
-            if self.signal.topcoin(pair, self.config['filter'].getint('topcoin_limit')):           
-                pair = self.config['trading']['market'] + "_" + pair
-                if pair in self.pair_data:
-                    self.logging.debug("Pair " + pair + " added to the list.")
-                    pairs.append(pair)
-            else:
-                self.logging.debug("Pair " + pair + " is not in the top coin list!")
+        # Create pair list
+        # Filter topcoins (if set) 
+        coinlist = self.signal.topcoin(self.tg_data, self.config['filter'].getint('topcoin_limit'))
+        for coin in coinlist:
+            pair = self.config['trading']['market'] + "_" + coin
+            # Traded on our exchange?
+            if pair in self.pair_data:
+                self.logging.debug("Pair " + pair + " added to the list.")
+                pairs.append(pair)
 
         # Run filters to adapt pair list
         if self.config['filter'].getboolean('limit_initial_pairs'):
