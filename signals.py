@@ -15,15 +15,23 @@ class Signals:
 
     def topcoin(self, coins, rank):
         pages = math.ceil(rank / 250)
-        coinlist = []
+        
         
         for page in range(1,pages +1):        
             market = self.cg.get_coins_markets(vs_currency='usd', page=page, per_page=250)
             
-            for coin in coins:
+            if isinstance(coins, list):
+                coinlist = []
+                for coin in coins:
+                    for symbol in market:
+                        if coin.lower() in symbol['symbol']:
+                            coinlist.append(coin)
+                            break
+            else:
+                coinlist = ""
                 for symbol in market:
                     if coin.lower() in symbol['symbol']:
-                        coinlist.append(coin)
+                        coinlist = coin
                         break
                     
         return coinlist
