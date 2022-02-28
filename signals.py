@@ -2,6 +2,7 @@ import yfinance as yf
 import numpy as np
 import asyncio
 import math
+import re
 
 from pycoingecko import CoinGeckoAPI
 from tenacity import retry,wait_fixed
@@ -13,28 +14,35 @@ class Signals:
         self.logging = logging
     
 
-    def topcoin(self, coins, rank):
+    def topcoin(self, pairs, rank):
         pages = math.ceil(rank / 250)
+        market = []
+
+        for page in range(1,pages +1):
+            page = self.cg.get_coins_markets(vs_currency='usd', page=page, per_page=250)
+            for entry in page:
+                market.append(entry)
         
         
-        for page in range(1,pages +1):        
-            market = self.cg.get_coins_markets(vs_currency='usd', page=page, per_page=250)
-            
-            if isinstance(coins, list):
-                coinlist = []
-                for coin in coins:
-                    for symbol in market:
-                        if coin.lower() in symbol['symbol']:
-                            coinlist.append(coin)
-                            break
-            else:
-                coinlist = ""
+        if isinstance(pairs, list):
+            pairlist = []
+            for pair in pairs:
                 for symbol in market:
+                    coin = pair
                     if coin.lower() in symbol['symbol']:
-                        coinlist = coin
+                        pairlist.append(pair)
                         break
-                    
-        return coinlist
+        else:
+            pairlist = ""
+            coin = re.search('(\w+)_(\w+)', pairs).group(2)
+
+            for symbol in market:
+                if coin.lower() in symbol['symbol']:
+                    pairlist = pairs
+                    break
+        
+        self.logging.debug("Pairs after toplist: " + str(pairlist))
+        return pairlist
 
     # Credits going to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts

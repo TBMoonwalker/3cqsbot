@@ -152,7 +152,8 @@ class SingleBot:
                 if (self.tg_data['action'] == "START" and
                     self.deal_data() < self.config['dcabot'].getint('mad')):
                     
-                    if self.signal.topcoin(re.search('(\w+)_(\w+)', pair).group(2), self.config['filter'].getint('topcoin_limit')):
+                    pair = self.signal.topcoin(pair, self.config['filter'].getint('topcoin_limit'))
+                    if pair:
                         self.logging.info("No single dcabot for " + pair + " found - creating one")
                         self.create()
                     else:
