@@ -1,5 +1,6 @@
 import random
 import re
+import json
 
 from signals import Signals
 
@@ -21,7 +22,7 @@ class MultiBot:
         if self.config['filter']['deal_mode'] == "signal":
             strategy = [{"strategy":"manual"}]
         else:
-            strategy = self.config['filter']['deal_mode']
+            strategy = json.loads(self.config['filter']['deal_mode'])
 
         return strategy
 
