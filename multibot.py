@@ -140,8 +140,8 @@ class MultiBot:
 
         # Create pair list
         # Filter topcoins (if set) 
-        pairs = self.signal.topcoin(self.tg_data, self.config['filter'].getint('topcoin_limit'))
-        for pair in pairs:
+        pairlist = self.signal.topcoin(self.tg_data, self.config['filter'].getint('topcoin_limit'))
+        for pair in pairlist:
             pair = self.config['trading']['market'] + "_" + pair
             # Traded on our exchange?
             if pair in self.pair_data:
