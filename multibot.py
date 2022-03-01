@@ -147,6 +147,8 @@ class MultiBot:
             if pair in self.pair_data:
                 self.logging.debug("Pair " + pair + " added to the list.")
                 pairs.append(pair)
+        
+        self.logging.debug("Pairs after topcoin filter " + pairs)
 
         # Run filters to adapt pair list
         if self.config['filter'].getboolean('limit_initial_pairs'):
@@ -158,6 +160,8 @@ class MultiBot:
             else:
                 maxpairs = len(pairs)
             pairs = pairs[0 : maxpairs]
+
+            self.logging.debug("Pairs after limit initial pairs filter " + pairs)
 
         # Adapt mad if pairs are under value
         mad = self.adjustmad(pairs, mad)

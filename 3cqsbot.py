@@ -158,7 +158,7 @@ def pair_data():
 
     for pair in data:
         if config['trading']['market'] in pair:
-            if not pair in config['filter']['token_denylist']:
+            if pair not in config['filter']['token_denylist']:
                 pairs.append(pair)
 
     return pairs
