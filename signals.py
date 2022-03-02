@@ -6,15 +6,53 @@ import re
 
 from pycoingecko import CoinGeckoAPI
 from tenacity import retry,wait_fixed
+from functools import lru_cache, wraps
+from time import monotonic_ns
 
 class Signals:
 
     def __init__(self, logging):
         self.cg = CoinGeckoAPI()
         self.logging = logging
-    
 
-    def topcoin(self, pairs, rank):
+    # Credits goes to https://gist.github.com/Morreski/c1d08a3afa4040815eafd3891e16b945
+    def timed_lru_cache(
+        _func=None, *, seconds: int = 600, maxsize: int = 128, typed: bool = False
+    ):
+        """Extension of functools lru_cache with a timeout
+
+        Parameters:
+        seconds (int): Timeout in seconds to clear the WHOLE cache, default = 10 minutes
+        maxsize (int): Maximum Size of the Cache
+        typed (bool): Same value of different type will be a different entry
+
+        """
+
+        def wrapper_cache(f):
+            f = lru_cache(maxsize=maxsize, typed=typed)(f)
+            f.delta = seconds * 10 ** 9
+            f.expiration = monotonic_ns() + f.delta
+
+            @wraps(f)
+            def wrapped_f(*args, **kwargs):
+                if monotonic_ns() >= f.expiration:
+                    f.cache_clear()
+                    f.expiration = monotonic_ns() + f.delta
+                return f(*args, **kwargs)
+
+            wrapped_f.cache_info = f.cache_info
+            wrapped_f.cache_clear = f.cache_clear
+            return wrapped_f
+
+        # To allow decorator to be used without arguments
+        if _func is None:
+            return wrapper_cache
+        else:
+            return wrapper_cache(_func)
+
+    
+    @timed_lru_cache(seconds=10800)
+    def cgvalues(self, rank):
         pages = math.ceil(rank / 250)
         market = []
 
@@ -22,7 +60,13 @@ class Signals:
             page = self.cg.get_coins_markets(vs_currency='usd', page=page, per_page=250)
             for entry in page:
                 market.append(entry)
+
+        return market
+    
+
+    def topcoin(self, pairs, rank):
         
+        market = self.cgvalues(rank)
         
         if isinstance(pairs, list):
             pairlist = []
@@ -44,7 +88,7 @@ class Signals:
         self.logging.debug("Pairs after toplist: " + str(pairlist))
         return pairlist
 
-    # Credits going to @IamtheOnewhoKnocks from
+    # Credits goes to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts
     def ema(self, data, period, smoothing=2):
         # Calculate EMA without dependency for TA-Lib
@@ -58,7 +102,7 @@ class Signals:
         
         return ema
 
-    # Credits going to @IamtheOnewhoKnocks from
+    # Credits goes to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts
     @retry(wait=wait_fixed(2))
     def btctechnical(self, symbol):
@@ -76,7 +120,7 @@ class Signals:
             
         return btcusdt
         
-    # Credits going to @IamtheOnewhoKnocks from
+    # Credits goes to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts
     async def getbtcbool(self, asyncState):
 

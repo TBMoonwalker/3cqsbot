@@ -1,4 +1,5 @@
 import re
+import json
 
 from signals import Signals
 
@@ -14,6 +15,14 @@ class SingleBot:
         self.prefix = self.config['dcabot']['prefix']
         self.subprefix = self.config['dcabot']['subprefix']
         self.suffix = self.config['dcabot']['suffix']
+
+    def strategy(self):
+        if self.config['filter']['deal_mode'] == "signal":
+            strategy = [{"strategy":"nonstop"}]
+        else:
+            strategy = json.loads(self.config['filter']['deal_mode'])
+
+        return strategy
 
     def deal_data(self):
         account = self.account_data
@@ -104,7 +113,7 @@ class SingleBot:
                 "safety_order_step_percentage": self.config['dcabot'].getfloat('sos'),
                 "take_profit_type": "total",
                 "active_safety_orders_count": self.config['dcabot'].getint('max'),
-                "strategy_list": [{"strategy":"nonstop"}],
+                "strategy_list": self.strategy(),
                 "trailing_enabled": self.config['trading'].getboolean('trailing'),
                 "trailing_deviation": self.config['trading'].getfloat('trailing_deviation'),
                 "min_volume_btc_24h": self.config['dcabot'].getfloat('btc_min_vol')

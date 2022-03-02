@@ -1,3 +1,6 @@
+[general]
+debug = false
+
 [telegram]
 api_id =
 api_hash =

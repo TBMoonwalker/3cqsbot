@@ -26,13 +26,14 @@ Create a [3commas api account](https://3commas.io/api_access_tokens) too and ins
     - Ubuntu
 - Windows
     - untested (please let me know if it works)
+- Docker
 
 ## Installation
 ### Python modules
 pip3 install requirements.txt
 
 # Configuration (config.ini)
-First of all, the value type doesn't matter, because Pythons configparser is taking care of the types. So you don't need '' or "" around the values.
+Copy the `config.ini.example` to `config.ini` and change your settings regarding the available settings below. The value type doesn't matter, because Pythons configparser is taking care of the types. So you don't need '' or "" around the values.
 
 ## Telegram
 Name | Type | Mandatory | Values(default) | Description
@@ -139,6 +140,29 @@ python3 3cqsbot.py
 ```
 When running for the first time, you will be asked for your Telegram phonenumber and you will get a code you have to insert!
 
+# Docker
+## Create the docker image
+```
+docker build -t "your repo name"/3cqsbot:"version number"
+```
+## Create a persistent volume for your Telegram session file
+```
+docker volume create session
+```
+
+## Create your .env file
+Copy the `.env.example` file to `.env`and change the settings. The same settings as in the config.ini can be used
+
+## Run your container
+```
+docker run --name 3cqsbot --volume session:/App/session --env-file .env -d "your repo name"/3cqsbot:"version number"
+```
+
+## Logfile monitoring
+```
+docker logs --follow 3cqsbot
+```
+
 # Debugging
 The script can be started with
 
@@ -150,3 +174,8 @@ do show debug logging
 
 # Bug reports
 Please submit bugs or problems through the Github [issues page](https://github.com/TBMoonwalker/3cqsbot/issues).
+
+# Donation
+If you like to support this project, you can donate to the following wallet:
+
+- USDT or BUSD (BEP20 - Binance Smart Chain): 0xB3C6DD82a203E3b6f399187DB265AdC664E2beF9

@@ -1,5 +1,6 @@
 import configparser
 import argparse
+from distutils.log import debug
 import re
 import logging
 import asyncio
@@ -43,7 +44,11 @@ client = TelegramClient(
     config['telegram']['api_id'], 
     config['telegram']['api_hash'])
 
-loglevel = getattr(logging, args.loglevel.upper(), None)
+# Set logging facility
+if config['general'].getboolean('debug'):
+    loglevel = "DEBUG"
+else:
+    loglevel = getattr(logging, args.loglevel.upper(), None)
 
 logging.basicConfig(
     format='%(asctime)s %(levelname)-8s %(message)s',
@@ -122,6 +127,9 @@ def bot_data():
         additional_headers={'Forced-Mode': config['trading']['trade_mode']}
     )
 
+    if error:
+        logging.error(error['msg'])
+
     return data
 
 
@@ -135,10 +143,13 @@ def account_data():
         additional_headers={'Forced-Mode': config['trading']['trade_mode']}
     )
 
-    for accounts in data:
-        if accounts['exchange_name'] == config['trading']['exchange']:
-            account.update({'id': str(accounts['id'])})
-            account.update({'market_code': str(accounts['market_code'])})
+    if error:
+        logging.error(error['msg'])
+    else:
+        for accounts in data:
+            if accounts['exchange_name'] == config['trading']['exchange']:
+                account.update({'id': str(accounts['id'])})
+                account.update({'market_code': str(accounts['market_code'])})
 
     return account
 
@@ -156,10 +167,13 @@ def pair_data():
         }
     )
 
-    for pair in data:
-        if config['trading']['market'] in pair:
-            if pair not in config['filter']['token_denylist']:
-                pairs.append(pair)
+    if error:
+        logging.error(error['msg'])
+    else:
+        for pair in data:
+            if config['trading']['market'] in pair:
+                if pair not in config['filter']['token_denylist']:
+                    pairs.append(pair)
 
     return pairs
 
