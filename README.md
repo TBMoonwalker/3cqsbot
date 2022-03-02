@@ -84,7 +84,7 @@ Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
 market | string | YES | (USDT)  | Trading market (Example: BUSD, USDT, USDC)
 trade_mode | string | YES | (paper) real   | Real or Paper trading mode
-exchange | string | YES | (Paper trading account)  | Exchange of the chosen account (Example: Binance, Paper trading account, FTX )
+account_name | string | YES | (Paper trading 123456)  | Account name for trading. Can be found unter "My Exchanges". 
 symrank_limit | integer | YES | (10000) | Maximum value of bot creation according to the Symrank
 volatility_limit | number | YES | (10000) | Maximum value of bot creation according to the volatility
 price_action_limit | number | YES | (10000) | Maximum value of bot creation according to the price action

@@ -34,7 +34,7 @@ btc_min_vol = 100
 [trading]
 market = USDT
 trade_mode = paper
-exchange = Paper trading account
+account_name = Paper Account 1064454
 delete_single_bots = false
 # Binance only
 trailing = false

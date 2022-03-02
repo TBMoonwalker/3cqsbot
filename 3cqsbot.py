@@ -147,7 +147,7 @@ def account_data():
         logging.error(error['msg'])
     else:
         for accounts in data:
-            if accounts['exchange_name'] == config['trading']['exchange']:
+            if accounts['name'] == config['trading']['account_name']:
                 account.update({'id': str(accounts['id'])})
                 account.update({'market_code': str(accounts['market_code'])})
 
@@ -260,7 +260,7 @@ async def my_event_handler(event):
                 else:
                     logging.info("Trading limits reached. Deal not placed.")
             else:
-                logging.info("Token " + tg_output['pair'] + " is not traded on " + config['trading']['exchange'])
+                logging.info("Token " + tg_output['pair'] + " is not traded on account " + config['trading']['account_name'])
         elif tg_output and isinstance(tg_output, list):
             if not config['dcabot'].getboolean('single'):
                 # Create or update multibot with pairs from "/symrank"

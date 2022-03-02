@@ -35,7 +35,7 @@ sed -i "s/btc_min_vol = 100$/btc_min_vol = $DCABOT_BTC_MIN_VOL/" config.ini
 # General settings
 sed -i "s/market = USDT$/market = $MARKET/" config.ini
 sed -i "s/trade_mode = paper$/trade_mode = $TRADE_MODE/" config.ini
-sed -i "s/exchange = Paper trading account$/exchange = $EXCHANGE/" config.ini
+sed -i "s/account_name = Paper trading 123456$/account_name = $ACCOUNT/" config.ini
 sed -i "s/symrank_limit = 10000$/symrank_limit = $SYMRANK_LIMIT/" config.ini
 sed -i "s/volatility_limit = 10000$/volatility_limit = $VOLATILITY_LIMIT/" config.ini
 sed -i "s/price_action_limit = 10000$/price_action_limit = $PRICE_ACTION_LIMIT/" config.ini
