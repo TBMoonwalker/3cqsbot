@@ -12,7 +12,6 @@ from time import monotonic_ns
 class Signals:
 
     def __init__(self, logging):
-        self.cg = CoinGeckoAPI()
         self.logging = logging
 
     # Credits goes to https://gist.github.com/Morreski/c1d08a3afa4040815eafd3891e16b945
@@ -50,14 +49,19 @@ class Signals:
         else:
             return wrapper_cache(_func)
 
-    
+    @staticmethod
     @timed_lru_cache(seconds=10800)
-    def cgvalues(self, rank):
-        pages = math.ceil(rank / 250)
+    def cgvalues(rank):
+        cg = CoinGeckoAPI()
         market = []
 
+        if rank <= 250:
+            pages=1
+        else:
+            pages = math.ceil(rank / 250)
+        
         for page in range(1,pages +1):
-            page = self.cg.get_coins_markets(vs_currency='usd', page=page, per_page=250)
+            page = cg.get_coins_markets(vs_currency='usd', page=page, per_page=250)
             for entry in page:
                 market.append(entry)
 
@@ -67,6 +71,8 @@ class Signals:
     def topcoin(self, pairs, rank):
         
         market = self.cgvalues(rank)
+
+        self.logging.debug(self.cgvalues.cache_info())
         
         if isinstance(pairs, list):
             pairlist = []

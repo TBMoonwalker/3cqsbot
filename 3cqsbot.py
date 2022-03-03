@@ -4,6 +4,7 @@ from distutils.log import debug
 import re
 import logging
 import asyncio
+import sys
 
 from telethon import TelegramClient, events
 from py3cw.request import Py3CW
@@ -150,6 +151,10 @@ def account_data():
             if accounts['name'] == config['trading']['account_name']:
                 account.update({'id': str(accounts['id'])})
                 account.update({'market_code': str(accounts['market_code'])})
+
+        if 'id' not in account:
+            sys.tracebacklimit = 0
+            sys.exit("Account with name " + config['trading']['account_name'] + " not found")
 
     return account
 
