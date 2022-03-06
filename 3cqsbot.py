@@ -187,8 +187,7 @@ async def symrank():
     logging.info("Calling Symrank to get new pairs")
     await client.send_message(asyncState.chatid, '/symrank')
 
-async def botswitch():
-    
+async def botswitch(): 
     while True:
         if (not asyncState.btcbool and
             not asyncState.botswitch):
@@ -199,8 +198,7 @@ async def botswitch():
                 logging.info("Not activating old single bots (waiting for new signals.")
             else:
                 # Send new top 30 for activating the multibot
-                #logging.debug("Calling for new symrank stats")
-                #await client.send_message(asyncState.chatid, '/symrank')
+                logging.debug("Calling for new symrank stats")
                 await symrank()
         elif (asyncState.btcbool and
             asyncState.botswitch):
@@ -208,7 +206,7 @@ async def botswitch():
             logging.debug("Botswitch: " + str(asyncState.botswitch))
             asyncState.botswitch = False
             if config['dcabot'].getboolean('single'):
-                bot = SingleBot([], bot_data(), {}, 0, config, p3cw, logging)
+                bot = SingleBot([], bot_data(), {}, config, p3cw, logging)
                 bot.disable(bot_data(), True)
             else:
                 bot = MultiBot([], bot_data(), {}, 0, config, p3cw, logging)
@@ -289,8 +287,7 @@ async def main():
     if not config['dcabot'].getboolean('single'):
         await symrank()
     
-    if (config['filter'].getboolean('btc_pulse') and
-        not config['dcabot'].getboolean('single')):
+    if config['filter'].getboolean('btc_pulse'):
         btcbooltask =  client.loop.create_task(signals.getbtcbool(asyncState))
         btcbooltask.add_done_callback(_handle_task_result)
         switchtask = client.loop.create_task(botswitch())

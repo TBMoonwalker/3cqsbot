@@ -89,12 +89,36 @@ symrank_limit | integer | YES | (10000) | Maximum value of bot creation accordin
 volatility_limit | number | YES | (10000) | Maximum value of bot creation according to the volatility
 price_action_limit | number | YES | (10000) | Maximum value of bot creation according to the price action
 topcoin_limit | integer | YES | (10000) | Maximum number of coins according to the CoinGecko toplist
-deal_mode | string | YES | (rsi) signal | Method how the script is creating new deals in multipair bot
+deal_mode | string | YES | ( [{"options": {"time": "3m", "points": "100"}, "strategy": "rsi"}]) signal | Method how the script is creating new deals in multipair bot
 limit_initial_pairs | boolean | YES | (false) | Limit initial pairs to the max number of deals (MAD) - bot chooses the top pairs
 btc_pulse | boolean | YES | (false) | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
 delete_single_bots | boolean | YES | (false) | If set to yes, bots without an active deal will be deleted in single bot configuration
 trailing | boolean | YES | (false) true | Trailing profit enabled
 trailing_deviation | number | YES | (0.2) | Deviation of trailing profit
+
+### Deal Mode explanation
+
+**single=true deal_mode=signal**
+
+A single bot for a specific pair (the signal) will be created when the signal fits your configured filters and when the signal is a "START" signal. The deal will be start immediately. The bot will be disabled on a stop signal for this specific pair. If `delete_single_bots`is set to true, the script tries do delete the bot. This only works, when no deal is running.
+
+**single=true deal_mode="self asigned strategy"**
+
+Everything is the same as with the other single mode, but the deals are started dependent on your configured `deal_mode` strategy.
+
+**single=false deal_mode=signal**
+
+A multi bot will be created with the top 30 Symrank list (initical call to /symrank). A new deal will be started when a new signal is coming in. 
+
+If it is a STOP/START signal which is not from an existing pair a random pair from the initial top 30 Symrank list is used for a new deal. 
+
+If it is a START signal from an existing pair or a freshly added pair, exactly that pair is used for a new deal.
+
+Pairs will be deleted from the list during a STOP signal and added with a START signal, if it fits the filters.
+
+**single=false deal_mode="self asigned strategy"**
+
+Everything is the same as with the other multi mode, but the deals are started dependent on your configured `deal_mode` strategy.
 
 ## Filter
 

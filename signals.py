@@ -79,7 +79,8 @@ class Signals:
             for pair in pairs:
                 for symbol in market:
                     coin = pair
-                    if coin.lower() in symbol['symbol']:
+                    if (coin.lower() in symbol['symbol'] and
+                        int(symbol['market_cap_rank']) <= rank):
                         pairlist.append(pair)
                         break
         else:

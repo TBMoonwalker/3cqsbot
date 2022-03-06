@@ -48,6 +48,9 @@ price_action_limit = 10000
 topcoin_limit = 3500
 limit_initial_pairs = false
 # RSI-7 < 100 (means asap)
+# single strategy
 deal_mode = [{"options": {"time": "3m", "points": "100"}, "strategy": "rsi"}]
+# multiple strategies 
+#deal_mode = [{"options": {"time": "5m", "type": "buy_or_strong_buy"}, "strategy": "trading_view"},{"options":{"time":"15m","points":70},"strategy":"rsi"},{"options":{"time":"1h","points":70},"strategy":"rsi"},{"options":{"time":"4h","points":70},"strategy":"rsi"}]
 btc_pulse = false
 token_denylist = [USDT_BTC, USDT_ETH, USDT_BUSD, USDT_USDC]

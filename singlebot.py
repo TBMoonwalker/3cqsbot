@@ -45,7 +45,7 @@ class SingleBot:
             for deal in data:
                 if (self.prefix + "_" +  self.subprefix + "_" + self.config['trading']['market']) in deal['bot_name']:
                     deals.append(deal['bot_name'])
-        
+        self.logging.debug(str(data))
         self.logging.debug(deals)
         self.logging.debug("Deal count: " + str(len(deals)))
         
@@ -67,17 +67,27 @@ class SingleBot:
             self.logging.info("Enabling bot " + bot['name'])
 
 
-    def disable(self, bot, allbots):
+    def disable(self, bot, allbots=False):
         # Disable all bots
+        error = {}
+
         if allbots:
-            for bot in self.bot_data:
-                if (self.prefix + "_" +  self.subprefix + "_" + self.config['trading']['market'] + self.suffix) in bot['name']:
+            
+            self.logging.debug("Disabling all bots")
+
+            for bots in bot:
+                if (self.prefix + "_" +  self.subprefix + "_" + self.config['trading']['market']) in bots['name']:
                     error, data = self.p3cw.request(
                         entity="bots",
                         action="disable",
-                        action_id=str(bot['id']),
+                        action_id=str(bots['id']),
                         additional_headers={'Forced-Mode': self.config['trading']['trade_mode']},
                     )
+
+                    if error:
+                        self.logging.error(error['msg'])
+                    else:
+                        self.logging.info("Disabling bot " + bots['name'])
         else:
             # Disables an existing bot
             error, data = self.p3cw.request(
@@ -87,10 +97,10 @@ class SingleBot:
                 additional_headers={'Forced-Mode': self.config['trading']['trade_mode']},
             )
 
-        if error:
-            self.logging.error(error['msg'])
-        else:
-            self.logging.info("Disabling bot " + bot['name'])
+            if error:
+                self.logging.error(error['msg'])
+            else:
+                self.logging.info("Disabling bot " + bot['name'])
 
     def create(self):
         # Creates a single bot with start signal
@@ -153,7 +163,7 @@ class SingleBot:
 
         if self.bot_data:
             for bot in self.bot_data:
-                if (self.prefix + "_" +  self.subprefix + "_" + self.config['trading']['market'] + self.suffix) in bot['name']:
+                if (self.prefix + "_" +  self.subprefix + "_" + pair + "_" + self.suffix) in bot['name']:
                     new_bot = False
                     break
 
