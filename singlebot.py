@@ -181,8 +181,8 @@ class SingleBot:
 
     def trigger(self):
         # Triggers a single bot deal
-       
-       self.logging.info("Got new 3cqs signal")
+
+        self.logging.info("Got new 3cqs signal")
 
         new_bot = True
         pair = self.tg_data["pair"]
@@ -217,9 +217,7 @@ class SingleBot:
                         "Stop command on a non-existing bot with pair: " + pair
                     )
                 else:
-                    self.logging.info(
-                        "Maximum deals reached."
-                    )
+                    self.logging.info("Maximum deals reached.")
             else:
                 self.logging.debug("Pair: " + pair)
                 self.logging.debug("Bot-Name: " + bot["name"])
