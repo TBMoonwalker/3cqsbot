@@ -217,7 +217,9 @@ class SingleBot:
                         "Stop command on a non-existing bot with pair: " + pair
                     )
                 else:
-                    self.logging.info("Maximum deals reached.")
+                    self.logging.info(
+                        "Maximum deals reached. Bot with pair: " + pair + " not added."
+                    )
             else:
                 self.logging.debug("Pair: " + pair)
                 self.logging.debug("Bot-Name: " + bot["name"])
