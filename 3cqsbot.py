@@ -168,9 +168,8 @@ def account_data():
     return account
 
 
-def pair_data():
+def pair_data(account):
     pairs = []
-    account = account_data()
 
     error, data = p3cw.request(
         entity="accounts",
@@ -246,7 +245,7 @@ async def my_event_handler(event):
         tg_output = tg_data(parse_tg(event.raw_text))
         bot_output = bot_data()
         account_output = account_data()
-        pair_output = pair_data()
+        pair_output = pair_data(account_output)
 
         if tg_output and not isinstance(tg_output, list):
             if config["dcabot"].getboolean("single"):
