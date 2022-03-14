@@ -269,10 +269,17 @@ async def my_event_handler(event):
             if tg_output["volatility"] != 0 and tg_output["pair"] in pair_output:
                 if (
                     tg_output["volatility"]
-                    <= config["filter"].getfloat("volatility_limit")
+                    >= config["filter"].getfloat("volatility_limit_min")
+                    and tg_output["volatility"]
+                    <= config["filter"].getfloat("volatility_limit_max")
                     and tg_output["price_action"]
-                    <= config["filter"].getfloat("price_action_limit")
-                    and tg_output["symrank"] <= config["filter"].getint("symrank_limit")
+                    >= config["filter"].getfloat("price_action_limit_min")
+                    and tg_output["price_action"]
+                    <= config["filter"].getfloat("price_action_limit_max")
+                    and tg_output["symrank"]
+                    >= config["filter"].getint("symrank_limit_min")
+                    and tg_output["symrank"]
+                    <= config["filter"].getint("symrank_limit_max")
                 ) or tg_output["action"] == "STOP":
 
                     bot.trigger()

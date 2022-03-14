@@ -41,9 +41,12 @@ trailing = false
 trailing_deviation = 0.2
 
 [filter]
-symrank_limit = 10000
-volatility_limit = 10000
-price_action_limit = 10000
+symrank_limit_min = 1
+symrank_limit_max = 10000
+volatility_limit_min = 1
+volatility_limit_max = 10000
+price_action_limit_min = 1
+price_action_limit_max = 10000
 # not more then 3500
 topcoin_limit = 3500
 limit_initial_pairs = false

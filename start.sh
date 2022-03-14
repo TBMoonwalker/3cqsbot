@@ -36,9 +36,12 @@ sed -i "s/btc_min_vol = .*/btc_min_vol = $DCABOT_BTC_MIN_VOL/" config.ini
 sed -i "s/market = .*/market = $MARKET/" config.ini
 sed -i "s/trade_mode = .*/trade_mode = $TRADE_MODE/" config.ini
 sed -i "s/account_name = .*/account_name = $ACCOUNT/" config.ini
-sed -i "s/symrank_limit = .*/symrank_limit = $SYMRANK_LIMIT/" config.ini
-sed -i "s/volatility_limit = .*/volatility_limit = $VOLATILITY_LIMIT/" config.ini
-sed -i "s/price_action_limit = .*/price_action_limit = $PRICE_ACTION_LIMIT/" config.ini
+sed -i "s/symrank_limit_min = .*/symrank_limit_min = $SYMRANK_LIMIT_MIN/" config.ini
+sed -i "s/symrank_limit_max = .*/symrank_limit_max = $SYMRANK_LIMIT_MAX/" config.ini
+sed -i "s/volatility_limit_min = .*/volatility_limit_min = $VOLATILITY_LIMIT_MIN/" config.ini
+sed -i "s/volatility_limit_max = .*/volatility_limit_max = $VOLATILITY_LIMIT_MAX/" config.ini
+sed -i "s/price_action_limit_min = .*/price_action_limit_min = $PRICE_ACTION_LIMIT_MIN/" config.ini
+sed -i "s/price_action_limit_max = .*/price_action_limit_max = $PRICE_ACTION_LIMIT_MAX/" config.ini
 sed -i "s/topcoin_limit = .*/topcoin_limit = $TOPCOIN_LIMIT/" config.ini
 sed -i "s/deal_mode = .*/deal_mode = $DEAL_MODE/" config.ini
 sed -i "s/trailing = .*/trailing = $TRAILING/" config.ini
