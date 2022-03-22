@@ -65,11 +65,12 @@ so | number | YES | (11) | Safety order volume
 os | number | YES | (1.05) | Safety order volume scale
 ss | number | YES | (1) | Safety order step scale
 sos | number | YES | (2.4) | Price deviation to open safety orders
-mad | integer | YES | (3) | Max active deals
+mad | integer | YES | (3) | Max active deals per single bot
 max | integer | YES | (1) | Max active safety trades count
 mstc | integer | YES | (25) | Max safety trades count
 sdsp | integer | NO | (1) | Simultaneous deals per same pair (only Multibot)
 single | boolean | YES | (false) true | Type of Bot creation (True for Single DCA Bots)
+single_count | integer | YES | (3) | Maximum single bots
 btc_min_vol | number | YES | (100) | Minimum 24h volume trading calculated in BTC
 
 Configure the 'dcabot' section in the `config.ini` according to your favourite bot configuration. 

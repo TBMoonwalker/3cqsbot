@@ -30,6 +30,7 @@ sed -i "s/max = .*/max = $MAX/" config.ini
 sed -i "s/mstc = .*/mstc = $DCABOT_MSTC/" config.ini
 sed -i "s/sdsp = .*/sdsp = $DCABOT_SDSP/" config.ini
 sed -i "s/single = .*/single = $DCABOT_SINGLE/" config.ini
+sed -i "s/single_count = .*/single_count = $DCABOT_SINGLE_COUNT/" config.ini
 sed -i "s/btc_min_vol = .*/btc_min_vol = $DCABOT_BTC_MIN_VOL/" config.ini
 
 # General settings

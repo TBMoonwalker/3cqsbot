@@ -131,14 +131,20 @@ class MultiBot:
         # Creates a multi bot with start signal
         new_bot = True
         pairs = []
+        botnames = []
         mad = self.config["dcabot"].getint("mad")
 
         # Check for existing or new bot
         for bot in self.bot_data:
+
+            botnames.append(bot["name"])
+
             if (self.prefix + "_" + self.subprefix + "_" + self.suffix) in bot["name"]:
                 botid = str(bot["id"])
                 new_bot = False
                 break
+
+        logging.debug("Existing bot names: " + str(botnames))
 
         # Create pair list
         # Filter topcoins (if set)
@@ -209,7 +215,6 @@ class MultiBot:
     def trigger(self, triggeronly=False):
         # Updates multi bot with new pairs
         triggerpair = ""
-        deal_strategy = self.strategy()
         mad = self.config["dcabot"].getint("mad")
 
         self.logging.info("Got new 3cqs signal")

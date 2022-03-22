@@ -25,7 +25,7 @@ class SingleBot:
 
         return strategy
 
-    def deal_data(self):
+    def deal_count(self):
         account = self.account_data
         deals = []
 
@@ -54,6 +54,24 @@ class SingleBot:
         self.logging.debug("Deal count: " + str(len(deals)))
 
         return len(deals)
+
+    def bot_count(self):
+
+        bots = []
+
+        for bot in self.bot_data:
+            if (
+                self.prefix
+                + "_"
+                + self.subprefix
+                + "_"
+                + self.config["trading"]["market"]
+            ) in bot["name"]:
+                bots.append(bot["name"])
+
+        self.logging.debug(bots)
+        self.logging.debug("Bot count: " + str(len(bots)))
+        return len(bots)
 
     def enable(self, bot):
 
@@ -196,9 +214,9 @@ class SingleBot:
                     break
 
             if new_bot:
-                if self.tg_data["action"] == "START" and self.deal_data() < self.config[
+                if self.tg_data["action"] == "START" and self.bot_count() < self.config[
                     "dcabot"
-                ].getint("mad"):
+                ].getint("single_count"):
 
                     pair = self.signal.topcoin(
                         pair, self.config["filter"].getint("topcoin_limit")
@@ -225,7 +243,7 @@ class SingleBot:
                 self.logging.debug("Bot-Name: " + bot["name"])
 
                 if self.tg_data["action"] == "START":
-                    if self.deal_data() < self.config["dcabot"].getint("mad"):
+                    if self.deal_count() < self.config["dcabot"].getint("mad"):
                         self.enable(bot)
                 else:
                     self.delete(bot)

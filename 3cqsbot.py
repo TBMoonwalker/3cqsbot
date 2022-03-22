@@ -136,7 +136,7 @@ def bot_data():
     )
 
     if error:
-        logging.error(error["msg"])
+        sys.exit(error["msg"])
 
     return data
 
@@ -152,7 +152,7 @@ def account_data():
     )
 
     if error:
-        logging.error(error["msg"])
+        sys.exit(error["msg"])
     else:
         for accounts in data:
             if accounts["name"] == config["trading"]["account_name"]:
@@ -179,7 +179,7 @@ def pair_data(account):
     )
 
     if error:
-        logging.error(error["msg"])
+        sys.exit(error["msg"])
     else:
         for pair in data:
             if config["trading"]["market"] in pair:
