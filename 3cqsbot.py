@@ -133,6 +133,7 @@ def bot_data():
         entity="bots",
         action="",
         additional_headers={"Forced-Mode": config["trading"]["trade_mode"]},
+        payload={"limit": 1000},
     )
 
     if error:
