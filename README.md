@@ -70,7 +70,7 @@ max | integer | YES | (1) | Max active safety trades count
 mstc | integer | YES | (25) | Max safety trades count
 sdsp | integer | NO | (1) | Simultaneous deals per same pair (only Multibot)
 single | boolean | YES | (false) true | Type of Bot creation (True for Single DCA Bots)
-single_count | integer | YES | (3) | Maximum single bots
+single_count | integer | YES | (3) | Maximum single bots - only have to configured for singlebots
 btc_min_vol | number | YES | (100) | Minimum 24h volume trading calculated in BTC
 
 Configure the 'dcabot' section in the `config.ini` according to your favourite bot configuration. 
@@ -78,6 +78,28 @@ Configure the 'dcabot' section in the `config.ini` according to your favourite b
 If you don't have any, please take a look at [this site](https://www.buymeacoffee.com/Ribsy/posts) for published settings.
 
 Default configuration is based on Trade Alts Safer settings: https://discord.gg/tradealts
+
+### Note about single/multibot deal/bots settings
+#### Singlebot configuration
+**single_count** = how many singlebots can run overall
+
+**mad** = how many deals can run on a singlebot pair
+
+**Examples:** 
+
+`single_count=1`, `mad=1` - Only one singlebot is started, and only one deal is started
+
+`single_count=3`, `mad=1` - Three singlebots are started, and only one deal per singlebot is started
+
+`single_count=3`, `mad=2` - Three singlebots are started, and two deals are started per singlebot
+
+#### Multibot configuration
+**mad** = how many deals per composite bot can run
+
+**Example:** 
+
+`mad=20` - 20 deals with different pairs can run at the same time
+
 
 ## Trading mode
 

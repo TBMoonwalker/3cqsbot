@@ -26,7 +26,7 @@ sed -i "s/^os = .*/os = $DCABOT_OS/" config.ini
 sed -i "s/ss = .*/ss = $DCABOT_SS/" config.ini
 sed -i "s/sos = .*/sos = $DCABOT_SOS/" config.ini
 sed -i "s/mad = .*/mad = $DCABOT_MAD/" config.ini
-sed -i "s/max = .*/max = $MAX/" config.ini
+sed -i "s/max = .*/max = $DCABOT_MAX/" config.ini
 sed -i "s/mstc = .*/mstc = $DCABOT_MSTC/" config.ini
 sed -i "s/sdsp = .*/sdsp = $DCABOT_SDSP/" config.ini
 sed -i "s/single = .*/single = $DCABOT_SINGLE/" config.ini

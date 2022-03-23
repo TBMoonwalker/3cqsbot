@@ -144,7 +144,7 @@ class MultiBot:
                 new_bot = False
                 break
 
-        logging.debug("Existing bot names: " + str(botnames))
+        self.logging.debug("Existing bot names: " + str(botnames))
 
         # Create pair list
         # Filter topcoins (if set)
