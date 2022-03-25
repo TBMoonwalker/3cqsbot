@@ -49,8 +49,7 @@ class SingleBot:
                     + self.config["trading"]["market"]
                 ) in deal["bot_name"]:
                     deals.append(deal["bot_name"])
-        self.logging.debug(str(data))
-        self.logging.debug(deals)
+        self.logging.debug(str(deals["bot_name"]))
         self.logging.debug("Deal count: " + str(len(deals)))
 
         return len(deals)
