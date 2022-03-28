@@ -153,7 +153,9 @@ def account_data():
     )
 
     if error:
-        sys.exit(error["msg"])
+        logging.debug(error["msg"])
+        sys.tracebacklimit = 0
+        sys.exit("Problem fetching account data from 3commas api - stopping!")
     else:
         for accounts in data:
             if accounts["name"] == config["trading"]["account_name"]:
@@ -180,7 +182,9 @@ def pair_data(account):
     )
 
     if error:
-        sys.exit(error["msg"])
+        logging.debug(error["msg"])
+        sys.tracebacklimit = 0
+        sys.exit("Problem fetching pair data from 3commas api - stopping!")
     else:
         for pair in data:
             if config["trading"]["market"] in pair:

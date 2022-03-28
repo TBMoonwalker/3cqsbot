@@ -1,5 +1,6 @@
 import re
 import json
+import time
 
 from signals import Signals
 
@@ -65,11 +66,10 @@ class SingleBot:
                 + self.subprefix
                 + "_"
                 + self.config["trading"]["market"]
-            ) in bot["name"]:
+            ) in bot["name"] and bot["is_enabled"]:
                 bots.append(bot["name"])
 
-        self.logging.debug(bots)
-        self.logging.debug("Bot count: " + str(len(bots)))
+        self.logging.debug("Enabled bot count: " + str(len(bots)))
         return len(bots)
 
     def enable(self, bot):
@@ -150,6 +150,7 @@ class SingleBot:
                 + self.suffix,
                 "account_id": self.account_data["id"],
                 "pairs": self.tg_data["pair"],
+                "max_active_deals": self.config["dcabot"].getint("mad"),
                 "base_order_volume": self.config["dcabot"].getfloat("bo"),
                 "take_profit": self.config["dcabot"].getfloat("tp"),
                 "safety_order_volume": self.config["dcabot"].getfloat("so"),
@@ -171,6 +172,8 @@ class SingleBot:
         if error:
             self.logging.error(error["msg"])
         else:
+            # Fix - 3commas needs some time for bot creation
+            time.sleep(2)
             self.enable(data)
 
     def delete(self, bot):
@@ -242,8 +245,14 @@ class SingleBot:
                 self.logging.debug("Bot-Name: " + bot["name"])
 
                 if self.tg_data["action"] == "START":
-                    if self.deal_count() < self.config["dcabot"].getint("mad"):
+                    if self.bot_count() < self.config["dcabot"].getint("single_count"):
                         self.enable(bot)
+                    else:
+                        self.logging.info(
+                            "Maximum enabled bots reached. Bot with pair: "
+                            + pair
+                            + " not enabled."
+                        )
                 else:
                     self.delete(bot)
 
