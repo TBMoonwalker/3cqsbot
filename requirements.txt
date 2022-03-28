@@ -4,3 +4,4 @@ pycoingecko
 yfinance
 numpy
 tenacity
+portalocker

@@ -1,3 +1,4 @@
+from cProfile import run
 import configparser
 import argparse
 from distutils.log import debug
@@ -5,6 +6,8 @@ import re
 import logging
 import asyncio
 import sys
+import os
+import portalocker
 
 from telethon import TelegramClient, events
 from py3cw.request import Py3CW
@@ -68,10 +71,25 @@ logging.basicConfig(
 asyncState = type("", (), {})()
 asyncState.btcbool = True
 asyncState.botswitch = True
+asyncState.fh = 0
 
 ######################################################
 #                     Methods                        #
 ######################################################
+def run_once():
+    asyncState.fh = open(os.path.realpath(__file__), "r")
+    try:
+        portalocker.lock(asyncState.fh, portalocker.LOCK_EX | portalocker.LOCK_NB)
+    except:
+        sys.exit(
+            "Another 3CQSBot is already running in this directory - please use another one!"
+        )
+
+
+# Check for single instance run
+run_once()
+
+
 def parse_tg(raw_text):
     return raw_text.split("\n")
 
@@ -318,6 +336,7 @@ async def my_event_handler(event):
 
 
 async def main():
+
     signals = Signals(logging)
 
     logging.debug("Refreshing cache...")
