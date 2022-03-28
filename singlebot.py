@@ -250,11 +250,15 @@ class SingleBot:
                 self.logging.debug("Bot-Name: " + bot["name"])
 
                 if self.tg_data["action"] == "START":
-                    if self.bot_count() < self.config["dcabot"].getint("single_count"):
+                    if self.bot_count() < self.config["dcabot"].getint(
+                        "single_count"
+                    ) and self.deal_count() < self.config["dcabot"].getint(
+                        "single_count"
+                    ):
                         self.enable(bot)
                     else:
                         self.logging.info(
-                            "Maximum enabled bots reached. Bot with pair: "
+                            "Maximum enabled bots/deals reached. Bot with pair: "
                             + pair
                             + " not enabled."
                         )
