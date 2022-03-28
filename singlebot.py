@@ -216,9 +216,11 @@ class SingleBot:
                     break
 
             if new_bot:
-                if self.tg_data["action"] == "START" and self.bot_count() < self.config[
-                    "dcabot"
-                ].getint("single_count"):
+                if (
+                    self.tg_data["action"] == "START"
+                    and self.bot_count() < self.config["dcabot"].getint("single_count")
+                    and self.deal_count() < self.config["dcabot"].getint("single_count")
+                ):
 
                     pair = self.signal.topcoin(
                         pair, self.config["filter"].getint("topcoin_limit")
@@ -238,7 +240,9 @@ class SingleBot:
                     )
                 else:
                     self.logging.info(
-                        "Maximum deals reached. Bot with pair: " + pair + " not added."
+                        "Maximum bots/deals reached. Bot with pair: "
+                        + pair
+                        + " not added."
                     )
             else:
                 self.logging.debug("Pair: " + pair)
