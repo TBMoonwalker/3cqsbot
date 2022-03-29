@@ -96,7 +96,9 @@ def parse_tg(raw_text):
 
 def tg_data(text_lines):
     # Make sure the message is a signal
-    if len(text_lines) == 6:
+    # 6 Lines old Telegram signal - will be removed after @Mantis update
+    # 7 Lines new Telegram signal
+    if len(text_lines) == 6 or len(text_lines) == 7:
         data = {}
         token = text_lines[1].replace("#", "")
         action = text_lines[2].replace("BOT_", "")
