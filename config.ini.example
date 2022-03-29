@@ -37,6 +37,7 @@ market = USDT
 trade_mode = paper
 account_name = Paper Account 1064454
 delete_single_bots = false
+singlebot_update = true
 # Binance only
 trailing = false
 trailing_deviation = 0.2

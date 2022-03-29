@@ -117,7 +117,8 @@ topcoin_limit | integer | YES | (10000) | Maximum number of coins according to
 deal_mode | string | YES | ( [{"options": {"time": "3m", "points": "100"}, "strategy": "rsi"}]) signal | Method how the script is creating new deals in multipair bot
 limit_initial_pairs | boolean | YES | (false) | Limit initial pairs to the max number of deals (MAD) - bot chooses the top pairs
 btc_pulse | boolean | YES | (false) | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
-delete_single_bots | boolean | YES | (false) | If set to yes, bots without an active deal will be deleted in single bot configuration
+delete_single_bots | boolean | YES | (false) | If set to true, bots without an active deal will be deleted in single bot configuration
+singlebot_update | boolean | NO | (true) | If set to true, singlebots settings will be updated when enabled again (new settings only work after restart of the script)
 trailing | boolean | YES | (false) true | Trailing profit enabled
 trailing_deviation | number | YES | (0.2) | Deviation of trailing profit
 

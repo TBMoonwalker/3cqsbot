@@ -73,7 +73,49 @@ class SingleBot:
         self.logging.debug("Enabled bot count: " + str(len(bots)))
         return len(bots)
 
+    def payload(self, pair):
+        payload = {
+            "name": self.prefix + "_" + self.subprefix + "_" + pair + "_" + self.suffix,
+            "account_id": self.account_data["id"],
+            "pairs": self.tg_data["pair"],
+            "max_active_deals": self.config["dcabot"].getint("mad"),
+            "base_order_volume": self.config["dcabot"].getfloat("bo"),
+            "take_profit": self.config["dcabot"].getfloat("tp"),
+            "safety_order_volume": self.config["dcabot"].getfloat("so"),
+            "martingale_volume_coefficient": self.config["dcabot"].getfloat("os"),
+            "martingale_step_coefficient": self.config["dcabot"].getfloat("ss"),
+            "max_safety_orders": self.config["dcabot"].getint("mstc"),
+            "safety_order_step_percentage": self.config["dcabot"].getfloat("sos"),
+            "take_profit_type": "total",
+            "active_safety_orders_count": self.config["dcabot"].getint("max"),
+            "strategy_list": self.strategy(),
+            "trailing_enabled": self.config["trading"].getboolean("trailing"),
+            "trailing_deviation": self.config["trading"].getfloat("trailing_deviation"),
+            "min_volume_btc_24h": self.config["dcabot"].getfloat("btc_min_vol"),
+        }
+
+        return payload
+
+    def update(self, bot):
+
+        # Update settings on an existing bot
+        error, data = self.p3cw.request(
+            entity="bots",
+            action="update",
+            action_id=str(bot["id"]),
+            additional_headers={"Forced-Mode": self.config["trading"]["trade_mode"]},
+            payload=self.payload(bot["pairs"]),
+        )
+
+        if error:
+            self.logging.error(error["msg"])
+        else:
+            self.logging.info("Updating bot settings on " + bot["name"])
+
     def enable(self, bot):
+
+        if self.config["trading"].getboolean("singlebot_update"):
+            self.update(bot)
 
         # Enables an existing bot
         error, data = self.p3cw.request(
@@ -141,33 +183,7 @@ class SingleBot:
             entity="bots",
             action="create_bot",
             additional_headers={"Forced-Mode": self.config["trading"]["trade_mode"]},
-            payload={
-                "name": self.prefix
-                + "_"
-                + self.subprefix
-                + "_"
-                + self.tg_data["pair"]
-                + "_"
-                + self.suffix,
-                "account_id": self.account_data["id"],
-                "pairs": self.tg_data["pair"],
-                "max_active_deals": self.config["dcabot"].getint("mad"),
-                "base_order_volume": self.config["dcabot"].getfloat("bo"),
-                "take_profit": self.config["dcabot"].getfloat("tp"),
-                "safety_order_volume": self.config["dcabot"].getfloat("so"),
-                "martingale_volume_coefficient": self.config["dcabot"].getfloat("os"),
-                "martingale_step_coefficient": self.config["dcabot"].getfloat("ss"),
-                "max_safety_orders": self.config["dcabot"].getint("mstc"),
-                "safety_order_step_percentage": self.config["dcabot"].getfloat("sos"),
-                "take_profit_type": "total",
-                "active_safety_orders_count": self.config["dcabot"].getint("max"),
-                "strategy_list": self.strategy(),
-                "trailing_enabled": self.config["trading"].getboolean("trailing"),
-                "trailing_deviation": self.config["trading"].getfloat(
-                    "trailing_deviation"
-                ),
-                "min_volume_btc_24h": self.config["dcabot"].getfloat("btc_min_vol"),
-            },
+            payload=self.payload(self.tg_data["pair"]),
         )
 
         if error:
