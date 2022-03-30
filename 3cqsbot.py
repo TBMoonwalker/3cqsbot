@@ -71,6 +71,7 @@ logging.basicConfig(
 asyncState = type("", (), {})()
 asyncState.btcbool = True
 asyncState.botswitch = True
+asyncState.chatid = ""
 asyncState.fh = 0
 
 ######################################################

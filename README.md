@@ -29,8 +29,13 @@ Create a [3commas api account](https://3commas.io/api_access_tokens) too and ins
 - Docker
 
 ## Installation
+### Python
+Please install at least version 3.7 on your system
+
 ### Python modules
-pip3 install requirements.txt
+```
+pip3 install -r requirements.txt
+```
 
 # Configuration (config.ini)
 Copy the `config.ini.example` to `config.ini` and change your settings regarding the available settings below. The value type doesn't matter, because Pythons configparser is taking care of the types. So you don't need '' or "" around the values.
@@ -67,7 +72,7 @@ so | number | YES | (11) | Safety order volume
 os | number | YES | (1.05) | Safety order volume scale
 ss | number | YES | (1) | Safety order step scale
 sos | number | YES | (2.4) | Price deviation to open safety orders
-mad | integer | YES | (3) | Max active deals per single bot
+mad | integer | YES | (3) | Max active deals for a bot
 max | integer | YES | (1) | Max active safety trades count
 mstc | integer | YES | (25) | Max safety trades count
 sdsp | integer | NO | (1) | Simultaneous deals per same pair (only Multibot)
