@@ -40,6 +40,10 @@ class SingleBot:
 
         if error:
             self.logging.error(error["msg"])
+            self.logging.error(
+                "Setting deal count temporary to maximum - because of API errors!"
+            )
+            return self.config["dcabot"].getint("single_count")
         else:
             for deal in data:
                 if (
@@ -104,7 +108,7 @@ class SingleBot:
             action="update",
             action_id=str(bot["id"]),
             additional_headers={"Forced-Mode": self.config["trading"]["trade_mode"]},
-            payload=self.payload(bot["pairs"]),
+            payload=self.payload(bot["pairs"][0]),
         )
 
         if error:
