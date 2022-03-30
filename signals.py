@@ -89,7 +89,10 @@ class Signals:
             coin = re.search("(\w+)_(\w+)", pairs).group(2)
 
             for symbol in market:
-                if coin.lower() in symbol["symbol"]:
+                if (
+                    coin.lower() in symbol["symbol"]
+                    and int(symbol["market_cap_rank"]) <= rank
+                ):
                     pairlist = pairs
                     break
 
