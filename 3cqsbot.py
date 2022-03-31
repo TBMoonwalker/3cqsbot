@@ -16,6 +16,7 @@ from multibot import MultiBot
 from signals import Signals
 from logging.handlers import RotatingFileHandler
 
+
 ######################################################
 #                       Config                       #
 ######################################################
@@ -231,26 +232,26 @@ def pair_data(account):
 
 
 async def symrank():
-    logging.info("Calling Symrank to get new pairs")
+    logging.info("Sending /symrank command to 3C Quick Stats on Telegram to get new pairs")
     await client.send_message(asyncState.chatid, "/symrank")
 
 
 async def botswitch():
     while True:
         if not asyncState.btcbool and not asyncState.botswitch:
-            logging.debug("Activate Bot")
-            logging.debug("Botswitch: " + str(asyncState.botswitch))
+            logging.info("Enabling Bot because of BTC uptrend")
             asyncState.botswitch = True
+            logging.debug("Botswitch: " + str(asyncState.botswitch))
             if config["dcabot"].getboolean("single"):
                 logging.info("Not activating old single bots (waiting for new signals.")
             else:
                 # Send new top 30 for activating the multibot
-                logging.debug("Calling for new symrank stats")
                 await symrank()
+
         elif asyncState.btcbool and asyncState.botswitch:
-            logging.debug("Deactivate Bot")
-            logging.debug("Botswitch: " + str(asyncState.botswitch))
+            logging.info("Disabling Bot because of BTC downtrend")
             asyncState.botswitch = False
+            logging.debug("Botswitch: " + str(asyncState.botswitch))
             if config["dcabot"].getboolean("single"):
                 bot = SingleBot([], bot_data(), {}, config, p3cw, logging)
                 bot.disable(bot_data(), True)
@@ -259,8 +260,8 @@ async def botswitch():
                 bot.disable()
 
         else:
-            logging.debug("Botswitch: " + str(asyncState.botswitch))
             logging.debug("Nothing do to")
+            logging.debug("Botswitch: " + str(asyncState.botswitch))
 
         await asyncio.sleep(60)
 
@@ -281,9 +282,10 @@ async def my_event_handler(event):
         logging.info("Bot stopped - no new signals processed")
     else:
 
-        logging.debug("New signals incoming...")
+        logging.info("New 3CQS signals incoming...")
 
         tg_output = tg_data(parse_tg(event.raw_text))
+        logging.info("TG msg: "+ str(tg_output))
         bot_output = bot_data()
         account_output = account_data()
         pair_output = pair_data(account_output)
@@ -329,7 +331,7 @@ async def my_event_handler(event):
                     logging.info("Trading limits reached. Deal not placed.")
             else:
                 logging.info(
-                    "Token "
+                    "Pair "
                     + tg_output["pair"]
                     + " is not traded on account "
                     + config["trading"]["account_name"]
@@ -375,7 +377,6 @@ async def main():
         while True:
             await btcbooltask
             await switchtask
-
 
 with client:
     client.loop.run_until_complete(main())

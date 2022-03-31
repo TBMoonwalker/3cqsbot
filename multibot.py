@@ -83,6 +83,8 @@ class MultiBot:
                 self.logging.debug("Error enabling bot: " + bot["name"])
             else:
                 self.logging.info("Enabling bot: " + bot["name"])
+        else:
+            self.logging.info("Symrank update finished. 3cqsbot on 3commas already enabled, no need for enabling.")
 
     def disable(self):
         # Disables an existing bot
@@ -90,7 +92,6 @@ class MultiBot:
             if (self.prefix + "_" + self.subprefix + "_" + self.suffix) in bot["name"]:
 
                 # Disables an existing bot
-                self.logging.info("Disabling bot")
                 error, data = self.p3cw.request(
                     entity="bots",
                     action="disable",
@@ -101,12 +102,12 @@ class MultiBot:
                 )
 
                 if error:
-                    self.logging.error(error["msg"])
+                    self.logging.error("Error disabling bot: " + error["msg"])
                 else:
                     self.logging.info("Disabling bot: " + bot["name"])
 
     def new_deal(self, bot, triggerpair):
-        # Enables an existing bot
+        # Triggers a new deal
         if triggerpair:
             pair = triggerpair
         else:
@@ -208,7 +209,7 @@ class MultiBot:
             if error:
                 self.logging.error(error["msg"])
             else:
-                self.logging.info("Update pairs from symrank")
+                self.logging.info("Updating pairs from /symrank list")
                 self.logging.debug("Pairs: " + str(pairs))
                 self.enable(data)
 
@@ -217,32 +218,31 @@ class MultiBot:
         triggerpair = ""
         mad = self.config["dcabot"].getint("mad")
 
-        self.logging.info("Got new 3cqs signal")
-
         for bot in self.bot_data:
             if (self.prefix + "_" + self.subprefix + "_" + self.suffix) in bot["name"]:
 
                 if not triggeronly:
-
                     pair = self.tg_data["pair"]
+
+                    self.logging.info("Got new 3cqs " + self.tg_data["action"] + " signal for pair " + pair)
 
                     if self.tg_data["action"] == "START":
                         triggerpair = pair
 
                         if pair in bot["pairs"]:
                             self.logging.info(
-                                "Pair " + pair + " is already included in the list"
+                                "Pair " + pair + " is already included in the pair list"
                             )
                         else:
                             pair = self.signal.topcoin(
                                 pair, self.config["filter"].getint("topcoin_limit")
                             )
                             if pair:
-                                self.logging.info("Add pair " + pair)
+                                self.logging.info("Adding pair " + pair)
                                 bot["pairs"].append(pair)
                             else:
                                 self.logging.info(
-                                    "Pair " + pair + " is not in the top coin list!"
+                                    "Pair " + pair + " is not in Coingecko's top coin list!"
                                 )
 
                     else:
@@ -253,7 +253,7 @@ class MultiBot:
                             self.logging.info(
                                 "Pair "
                                 + pair
-                                + " is not included in the list, not removed"
+                                + " was not included in the pair list, not removed"
                             )
 
                     # Adapt mad if pairs are under value

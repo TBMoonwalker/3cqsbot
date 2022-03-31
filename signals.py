@@ -3,6 +3,7 @@ import numpy as np
 import asyncio
 import math
 import re
+import logging
 
 from pycoingecko import CoinGeckoAPI
 from tenacity import retry, wait_fixed
@@ -72,6 +73,10 @@ class Signals:
         market = self.cgvalues(rank)
 
         self.logging.debug(self.cgvalues.cache_info())
+        if isinstance(pairs, str): 
+           self.logging.info("Symrank pair BEFORE matching with CG's Top coins: " + str(pairs))
+        else:
+           self.logging.info(str(len(pairs)) + " Symrank pairs BEFORE matching with CG's Top coins: " + str(pairs))
 
         if isinstance(pairs, list):
             pairlist = []
@@ -95,8 +100,14 @@ class Signals:
                 ):
                     pairlist = pairs
                     break
-
-        self.logging.debug("Pairs after toplist: " + str(pairlist))
+        self.logging.info("Topcoin limit according to config.ini: " + str(rank))
+        if not pairlist:
+           self.logging.info(str(pairs) + " not ranging under CG's Top coins")
+        else:
+           if isinstance(pairlist, str):
+               self.logging.info(str(pairlist) + " matching with CG's Top coins")
+           else:
+               self.logging.info(str(len(pairlist)) + " Symrank pair(s) AFTER matching with CG's Top coins: " + str(pairlist))
         return pairlist
 
     # Credits goes to @IamtheOnewhoKnocks from
@@ -152,7 +163,7 @@ class Signals:
                 btcusdt.percentchange_15mins[-1] < -1
                 or btcusdt.EMA50[-1] > btcusdt.EMA9[-1]
             ):
-                self.logging.info("Bot sleep")
+                self.logging.info("BTC pulse signaling Downtrend. Waiting 5m more to confirm Downtrend.")
 
                 # after 5mins getting the latest BTC data to see if it has had a sharp rise in previous 5 mins
                 await asyncio.sleep(300)
@@ -164,14 +175,15 @@ class Signals:
                     btcusdt.EMA9[-1] > btcusdt.EMA50[-1]
                     and btcusdt.EMA50[-2] > btcusdt.EMA9[-2]
                 ):
-                    self.logging.info("Bot awake")
+                    self.logging.info("No Downtrend proved. BTC still in Uptrend")
                     asyncState.btcbool = False
                 else:
-                    self.logging.info("Bot sleep")
+                    self.logging.info("Downtrend proved. BTC pulse sending 3cqsbot to sleep")
                     asyncState.btcbool = True
 
             else:
-                self.logging.info("Bot awake")
+                self.logging.info("BTC pulse signaling Uptrend")
                 asyncState.btcbool = False
 
+            self.logging.info("Next BTC pulse check in 5m")
             await asyncio.sleep(300)
