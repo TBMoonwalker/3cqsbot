@@ -1,5 +1,9 @@
 [general]
 debug = false
+log_to_file = false
+log_file_path = 3cqsbot.log
+log_file_size = 200000
+log_file_count = 5
 
 [telegram]
 api_id =

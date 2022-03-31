@@ -14,6 +14,7 @@ from py3cw.request import Py3CW
 from singlebot import SingleBot
 from multibot import MultiBot
 from signals import Signals
+from logging.handlers import RotatingFileHandler
 
 ######################################################
 #                       Config                       #
@@ -39,6 +40,8 @@ args = parser.parse_args()
 ######################################################
 #                        Init                        #
 ######################################################
+
+# Initialize 3Commas API client
 p3cw = Py3CW(
     key=config["commas"]["key"],
     secret=config["commas"]["secret"],
@@ -49,6 +52,7 @@ p3cw = Py3CW(
     },
 )
 
+# Initialize Telegram API client
 client = TelegramClient(
     config["telegram"]["sessionfile"],
     config["telegram"]["api_id"],
@@ -61,10 +65,21 @@ if config["general"].getboolean("debug"):
 else:
     loglevel = getattr(logging, args.loglevel.upper(), None)
 
+# Set logging output
+handler = logging.StreamHandler()
+
+if config["general"].getboolean("log_to_file"):
+    handler = logging.handlers.RotatingFileHandler(
+        config["general"]["log_file_path"],
+        maxBytes=config["general"].getint("log_file_size"),
+        backupCount=config["general"].getint("log_file_count"),
+    )
+
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
     level=loglevel,
     datefmt="%Y-%m-%d %H:%M:%S",
+    handlers=[handler],
 )
 
 # Initialize variables
@@ -339,12 +354,11 @@ async def my_event_handler(event):
 
 
 async def main():
-
     signals = Signals(logging)
 
     logging.debug("Refreshing cache...")
 
-    async for dialog in client.iter_dialogs():
+    async for dialog in client.iter_dialogs(limit=None):
         if dialog.name == "3C Quick Stats":
             asyncState.chatid = dialog.id
 

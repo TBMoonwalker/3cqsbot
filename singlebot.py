@@ -56,7 +56,7 @@ class SingleBot:
                     deals.append(deal["bot_name"])
 
         self.logging.debug(str(deals))
-        self.logging.debug("Deal count: " + str(len(deals)))
+        self.logging.info("Deal count: " + str(len(deals)))
 
         return len(deals)
 
@@ -74,7 +74,8 @@ class SingleBot:
             ) in bot["name"] and bot["is_enabled"]:
                 bots.append(bot["name"])
 
-        self.logging.debug("Enabled bot count: " + str(len(bots)))
+        self.logging.info("Enabled single bot count: " + str(len(bots)))
+
         return len(bots)
 
     def payload(self, pair):
@@ -132,7 +133,9 @@ class SingleBot:
         if error:
             self.logging.error(error["msg"])
         else:
-            self.logging.info("Enabling bot " + bot["name"])
+            self.logging.info(
+                "Enabling single bot " + bot["name"] + " because of a START signal"
+            )
 
     def disable(self, bot, allbots=False):
         # Disable all bots
@@ -140,7 +143,7 @@ class SingleBot:
 
         if allbots:
 
-            self.logging.debug("Disabling all bots")
+            self.logging.info("Disabling all single bots, because of BTC Pulse")
 
             for bots in bot:
                 if (
@@ -162,7 +165,11 @@ class SingleBot:
                     if error:
                         self.logging.error(error["msg"])
                     else:
-                        self.logging.info("Disabling bot " + bots["name"])
+                        self.logging.info(
+                            "Disabling single bot "
+                            + bots["name"]
+                            + " because of a STOP signal"
+                        )
         else:
             # Disables an existing bot
             error, data = self.p3cw.request(
@@ -177,7 +184,9 @@ class SingleBot:
             if error:
                 self.logging.error(error["msg"])
             else:
-                self.logging.info("Disabling bot " + bot["name"])
+                self.logging.info(
+                    "Disabling single bot " + bot["name"] + " because of a STOP signal"
+                )
 
     def create(self):
         # Creates a single bot with start signal
@@ -248,7 +257,7 @@ class SingleBot:
                     )
                     if pair:
                         self.logging.info(
-                            "No single dcabot for " + pair + " found - creating one"
+                            "No single bot for " + pair + " found - creating one"
                         )
                         self.create()
                     else:
@@ -257,7 +266,7 @@ class SingleBot:
                         )
                 elif self.tg_data["action"] == "STOP":
                     self.logging.info(
-                        "Stop command on a non-existing bot with pair: " + pair
+                        "Stop command on a non-existing single bot with pair: " + pair
                     )
                 else:
                     self.logging.info(
@@ -278,7 +287,7 @@ class SingleBot:
                         self.enable(bot)
                     else:
                         self.logging.info(
-                            "Maximum enabled bots/deals reached. Bot with pair: "
+                            "Maximum enabled bots/deals reached. Single bot with pair: "
                             + pair
                             + " not enabled."
                         )
@@ -286,5 +295,5 @@ class SingleBot:
                     self.delete(bot)
 
         else:
-            self.logging.info("No dcabots found")
+            self.logging.info("No single bots found")
             self.create()

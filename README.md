@@ -40,6 +40,15 @@ pip3 install -r requirements.txt
 # Configuration (config.ini)
 Copy the `config.ini.example` to `config.ini` and change your settings regarding the available settings below. The value type doesn't matter, because Pythons configparser is taking care of the types. So you don't need '' or "" around the values.
 
+## General
+Name | Type | Mandatory | Values(default) | Description
+------------ | ------------ | ------------ | ------------ | ------------
+debug | boolean | NO | (false) true   | Set logging to debug
+log_to_file | boolean | NO | (false) true  | Log to file instead of console
+log_file_path | string | NO | (3cqsbot.log) | Location of the log file
+log_file_size | integer | NO | (200000) | Log file size
+log_file_count | integer | NO | (5) | How many logfiles will be archived, before deleted
+
 ## Telegram
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------

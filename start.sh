@@ -4,7 +4,11 @@
 cp config.ini.example config.ini
 
 # General
-sed -i "s/debug = false$/debug = $DEBUG/" config.ini
+sed -i "s/debug = .*$/debug = $DEBUG/" config.ini
+sed -i "s/log_to_file = .*$/log_to_file = $LOGFILE/" config.ini
+sed -i "s/log_file_path = .*$/log_file_path = $LOGFILEPATH/" config.ini
+sed -i "s/log_file_size = .*$/log_file_size = $LOGFILESIZE/" config.ini
+sed -i "s/log_file_count = .*$/log_file_count = $LOGFILECOUNT/" config.ini
 
 # Telegram settings
 sed -i "s/api_id =.*/api_id = $TG_ID/" config.ini
@@ -14,6 +18,9 @@ sed -i "s|sessionfile = .*|sessionfile = $TG_SESSIONFILE|" config.ini
 # 3Commas settings
 sed -i "s/key =.*/key = $API_KEY/" config.ini
 sed -i "s/secret =.*/secret = $API_SECRET/" config.ini
+sed -i "s/timeout =.*/timeout = $API_TIMEOUT/" config.ini
+sed -i "s/retries =.*/retries = $API_RETRIES/" config.ini
+sed -i "s/delay_between_retries =.*/delay_between_retries = $API_RETRY_DELAY/" config.ini
 
 # DCABOT settings
 sed -i "s/prefix = .*/prefix = $DCABOT_PREFIX/" config.ini
