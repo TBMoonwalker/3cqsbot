@@ -358,9 +358,8 @@ async def main():
 
     logging.debug("Refreshing cache...")
 
-    async for dialog in client.iter_dialogs(limit=None):
-        if dialog.name == "3C Quick Stats":
-            asyncState.chatid = dialog.id
+    user = await client.get_participants("The3CQSBot")
+    asyncState.chatid = user[0].id
 
     logging.info("*** 3CQS Bot started ***")
 
