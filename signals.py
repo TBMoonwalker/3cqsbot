@@ -72,7 +72,7 @@ class Signals:
         market = self.cgvalues(rank)
 
         self.logging.debug(self.cgvalues.cache_info())
-       
+
         if isinstance(pairs, list):
             self.logging.info("Symrank pair BEFORE matching with CG's Top coins: " + str(pairs))
             pairlist = []
