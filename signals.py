@@ -72,12 +72,9 @@ class Signals:
         market = self.cgvalues(rank)
 
         self.logging.debug(self.cgvalues.cache_info())
-        if isinstance(pairs, str): 
-           self.logging.info("Symrank pair BEFORE matching with CG's Top coins: " + str(pairs))
-        else:
-           self.logging.info(str(len(pairs)) + " Symrank pairs BEFORE matching with CG's Top coins: " + str(pairs))
-
+       
         if isinstance(pairs, list):
+            self.logging.info("Symrank pair BEFORE matching with CG's Top coins: " + str(pairs))
             pairlist = []
             for pair in pairs:
                 for symbol in market:
@@ -89,6 +86,7 @@ class Signals:
                         pairlist.append(pair)
                         break
         else:
+            self.logging.info(str(len(pairs)) + " Symrank pairs BEFORE matching with CG's Top coins: " + str(pairs))
             pairlist = ""
             coin = re.search("(\w+)_(\w+)", pairs).group(2)
 
