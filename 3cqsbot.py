@@ -285,7 +285,7 @@ async def my_event_handler(event):
         logging.info("New 3CQS signals incoming...")
 
         tg_output = tg_data(parse_tg(event.raw_text))
-        logging.info("TG msg: "+ str(tg_output))
+        logging.debug("TG msg: "+ str(tg_output))
         bot_output = bot_data()
         account_output = account_data()
         pair_output = pair_data(account_output)
