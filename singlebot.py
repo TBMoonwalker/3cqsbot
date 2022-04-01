@@ -253,7 +253,9 @@ class SingleBot:
                 ):
 
                     pair = self.signal.topcoin(
-                        pair, self.config["filter"].getint("topcoin_limit")
+                        pair,
+                        self.config["filter"].getint("topcoin_limit"),
+                        self.config["filter"].getint("topcoin_volume"),
                     )
                     if pair:
                         self.logging.info(

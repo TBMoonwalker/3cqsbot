@@ -54,6 +54,7 @@ volatility_limit_max = 10000
 price_action_limit_min = 1
 price_action_limit_max = 10000
 # not more then 3500
+topcoin_volume = 100
 topcoin_limit = 3500
 limit_initial_pairs = false
 # RSI-7 < 100 (means asap)

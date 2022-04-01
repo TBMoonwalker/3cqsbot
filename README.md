@@ -226,9 +226,72 @@ docker run --name 3cqsbot --volume session:/App/session --env-file .env -d "your
 ```
 docker logs --follow 3cqsbot
 ```
+# PythonAnywhere
+If you want to run 3cqsbot 24h/7d without running your home computer all the time and you do not have a Rasperry Pi, 
+then PythonAnywhere might be a cheap option for you to run the script.
+
+## Create account
+If you live in the EU go to https://eu.pythonanywhere.com otherwise https://www.pythonanywhere.com.
+The 'Hacker account' plan for 5€/5$ is sufficient enough to run 3cqsbot
+
+## Preparing PythonAnywhere to run 3CQSBot
+Click on `Dashboard`. Under menue "New console" Click on `$ Bash` to open a Bash console in your home directory.
+Clone the actual version of 3cqsbot from Github and install the requirements for the bot by following commands
+```
+git clone https://github.com/TBMoonwalker/3cqsbot.git 3cqsbot
+cd 3cqsbot
+pip3 install -r requirements.txt
+cp config.ini.example config.ini
+```
+When you want to use multiple 3cqsbots simultanously you have to clone 3cqsbot to different directories 
+```
+git clone https://github.com/TBMoonwalker/3cqsbot.git 3cqsbot_TAsafe
+git clone https://github.com/TBMoonwalker/3cqsbot.git 3cqsbot_Urmav6
+git clone https://github.com/TBMoonwalker/3cqsbot.git 3cqsbot_Mars
+```
+## Edit config.ini settings
+Edit the config.ini with the integrated editor of PythonAnywhere in the `Files` menue. Paste the necessary keys of 3commas and Telegram and 
+configure your DCA settings. Once done you can copy your config.ini to other directories of 3cqsbot and adapt the DCA settings.
+
+## Scheduled tasks
+Because the consoles of PythonAnywhere are frequently restarted due to maintenance you have to use scheduled task to ensure continuous work of your 3cqsbot.
+Before running 3cqsbot as scheduled task, make sure that you run the script once on the console to establish the Telegram security session. 
+Enter your phone number (international format, e.g. +49xxx or 0049xxx) of your Telegram account and enter the code you receive from Telegram. 
+Check if 3cqsbot is running without any problems under the console. 
+Do not copy the tgsession file to other directories of 3cqsbots, because it is an individual security file and you will invalidate the established Telegram session
+when used with another version of 3cqsbot.
+
+Click on `Tasks` menue. If you have only one python script running you can use the Always-on task (only one Always-on task allowed on the "Hacker account" plan).
+In case of using more scripts, e.g. for testing DCA settings, you have to use scheduled tasks on an hourly basis. Select "Hourly" and paste
+```
+cd ~/3cqsbot && python 3cqsbot.py 
+```
+If you encounter problems with this command then try this where YOUR_USERNAME has to be replaced by your chosen username on PythonAnywhere.
+```
+cd /home/YOUR_USERNAME/3cqsbot && python 3cqsbot.py
+```
+When using multiple 3cqsbots with different settings you have to add each 3cqsbot directory as seperate hourly task. 
+Rename 3cqsbot.py according to your DCA setting configuration in the `Files` menue to identify the task running in the process list.
+
+1. Hourly Task: 10min ```cd ~/3cqsbot_TAsafe && python 3cqsbot_TAsafe.py```
+2. Hourly Task: 11min ```cd ~/3cqsbot_Urmav6 && python 3cqsbot_Urmav6.py```
+3. Hourly Task: 12min ```cd ~/3cqsbot_Urmav6 && python 3cqsbot_Mars.py```
+
+In case you have to kill a process you can know easily identify your task to kill after fetching the process list under `Running tasks`
+Check the log files in the scheduled task under `Actions` for errors.
+
+## Updating 3cqsbot
+If you want to update 3cqsbot to the newest version open the Bash console. Change to your desired 3cqsbot directory with following commands
+```
+cd 3cqsbot
+git pull
+pip3 install -r requirements.txt
+```
+Check the config.ini.example for new config options. Make sure to update your existent config.ini for the new options with the integrated 
+PythonAnywhere editor (Files menue).
 
 # Debugging
-The script can be started with
+The script can be started with 
 
 ```
 python3 3cqsbot.py -l debug

@@ -56,7 +56,7 @@ class Signals:
         exchange = cg.get_exchanges_tickers_by_id(id=exchange, coin_ids=id)
 
         return exchange
-    
+
     @staticmethod
     @timed_lru_cache(seconds=10800)
     def cgvalues(rank):
@@ -75,6 +75,14 @@ class Signals:
 
         return market
     
+    def topvolume(self, id, volume):
+        # Check if topcoin has enough volume
+        volume_target = True
+
+        if volume > 0:
+
+            exchange = self.cgexchanges("binance", id)
+
     def topvolume(self, id, volume):
         # Check if topcoin has enough volume
         volume_target = True

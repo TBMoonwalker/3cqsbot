@@ -57,6 +57,7 @@ sed -i "s/volatility_limit_max = .*/volatility_limit_max = $VOLATILITY_LIMIT_MAX
 sed -i "s/price_action_limit_min = .*/price_action_limit_min = $PRICE_ACTION_LIMIT_MIN/" config.ini
 sed -i "s/price_action_limit_max = .*/price_action_limit_max = $PRICE_ACTION_LIMIT_MAX/" config.ini
 sed -i "s/topcoin_limit = .*/topcoin_limit = $TOPCOIN_LIMIT/" config.ini
+sed -i "s/topcoin_volume = .*/topcoin_volume = $TOPCOIN_VOLUME/" config.ini
 sed -i "s/deal_mode = .*/deal_mode = $DEAL_MODE/" config.ini
 sed -i "s/limit_initial_pairs = .*/limit_initial_pairs = $LIMIT_INIT_PAIRS/" config.ini
 sed -i "s/btc_pulse = .*/btc_pulse = $BTC_PULSE/" config.ini
