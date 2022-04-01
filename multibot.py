@@ -60,7 +60,7 @@ class MultiBot:
             "strategy_list": self.strategy(),
             "trailing_enabled": self.config["trading"].getboolean("trailing"),
             "trailing_deviation": self.config["trading"].getfloat("trailing_deviation"),
-            "allowed_deals_on_same_pair": 1,
+            "allowed_deals_on_same_pair": self.config["dcabot"].getint("sdsp"),
             "min_volume_btc_24h": self.config["dcabot"].getfloat("btc_min_vol"),
         }
 
@@ -84,9 +84,7 @@ class MultiBot:
             else:
                 self.logging.info("Enabling bot: " + bot["name"])
         else:
-            self.logging.info(
-                "3cqsbot is enabled"
-            )
+            self.logging.info("3cqsbot is enabled")
 
     def disable(self):
         # Disables an existing bot
@@ -160,8 +158,10 @@ class MultiBot:
         # Create pair list
         # Filter topcoins (if set)
         pairlist = self.signal.topcoin(
-            self.tg_data, self.config["filter"].getint("topcoin_limit"),
-            self.config["filter"].getint("topcoin_volume"), self.config["filter"]["topcoin_exchange"]
+            self.tg_data,
+            self.config["filter"].getint("topcoin_limit"),
+            self.config["filter"].getint("topcoin_volume"),
+            self.config["filter"]["topcoin_exchange"],
         )
         for pair in pairlist:
             pair = self.config["trading"]["market"] + "_" + pair
@@ -251,8 +251,15 @@ class MultiBot:
                             )
                         else:
                             pair = self.signal.topcoin(
+<<<<<<< HEAD
                                 pair, self.config["filter"].getint("topcoin_limit"),
                                 self.config["filter"].getint("topcoin_volume"), self.config["filter"]["topcoin_exchange"]
+=======
+                                pair,
+                                self.config["filter"].getint("topcoin_limit"),
+                                self.config["filter"].getint("topcoin_volume"),
+                                self.config["filter"]["topcoin_exchange"],
+>>>>>>> upstream/main
                             )
                             if pair:
                                 self.logging.info("Adding pair " + pair)
