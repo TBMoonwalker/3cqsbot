@@ -143,8 +143,8 @@ def tg_data(text_lines):
     # 7 Lines new Telegram signal
     elif len(text_lines) == 7:
         data = {}
-        token = text_lines[1].replace("#", "")
-        signal = text_lines[2]
+        signal = text_lines[1]
+        token = text_lines[2].replace("#", "")
         action = text_lines[3].replace("BOT_", "")
         volatility_score = text_lines[4].replace("Volatility Score ", "")
 
