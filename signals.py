@@ -102,12 +102,12 @@ class Signals:
         market = self.cgvalues(rank)
 
         self.logging.debug(self.cgvalues.cache_info())
-        self.logging.info("Topcoin limit according to config.ini: " + str(rank))
+        self.logging.info("Applying CG's Top coin filter settings: Marketcap <= " + str(rank) + " and BTC Volume 24h >= " + str(volume))
 
         if isinstance(pairs, list):
             self.logging.info(
                 str(len(pairs))
-                + " Symrank pairs BEFORE matching with CG's Top coins: "
+                + " Symrank pair(s) BEFORE Top coin filter: "
                 + str(pairs)
             )
             pairlist = []
@@ -124,7 +124,7 @@ class Signals:
                             break
         else:
             self.logging.info(
-                "Symrank pair BEFORE matching with CG's Top coins: " + str(pairs)
+                "Symrank pair BEFORE Top coin filter: " + str(pairs)
             )
             pairlist = ""
             coin = re.search("(\w+)_(\w+)", pairs).group(2)
@@ -147,7 +147,7 @@ class Signals:
             else:
                 self.logging.info(
                     str(len(pairlist))
-                    + " Symrank pair(s) AFTER matching with CG's Top coins: "
+                    + " Symrank pair(s) AFTER Top coin filter: "
                     + str(pairlist)
                 )
 

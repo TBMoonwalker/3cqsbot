@@ -85,7 +85,7 @@ class MultiBot:
                 self.logging.info("Enabling bot: " + bot["name"])
         else:
             self.logging.info(
-                "Symrank update finished. 3cqsbot on 3commas already enabled, no need for enabling."
+                "3cqsbot is enabled"
             )
 
     def disable(self):
@@ -160,7 +160,8 @@ class MultiBot:
         # Create pair list
         # Filter topcoins (if set)
         pairlist = self.signal.topcoin(
-            self.tg_data, self.config["filter"].getint("topcoin_limit")
+            self.tg_data, self.config["filter"].getint("topcoin_limit"),
+            self.config["filter"].getint("topcoin_volume"), self.config["filter"]["topcoin_exchange"]
         )
         for pair in pairlist:
             pair = self.config["trading"]["market"] + "_" + pair
@@ -189,7 +190,7 @@ class MultiBot:
 
         if new_bot:
 
-            self.logging.info("Create multi bot with pairs " + str(pairs))
+            self.logging.info("Creating multi bot with pairs " + str(pairs))
             error, data = self.p3cw.request(
                 entity="bots",
                 action="create_bot",
@@ -219,7 +220,7 @@ class MultiBot:
             if error:
                 self.logging.error(error["msg"])
             else:
-                self.logging.info("Updating pairs from /symrank list")
+                self.logging.info("3cqsbot updated with filtered pairs")
                 self.logging.debug("Pairs: " + str(pairs))
                 self.enable(data)
 
@@ -250,7 +251,8 @@ class MultiBot:
                             )
                         else:
                             pair = self.signal.topcoin(
-                                pair, self.config["filter"].getint("topcoin_limit")
+                                pair, self.config["filter"].getint("topcoin_limit"),
+                                self.config["filger"].getint("topcoin_volume"), self.config["filter"]["topcoin_exchange"]
                             )
                             if pair:
                                 self.logging.info("Adding pair " + pair)
@@ -259,7 +261,7 @@ class MultiBot:
                                 self.logging.info(
                                     "Pair "
                                     + pair
-                                    + " is not in Coingecko's top coin list!"
+                                    + " is not in filtered Coingecko's top coin list!"
                                 )
 
                     else:
