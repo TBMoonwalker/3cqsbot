@@ -252,7 +252,7 @@ class MultiBot:
                         else:
                             pair = self.signal.topcoin(
                                 pair, self.config["filter"].getint("topcoin_limit"),
-                                self.config["filter"].getint("topcoin_volume"), self.config["filter"]["topcoin_exchange"]
+                                self.config["filger"].getint("topcoin_volume"), self.config["filter"]["topcoin_exchange"]
                             )
                             if pair:
                                 self.logging.info("Adding pair " + pair)
