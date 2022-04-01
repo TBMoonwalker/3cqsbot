@@ -84,7 +84,9 @@ class MultiBot:
             else:
                 self.logging.info("Enabling bot: " + bot["name"])
         else:
-            self.logging.info("Symrank update finished. 3cqsbot on 3commas already enabled, no need for enabling.")
+            self.logging.info(
+                "Symrank update finished. 3cqsbot on 3commas already enabled, no need for enabling."
+            )
 
     def disable(self):
         # Disables an existing bot
@@ -111,22 +113,30 @@ class MultiBot:
         if triggerpair:
             pair = triggerpair
         else:
-            pair = random.choice(bot["pairs"])
-
-        self.logging.info("Trigger new deal with pair " + pair)
-        error, data = self.p3cw.request(
-            entity="bots",
-            action="start_new_deal",
-            action_id=str(bot["id"]),
-            additional_headers={"Forced-Mode": self.config["trading"]["trade_mode"]},
-            payload={"pair": pair},
-        )
-
-        if error:
-            if bot["active_deals_count"] == bot["max_active_deals"]:
-                self.logging.info("Max deals count reached, not adding a new one.")
+            if self.config["filter"].getboolean("random_pair"):
+                pair = random.choice(bot["pairs"])
             else:
-                self.logging.error(error["msg"])
+                pair = ""
+
+        if pair:
+            self.logging.info("Trigger new deal with pair " + pair)
+            error, data = self.p3cw.request(
+                entity="bots",
+                action="start_new_deal",
+                action_id=str(bot["id"]),
+                additional_headers={
+                    "Forced-Mode": self.config["trading"]["trade_mode"]
+                },
+                payload={"pair": pair},
+            )
+
+            if error:
+                if bot["active_deals_count"] == bot["max_active_deals"]:
+                    self.logging.info("Max deals count reached, not adding a new one.")
+                else:
+                    self.logging.error(error["msg"])
+        else:
+            self.logging.info("Pair was not part of the START signal, ignoring it.")
 
     def create(self):
         # Creates a multi bot with start signal
@@ -224,7 +234,12 @@ class MultiBot:
                 if not triggeronly:
                     pair = self.tg_data["pair"]
 
-                    self.logging.info("Got new 3cqs " + self.tg_data["action"] + " signal for pair " + pair)
+                    self.logging.info(
+                        "Got new 3cqs "
+                        + self.tg_data["action"]
+                        + " signal for pair "
+                        + pair
+                    )
 
                     if self.tg_data["action"] == "START":
                         triggerpair = pair
@@ -242,7 +257,9 @@ class MultiBot:
                                 bot["pairs"].append(pair)
                             else:
                                 self.logging.info(
-                                    "Pair " + pair + " is not in Coingecko's top coin list!"
+                                    "Pair "
+                                    + pair
+                                    + " is not in Coingecko's top coin list!"
                                 )
 
                     else:
