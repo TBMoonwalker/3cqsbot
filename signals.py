@@ -51,6 +51,14 @@ class Signals:
 
     @staticmethod
     @timed_lru_cache(seconds=10800)
+    def cgexchanges(exchange, id):
+        cg = CoinGeckoAPI()
+        exchange = cg.get_exchanges_tickers_by_id(id=exchange, coin_ids=id)
+
+        return exchange
+    
+    @staticmethod
+    @timed_lru_cache(seconds=10800)
     def cgvalues(rank):
         cg = CoinGeckoAPI()
         market = []
@@ -66,15 +74,42 @@ class Signals:
                 market.append(entry)
 
         return market
+    
+    def topvolume(self, id, volume):
+        # Check if topcoin has enough volume
+        volume_target = True
 
-    def topcoin(self, pairs, rank):
+        if volume > 0:
+
+            exchange = self.cgexchanges("binance", id)
+
+            self.logging.debug(self.cgvalues.cache_info())
+
+            for target in exchange["tickers"]:
+                if (
+                    target["target"] == "USDT"
+                    and target["converted_volume"]["btc"] >= volume
+                ):
+                    volume_target = True
+                    break
+                else:
+                    volume_target = False
+
+        return volume_target
+
+    def topcoin(self, pairs, rank, volume):
 
         market = self.cgvalues(rank)
 
         self.logging.debug(self.cgvalues.cache_info())
+        self.logging.info("Topcoin limit according to config.ini: " + str(rank))
 
         if isinstance(pairs, list):
-            self.logging.info("Symrank pair BEFORE matching with CG's Top coins: " + str(pairs))
+            self.logging.info(
+                str(len(pairs))
+                + " Symrank pairs BEFORE matching with CG's Top coins: "
+                + str(pairs)
+            )
             pairlist = []
             for pair in pairs:
                 for symbol in market:
@@ -83,10 +118,14 @@ class Signals:
                         coin.lower() in symbol["symbol"]
                         and int(symbol["market_cap_rank"]) <= rank
                     ):
-                        pairlist.append(pair)
-                        break
+                        # Check if topcoin has enough volume
+                        if self.topvolume(symbol["id"], volume):
+                            pairlist.append(pair)
+                            break
         else:
-            self.logging.info(str(len(pairs)) + " Symrank pairs BEFORE matching with CG's Top coins: " + str(pairs))
+            self.logging.info(
+                "Symrank pair BEFORE matching with CG's Top coins: " + str(pairs)
+            )
             pairlist = ""
             coin = re.search("(\w+)_(\w+)", pairs).group(2)
 
@@ -95,16 +134,23 @@ class Signals:
                     coin.lower() in symbol["symbol"]
                     and int(symbol["market_cap_rank"]) <= rank
                 ):
-                    pairlist = pairs
-                    break
-        self.logging.info("Topcoin limit according to config.ini: " + str(rank))
+                    # Check if topcoin has enough volume
+                    if self.topvolume(symbol["id"], volume):
+                        pairlist = pairs
+                        break
+
         if not pairlist:
-           self.logging.info(str(pairs) + " not ranging under CG's Top coins")
+            self.logging.info(str(pairs) + " not ranging under CG's Top coins")
         else:
-           if isinstance(pairlist, str):
-               self.logging.info(str(pairlist) + " matching with CG's Top coins")
-           else:
-               self.logging.info(str(len(pairlist)) + " Symrank pair(s) AFTER matching with CG's Top coins: " + str(pairlist))
+            if isinstance(pairlist, str):
+                self.logging.info(str(pairlist) + " matching with CG's Top coins")
+            else:
+                self.logging.info(
+                    str(len(pairlist))
+                    + " Symrank pair(s) AFTER matching with CG's Top coins: "
+                    + str(pairlist)
+                )
+
         return pairlist
 
     # Credits goes to @IamtheOnewhoKnocks from
