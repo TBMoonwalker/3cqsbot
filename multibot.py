@@ -161,7 +161,7 @@ class MultiBot:
         # Filter topcoins (if set)
         pairlist = self.signal.topcoin(
             self.tg_data, self.config["filter"].getint("topcoin_limit"),
-            self.config["filter"].getint("topcoin_volume"), "binance"
+            self.config["filter"].getint("topcoin_volume"), self.config["filter"]["topcoin_exchange"]
         )
         for pair in pairlist:
             pair = self.config["trading"]["market"] + "_" + pair
@@ -252,7 +252,7 @@ class MultiBot:
                         else:
                             pair = self.signal.topcoin(
                                 pair, self.config["filter"].getint("topcoin_limit"),
-                                self.config["filger"].getint("topcoin_volume"), "binance"
+                                self.config["filger"].getint("topcoin_volume"), self.config["filter"]["topcoin_exchange"]
                             )
                             if pair:
                                 self.logging.info("Adding pair " + pair)
