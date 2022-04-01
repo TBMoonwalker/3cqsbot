@@ -3,7 +3,6 @@ import numpy as np
 import asyncio
 import math
 import re
-import logging
 
 from pycoingecko import CoinGeckoAPI
 from tenacity import retry, wait_fixed
