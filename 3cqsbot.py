@@ -114,7 +114,8 @@ def parse_tg(raw_text):
 def tg_data(text_lines):
     # Make sure the message is a signal
     # 6 Lines old Telegram signal - will be removed after @Mantis update
-    if len(text_lines) == 6:
+    # 7 Lines new Telegram signal
+    if len(text_lines) == 6 or len(text_lines) == 7:
         data = {}
         token = text_lines[1].replace("#", "")
         action = text_lines[2].replace("BOT_", "")
@@ -140,35 +141,7 @@ def tg_data(text_lines):
             "price_action": float(priceaction_score),
             "symrank": int(symrank),
         }
-    # 7 Lines new Telegram signal
-    elif len(text_lines) == 7:
-        data = {}
-        signal = text_lines[1]
-        token = text_lines[2].replace("#", "")
-        action = text_lines[3].replace("BOT_", "")
-        volatility_score = text_lines[4].replace("Volatility Score ", "")
 
-        if volatility_score == "N/A":
-            volatility_score = 9999999
-
-        priceaction_score = text_lines[5].replace("Price Action Score ", "")
-
-        if priceaction_score == "N/A":
-            priceaction_score = 9999999
-
-        symrank = text_lines[6].replace("SymRank #", "")
-
-        if symrank == "N/A":
-            symrank = 9999999
-
-        data = {
-            "pair": config["trading"]["market"] + "_" + token,
-            "action": action,
-            "volatility": float(volatility_score),
-            "price_action": float(priceaction_score),
-            "symrank": int(symrank),
-        }
-    # Symrank list
     elif len(text_lines) == 17:
         pairs = {}
         data = []
@@ -259,9 +232,7 @@ def pair_data(account):
 
 
 async def symrank():
-    logging.info(
-        "Sending /symrank command to 3C Quick Stats on Telegram to get new pairs"
-    )
+    logging.info("Sending /symrank command to 3C Quick Stats on Telegram to get new pairs")
     await client.send_message(asyncState.chatid, "/symrank")
 
 
@@ -314,7 +285,7 @@ async def my_event_handler(event):
         logging.info("New 3CQS signal incoming...")
 
         tg_output = tg_data(parse_tg(event.raw_text))
-        logging.debug("TG msg: " + str(tg_output))
+        logging.debug("TG msg: "+ str(tg_output))
         bot_output = bot_data()
         account_output = account_data()
         pair_output = pair_data(account_output)
@@ -406,7 +377,6 @@ async def main():
         while True:
             await btcbooltask
             await switchtask
-
 
 with client:
     client.loop.run_until_complete(main())
