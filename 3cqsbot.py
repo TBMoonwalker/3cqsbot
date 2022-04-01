@@ -279,10 +279,10 @@ def _handle_task_result(task: asyncio.Task) -> None:
 async def my_event_handler(event):
 
     if asyncState.btcbool and config["filter"].getboolean("btc_pulse"):
-        logging.info("New 3CQS signal not processed - Bot stopped because of BTC downtrend")
+        logging.info("Bot stopped - no new signals processed")
     else:
 
-        logging.info("New 3CQS signal incoming...")
+        logging.info("New 3CQS signals incoming...")
 
         tg_output = tg_data(parse_tg(event.raw_text))
         logging.debug("TG msg: "+ str(tg_output))
