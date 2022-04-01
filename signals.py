@@ -74,6 +74,14 @@ class Signals:
                 market.append(entry)
 
         return market
+    
+    def topvolume(self, id, volume):
+        # Check if topcoin has enough volume
+        volume_target = True
+
+        if volume > 0:
+
+            exchange = self.cgexchanges("binance", id)
 
     def topvolume(self, id, volume):
         # Check if topcoin has enough volume
@@ -206,7 +214,7 @@ class Signals:
                 btcusdt.percentchange_15mins[-1] < -1
                 or btcusdt.EMA50[-1] > btcusdt.EMA9[-1]
             ):
-                self.logging.info("Bot sleep")
+                self.logging.info("BTC pulse signaling Downtrend. Waiting 5m more to confirm Downtrend.")
 
                 # after 5mins getting the latest BTC data to see if it has had a sharp rise in previous 5 mins
                 await asyncio.sleep(300)
@@ -218,14 +226,15 @@ class Signals:
                     btcusdt.EMA9[-1] > btcusdt.EMA50[-1]
                     and btcusdt.EMA50[-2] > btcusdt.EMA9[-2]
                 ):
-                    self.logging.info("Bot awake")
+                    self.logging.info("No Downtrend proved. BTC still in Uptrend")
                     asyncState.btcbool = False
                 else:
-                    self.logging.info("Bot sleep")
+                    self.logging.info("Downtrend proved. BTC pulse sending 3cqsbot to sleep")
                     asyncState.btcbool = True
 
             else:
-                self.logging.info("Bot awake")
+                self.logging.info("BTC pulse signaling Uptrend")
                 asyncState.btcbool = False
 
+            self.logging.info("Next BTC pulse check in 5m")
             await asyncio.sleep(300)
