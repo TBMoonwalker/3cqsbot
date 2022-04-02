@@ -86,7 +86,7 @@ class MultiBot:
             else:
                 self.logging.info("Enabling bot: " + bot["name"])
         else:
-            self.logging.info("3cqsbot is enabled")
+            self.logging.info(bot["name"] + " enabled")
 
     def disable(self):
         # Disables an existing bot
