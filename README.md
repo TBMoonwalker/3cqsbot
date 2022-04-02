@@ -164,13 +164,17 @@ Everything is the same as with the other multi mode, but the deals are started d
 
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
+symrank_signal | string | YES | (old), SymRank Top 100 Triple Tracker, SymRank Top 30, X-Treme Volatility | Decide which signal the bot should parse. "Old" is default and should be used as long as the new signals are not available for everyone
 symrank_limit | integer | YES | (10000) | Bots will be created when the symrank value is under this limit
 volatility_limit | number | YES | (10000) | Bots will be created when the volatility value is under this limit
 price_action_limit | number | YES | (10000) | Bots will be created when the price_action value is under this limit
-topcoin_limit | integer | YES | (10000) | Token pair has to be in the configured topcoin limit to be traded by the bot
+topcoin_limit | integer | NO | (10000) | Token pair has to be in the configured topcoin limit to be traded by the bot
+topcoin_volume | integer | NO | (0) | Volume check against Coingecko (btc_min_vol means volume check directly in 3commas - not before like this setting). Only pairs with the given volume are traded. Default is 0 and means volume check is disabled
+topcoin_exchange | string | NO | (binance), gdax | Name of the exchange to check the volume. Because every exchange has another id, please contact me for your exchange and I will update this list here for configuration
 deal_mode | string | YES | ([{"options": {"time": "3m", "points": "100"}, "strategy": "rsi"}]) signal | Deal strategy how the script is creating new deals in multipair bot - for more see the "Deal Modes" section
-limit_initial_pairs | boolean | YES | (false) | Limit initial pairs to the max number of deals (MAD) - bot chooses the top pairs
-btc_pulse | boolean | YES | (false) | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
+limit_initial_pairs | boolean | YES | (false) true | Limit initial pairs to the max number of deals (MAD) - bot chooses the top pairs
+random_pair | boolean | NO | (false) true | If true then random pairs from the symrank list will be used for new deals in multibot
+btc_pulse | boolean | YES | (false) true | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
 token_denylist | array | NO | ([BTC_USDT, ETH_USDT, BUSD_USDT, USDC_USDT, USDT_USDT]) | Denylist of pairs which not be used by the bot for new deals
 
 ### BTC Pulse

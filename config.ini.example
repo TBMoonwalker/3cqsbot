@@ -47,6 +47,7 @@ trailing = false
 trailing_deviation = 0.2
 
 [filter]
+symrank_signal = old
 symrank_limit_min = 1
 symrank_limit_max = 10000
 volatility_limit_min = 1
