@@ -1,5 +1,7 @@
+from distutils.command.config import config
 import random
 import json
+from sys import prefix
 
 from signals import Signals
 
@@ -84,7 +86,7 @@ class MultiBot:
             else:
                 self.logging.info("Enabling bot: " + bot["name"])
         else:
-            self.logging.info("3cqsbot is enabled")
+            self.logging.info(bot["name"] + " enabled")
 
     def disable(self):
         # Disables an existing bot
@@ -203,7 +205,10 @@ class MultiBot:
             if error:
                 self.logging.error(error["msg"])
             else:
-                self.enable(data)
+                if not self.config["filter"].getboolean("ext_botswitch"):
+                    self.enable(data)
+                else:    
+                    self.logging.info("ext_botswitch set to true, bot has to be enabled by external TV signal")
                 self.new_deal(data, triggerpair="")
         else:
 
@@ -220,9 +225,12 @@ class MultiBot:
             if error:
                 self.logging.error(error["msg"])
             else:
-                self.logging.info("3cqsbot updated with filtered pairs")
+                self.logging.info(bot["name"]+" updated with filtered pairs")
                 self.logging.debug("Pairs: " + str(pairs))
-                self.enable(data)
+                if not self.config["filter"].getboolean("ext_botswitch"):
+                    self.enable(data)
+                else:    
+                    self.logging.info("ext_botswitch set to true, bot enabling/disabling has to be managed by external TV signal")  
 
     def trigger(self, triggeronly=False):
         # Updates multi bot with new pairs
