@@ -64,6 +64,7 @@ sed -i "s/deal_mode = .*/deal_mode = $DEAL_MODE/" config.ini
 sed -i "s/limit_initial_pairs = .*/limit_initial_pairs = $LIMIT_INIT_PAIRS/" config.ini
 sed -i "s/random_pair = .*/random_pair = $RANDOM_PAIR/" config.ini
 sed -i "s/btc_pulse = .*/btc_pulse = $BTC_PULSE/" config.ini
+sed -i "s/ext_botswitch = .*/ext_botswitch = $EXT_BOTSWITCH/" config.ini
 sed -i "s/token_denylist = .*/token_denylist = $DENYLIST/" config.ini
 
 python3 -u 3cqsbot.py

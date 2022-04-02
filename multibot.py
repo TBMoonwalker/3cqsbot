@@ -1,4 +1,3 @@
-from distutils.command.config import config
 import random
 import json
 from sys import prefix
@@ -207,8 +206,10 @@ class MultiBot:
             else:
                 if not self.config["filter"].getboolean("ext_botswitch"):
                     self.enable(data)
-                else:    
-                    self.logging.info("ext_botswitch set to true, bot has to be enabled by external TV signal")
+                else:
+                    self.logging.info(
+                        "ext_botswitch set to true, bot has to be enabled by external TV signal"
+                    )
                 self.new_deal(data, triggerpair="")
         else:
 
@@ -225,12 +226,14 @@ class MultiBot:
             if error:
                 self.logging.error(error["msg"])
             else:
-                self.logging.info(bot["name"]+" updated with filtered pairs")
+                self.logging.info(bot["name"] + " updated with filtered pairs")
                 self.logging.debug("Pairs: " + str(pairs))
                 if not self.config["filter"].getboolean("ext_botswitch"):
                     self.enable(data)
-                else:    
-                    self.logging.info("ext_botswitch set to true, bot enabling/disabling has to be managed by external TV signal")  
+                else:
+                    self.logging.info(
+                        "ext_botswitch set to true, bot enabling/disabling has to be managed by external TV signal"
+                    )
 
     def trigger(self, triggeronly=False):
         # Updates multi bot with new pairs

@@ -173,8 +173,9 @@ topcoin_volume | integer | NO | (0) | Volume check against Coingecko (btc_min_vo
 topcoin_exchange | string | NO | (binance), gdax | Name of the exchange to check the volume. Because every exchange has another id, please contact me for your exchange and I will update this list here for configuration
 deal_mode | string | YES | ([{"options": {"time": "3m", "points": "100"}, "strategy": "rsi"}]) signal | Deal strategy how the script is creating new deals in multipair bot - for more see the "Deal Modes" section
 limit_initial_pairs | boolean | YES | (false) true | Limit initial pairs to the max number of deals (MAD) - bot chooses the top pairs
-random_pair | boolean | NO | (false) true | If true then random pairs from the symrank list will be used for new deals in multibot
-btc_pulse | boolean | YES | (false) true | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
+random_pair | boolean | NO | (false), true | If true then random pairs from the symrank list will be used for new deals in multibot
+btc_pulse | boolean | YES | (false), true | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
+ext_botswitch | boolean | NO | (false), true | If enabled the automatic multibot enablement will be disabled and only triggered by external events - you must disable BTC Pulse if you enable this switch !!!
 token_denylist | array | NO | ([BTC_USDT, ETH_USDT, BUSD_USDT, USDC_USDT, USDT_USDT]) | Denylist of pairs which not be used by the bot for new deals
 
 ### BTC Pulse

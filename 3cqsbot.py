@@ -310,8 +310,14 @@ def _handle_task_result(task: asyncio.Task) -> None:
 @client.on(events.NewMessage(chats=config["telegram"]["chatroom"]))
 async def my_event_handler(event):
 
-    if asyncState.btcbool and config["filter"].getboolean("btc_pulse") and not config["filter"].getboolean("ext_botswitch"):
-        logging.info("New 3CQS signal not processed - Bot stopped because of BTC downtrend")
+    if (
+        asyncState.btcbool
+        and config["filter"].getboolean("btc_pulse")
+        and not config["filter"].getboolean("ext_botswitch")
+    ):
+        logging.info(
+            "New 3CQS signal not processed - Bot stopped because of BTC downtrend"
+        )
     else:
 
         logging.info("New 3CQS signal incoming...")
@@ -408,7 +414,9 @@ async def main():
     if not config["dcabot"].getboolean("single"):
         await symrank()
 
-    if config["filter"].getboolean("btc_pulse") and not config["filter"].getboolean("ext_botswitch"):
+    if config["filter"].getboolean("btc_pulse") and not config["filter"].getboolean(
+        "ext_botswitch"
+    ):
         btcbooltask = client.loop.create_task(signals.getbtcbool(asyncState))
         btcbooltask.add_done_callback(_handle_task_result)
         switchtask = client.loop.create_task(botswitch())
@@ -424,5 +432,5 @@ with client:
 
 client.start()
 
-if not config["filter"].getboolean("btc_pulse") or config["filter"].getboolean("ext_botswitch"):
+if not config["filter"].getboolean("btc_pulse"):
     client.run_until_disconnected()

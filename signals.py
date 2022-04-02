@@ -102,7 +102,14 @@ class Signals:
         market = self.cgvalues(rank)
 
         self.logging.debug(self.cgvalues.cache_info())
-        self.logging.info("Applying CG's Top coin filter settings: marketcap <= " + str(rank) + " with daily BTC volume >= " + str(volume) + " on " + str(exchange))
+        self.logging.info(
+            "Applying CG's Top coin filter settings: marketcap <= "
+            + str(rank)
+            + " with daily BTC volume >= "
+            + str(volume)
+            + " on "
+            + str(exchange)
+        )
 
         if isinstance(pairs, list):
             self.logging.info(
@@ -123,9 +130,7 @@ class Signals:
                             pairlist.append(pair)
                             break
         else:
-            self.logging.info(
-                "Symrank pair BEFORE Top coin filter: " + str(pairs)
-            )
+            self.logging.info("Symrank pair BEFORE Top coin filter: " + str(pairs))
             pairlist = ""
             coin = re.search("(\w+)_(\w+)", pairs).group(2)
 
