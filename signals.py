@@ -102,7 +102,7 @@ class Signals:
         market = self.cgvalues(rank)
 
         self.logging.debug(self.cgvalues.cache_info())
-        self.logging.info("Applying CG's Top coin filter settings: Marketcap <= " + str(rank) + " and BTC Volume 24h >= " + str(volume))
+        self.logging.info("Applying CG's Top coin filter settings: marketcap <= " + str(rank) + " with daily volume >= " + str(volume) + "BTC on " + str(exchange))
 
         if isinstance(pairs, list):
             self.logging.info(
