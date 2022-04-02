@@ -50,6 +50,7 @@ sed -i "s/trailing = .*/trailing = $TRAILING/" config.ini
 sed -i "s/trailing_deviation = .*/trailing_deviation = $TRAILING_DEVIATION/" config.ini
 
 # Filter settings
+sed -i "s/symrank_signal = .*/symrank_signal = $SYMRANK_SIGNAL/" config.ini
 sed -i "s/symrank_limit_min = .*/symrank_limit_min = $SYMRANK_LIMIT_MIN/" config.ini
 sed -i "s/symrank_limit_max = .*/symrank_limit_max = $SYMRANK_LIMIT_MAX/" config.ini
 sed -i "s/volatility_limit_min = .*/volatility_limit_min = $VOLATILITY_LIMIT_MIN/" config.ini

@@ -116,6 +116,7 @@ def tg_data(text_lines):
     # 6 Lines old Telegram signal - will be removed after @Mantis update
     if len(text_lines) == 6:
         data = {}
+        signal = "old"
         token = text_lines[1].replace("#", "")
         action = text_lines[2].replace("BOT_", "")
         volatility_score = text_lines[3].replace("Volatility Score ", "")
@@ -134,6 +135,7 @@ def tg_data(text_lines):
             symrank = 9999999
 
         data = {
+            "signal": signal,
             "pair": config["trading"]["market"] + "_" + token,
             "action": action,
             "volatility": float(volatility_score),
@@ -162,6 +164,7 @@ def tg_data(text_lines):
             symrank = 9999999
 
         data = {
+            "signal": signal,
             "pair": config["trading"]["market"] + "_" + token,
             "action": action,
             "volatility": float(volatility_score),
@@ -320,51 +323,59 @@ async def my_event_handler(event):
         pair_output = pair_data(account_output)
 
         if tg_output and not isinstance(tg_output, list):
-            if config["dcabot"].getboolean("single"):
-                bot = SingleBot(
-                    tg_output, bot_output, account_output, config, p3cw, logging
-                )
-            else:
-                bot = MultiBot(
-                    tg_output,
-                    bot_output,
-                    account_output,
-                    pair_output,
-                    config,
-                    p3cw,
-                    logging,
-                )
-                # Every signal triggers a new multibot deal
-                bot.trigger(triggeronly=True)
 
-            # Trigger bot if limits passed
-            if tg_output["volatility"] != 0 and tg_output["pair"] in pair_output:
-                if (
-                    tg_output["volatility"]
-                    >= config["filter"].getfloat("volatility_limit_min")
-                    and tg_output["volatility"]
-                    <= config["filter"].getfloat("volatility_limit_max")
-                    and tg_output["price_action"]
-                    >= config["filter"].getfloat("price_action_limit_min")
-                    and tg_output["price_action"]
-                    <= config["filter"].getfloat("price_action_limit_max")
-                    and tg_output["symrank"]
-                    >= config["filter"].getint("symrank_limit_min")
-                    and tg_output["symrank"]
-                    <= config["filter"].getint("symrank_limit_max")
-                ) or tg_output["action"] == "STOP":
+            # Check if it is the right signal
+            if tg_output["signal"] == config["filter"]["symrank_signal"]:
 
-                    bot.trigger()
-
+                # Choose multibot or singlebot
+                if config["dcabot"].getboolean("single"):
+                    bot = SingleBot(
+                        tg_output, bot_output, account_output, config, p3cw, logging
+                    )
                 else:
-                    logging.info("Trading limits reached. Deal not placed.")
+                    bot = MultiBot(
+                        tg_output,
+                        bot_output,
+                        account_output,
+                        pair_output,
+                        config,
+                        p3cw,
+                        logging,
+                    )
+                    # Every signal triggers a new multibot deal
+                    bot.trigger(triggeronly=True)
+
+                # Trigger bot if limits passed
+                if tg_output["volatility"] != 0 and tg_output["pair"] in pair_output:
+                    if (
+                        tg_output["volatility"]
+                        >= config["filter"].getfloat("volatility_limit_min")
+                        and tg_output["volatility"]
+                        <= config["filter"].getfloat("volatility_limit_max")
+                        and tg_output["price_action"]
+                        >= config["filter"].getfloat("price_action_limit_min")
+                        and tg_output["price_action"]
+                        <= config["filter"].getfloat("price_action_limit_max")
+                        and tg_output["symrank"]
+                        >= config["filter"].getint("symrank_limit_min")
+                        and tg_output["symrank"]
+                        <= config["filter"].getint("symrank_limit_max")
+                    ) or tg_output["action"] == "STOP":
+
+                        bot.trigger()
+
+                    else:
+                        logging.info("Trading limits reached. Deal not placed.")
+                else:
+                    logging.info(
+                        "Pair "
+                        + tg_output["pair"]
+                        + " is not traded on account "
+                        + config["trading"]["account_name"]
+                    )
             else:
-                logging.info(
-                    "Pair "
-                    + tg_output["pair"]
-                    + " is not traded on account "
-                    + config["trading"]["account_name"]
-                )
+                logging.info("Signal not configured, doing nothing.")
+
         elif tg_output and isinstance(tg_output, list):
             if not config["dcabot"].getboolean("single"):
                 # Create or update multibot with pairs from "/symrank"
