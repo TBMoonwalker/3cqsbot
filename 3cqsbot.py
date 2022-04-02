@@ -280,7 +280,7 @@ async def botswitch():
                 # Send new top 30 for activating the multibot
                 await symrank()
 
-        elif asyncState.btcbool and asyncState.botswitch:
+        elif asyncState.btcbool and asyncState.botswitch and not config["filter"].getboolean("ext_botswitch"):
             logging.info("Disabling Bot because of BTC downtrend")
             asyncState.botswitch = False
             logging.debug("Botswitch: " + str(asyncState.botswitch))
