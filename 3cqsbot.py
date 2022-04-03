@@ -8,6 +8,7 @@ import asyncio
 import sys
 import os
 import portalocker
+import math
 
 from telethon import TelegramClient, events
 from py3cw.request import Py3CW
@@ -196,17 +197,32 @@ def tg_data(text_lines):
 
 def bot_data():
     # Gets information about existing bot in 3Commas
-    error, data = p3cw.request(
-        entity="bots",
-        action="",
-        additional_headers={"Forced-Mode": config["trading"]["trade_mode"]},
-        payload={"limit": 1000},
-    )
+    botlimit = 200
+    pages = math.ceil(botlimit / 100)
+    bots = []
 
-    if error:
-        sys.exit(error["msg"])
+    for page in range(1, pages + 1):
+        if page == 1:
+            offset = 0
+        else:
+            offset = (page - 1) * 100 + (page - 1)
 
-    return data
+        error, data = p3cw.request(
+            entity="bots",
+            action="",
+            additional_headers={"Forced-Mode": config["trading"]["trade_mode"]},
+            payload={"limit": 100, "offset": offset},
+        )
+
+        if error:
+            sys.exit(error["msg"])
+        else:
+            if data:
+                bots += data
+            else:
+                break
+
+    return bots
 
 
 def account_data():
