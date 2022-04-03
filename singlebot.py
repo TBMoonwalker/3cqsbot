@@ -4,6 +4,8 @@ import time
 
 from signals import Signals
 
+deal_lock = False
+
 
 class SingleBot:
     def __init__(self, tg_data, bot_data, account_data, config, p3cw, logging):
@@ -234,8 +236,10 @@ class SingleBot:
 
         self.logging.info("Got new 3cqs signal")
 
+        global deal_lock
         new_bot = True
         pair = self.tg_data["pair"]
+        running_deals = self.deal_count()
 
         if self.bot_data:
             for bot in self.bot_data:
@@ -246,27 +250,45 @@ class SingleBot:
                     break
 
             if new_bot:
-                if (
-                    self.tg_data["action"] == "START"
-                    and self.bot_count() < self.config["dcabot"].getint("single_count")
-                    and self.deal_count() < self.config["dcabot"].getint("single_count")
-                ):
+                if self.tg_data["action"] == "START":
+                    if self.bot_count() < self.config["dcabot"].getint("single_count"):
 
-                    pair = self.signal.topcoin(
-                        pair,
-                        self.config["filter"].getint("topcoin_limit"),
-                        self.config["filter"].getint("topcoin_volume"),
-                        self.config["filter"]["topcoin_exchange"],
-                    )
-                    if pair:
-                        self.logging.info(
-                            "No single bot for " + pair + " found - creating one"
+                        pair = self.signal.topcoin(
+                            pair,
+                            self.config["filter"].getint("topcoin_limit"),
+                            self.config["filter"].getint("topcoin_volume"),
+                            self.config["filter"]["topcoin_exchange"],
                         )
-                        self.create()
-                    else:
-                        self.logging.info(
-                            "Pair " + pair + " is not in the top coin list - not added!"
-                        )
+
+                        if pair:
+                            self.logging.info(
+                                "No single bot for " + pair + " found - creating one"
+                            )
+                            # avoid deals over limit
+                            if (
+                                running_deals
+                                < self.config["dcabot"].getint("single_count") - 1
+                            ):
+                                self.create()
+                                deal_lock = False
+                            elif (
+                                running_deals
+                                == self.config["dcabot"].getint("single_count") - 1
+                            ) and not deal_lock:
+                                self.create()
+                                deal_lock = True
+                            else:
+                                self.logging.info(
+                                    "Blocking new deals, because last enabled bot can potentialy reach max deals!"
+                                )
+
+                        else:
+                            self.logging.info(
+                                "Pair "
+                                + pair
+                                + " is not in the top coin list - not added!"
+                            )
+
                 elif self.tg_data["action"] == "STOP":
                     self.logging.info(
                         "Stop command on a non-existing single bot with pair: " + pair
@@ -282,12 +304,25 @@ class SingleBot:
                 self.logging.debug("Bot-Name: " + bot["name"])
 
                 if self.tg_data["action"] == "START":
-                    if self.bot_count() < self.config["dcabot"].getint(
-                        "single_count"
-                    ) and self.deal_count() < self.config["dcabot"].getint(
-                        "single_count"
-                    ):
-                        self.enable(bot)
+                    if self.bot_count() < self.config["dcabot"].getint("single_count"):
+                        # avoid deals over limit
+                        if (
+                            self.deal_count()
+                            < self.config["dcabot"].getint("single_count") - 1
+                        ):
+                            self.enable(bot)
+                            deal_lock = False
+                        elif (
+                            self.deal_count()
+                            == self.config["dcabot"].getint("single_count") - 1
+                        ) and not deal_lock:
+                            self.enable(bot)
+                            deal_lock = True
+                        else:
+                            self.logging.info(
+                                "Blocking new deals, because last enabled bot can potentialy reach max deals!"
+                            )
+
                     else:
                         self.logging.info(
                             "Maximum enabled bots/deals reached. Single bot with pair: "

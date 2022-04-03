@@ -54,12 +54,12 @@ volatility_limit_min = 1
 volatility_limit_max = 10000
 price_action_limit_min = 1
 price_action_limit_max = 10000
-# not more then 3500
 topcoin_volume = 0
+# not more then 3500
 topcoin_limit = 3500
 topcoin_exchange = binance
 limit_initial_pairs = false
-random_pair = false
+random_pair = true
 # RSI-7 < 100 (means asap)
 # single strategy
 deal_mode = [{"options": {"time": "3m", "points": "100"}, "strategy": "rsi"}]

@@ -31,13 +31,13 @@ class MultiBot:
 
     def adjustmad(self, pairs, mad):
         # Lower max active deals, when pairs are under mad
-        if len(pairs) < mad:
+        if len(pairs) * self.config["dcabot"].getint("sdsp") < mad:
             self.logging.debug(
                 "Pairs are under 'mad' - Lower max active deals to actual pairs"
             )
             mad = len(pairs)
         # Raise max active deals to minimum pairs or mad if possible
-        elif len(pairs) >= mad:
+        elif len(pairs) * self.config["dcabot"].getint("sdsp") >= mad:
             self.logging.debug("Pairs are over 'mad' - nothing to do")
             mad = self.config["dcabot"].getint("mad")
 
