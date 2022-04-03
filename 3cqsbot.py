@@ -205,7 +205,7 @@ def bot_data():
         if page == 1:
             offset = 0
         else:
-            offset = (page - 1) * 100 + (page - 1)
+            offset = (page - 1) * 100
 
         error, data = p3cw.request(
             entity="bots",
