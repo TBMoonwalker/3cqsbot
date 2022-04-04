@@ -7,39 +7,39 @@ from signals import Signals
 
 class MultiBot:
     def __init__(
-        self, tg_data, bot_data, account_data, pair_data, config, p3cw, logging
+        self, tg_data, bot_data, account_data, pair_data, attributes, p3cw, logging
     ):
         self.tg_data = tg_data
         self.bot_data = bot_data
         self.account_data = account_data
         self.pair_data = pair_data
-        self.config = config
+        self.attributes = attributes
         self.p3cw = p3cw
         self.logging = logging
         self.signal = Signals(logging)
-        self.prefix = self.config["dcabot"]["prefix"]
-        self.subprefix = self.config["dcabot"]["subprefix"]
-        self.suffix = self.config["dcabot"]["suffix"]
+        self.prefix = self.attributes.get("prefix")
+        self.subprefix = self.attributes.get("subprefix")
+        self.suffix = self.attributes.get("suffix")
 
     def strategy(self):
-        if self.config["filter"]["deal_mode"] == "signal":
+        if self.attributes.get("deal_mode") == "signal":
             strategy = [{"strategy": "manual"}]
         else:
-            strategy = json.loads(self.config["filter"]["deal_mode"])
+            strategy = json.loads(self.attributes.get("deal_mode"))
 
         return strategy
 
     def adjustmad(self, pairs, mad):
         # Lower max active deals, when pairs are under mad
-        if len(pairs) * self.config["dcabot"].getint("sdsp") < mad:
+        if len(pairs) * self.attributes.get("sdsp") < mad:
             self.logging.debug(
                 "Pairs are under 'mad' - Lower max active deals to actual pairs"
             )
             mad = len(pairs)
         # Raise max active deals to minimum pairs or mad if possible
-        elif len(pairs) * self.config["dcabot"].getint("sdsp") >= mad:
+        elif len(pairs) * self.attributes.get("sdsp") >= mad:
             self.logging.debug("Pairs are over 'mad' - nothing to do")
-            mad = self.config["dcabot"].getint("mad")
+            mad = self.attributes.get("mad")
 
         return mad
 
@@ -49,20 +49,20 @@ class MultiBot:
             "account_id": self.account_data["id"],
             "pairs": pairs,
             "max_active_deals": mad,
-            "base_order_volume": self.config["dcabot"].getfloat("bo"),
-            "take_profit": self.config["dcabot"].getfloat("tp"),
-            "safety_order_volume": self.config["dcabot"].getfloat("so"),
-            "martingale_volume_coefficient": self.config["dcabot"].getfloat("os"),
-            "martingale_step_coefficient": self.config["dcabot"].getfloat("ss"),
-            "max_safety_orders": self.config["dcabot"].getint("mstc"),
-            "safety_order_step_percentage": self.config["dcabot"].getfloat("sos"),
+            "base_order_volume": self.attributes.get("bo"),
+            "take_profit": self.attributes.get("tp"),
+            "safety_order_volume": self.attributes.get("so"),
+            "martingale_volume_coefficient": self.attributes.get("os"),
+            "martingale_step_coefficient": self.attributes.get("ss"),
+            "max_safety_orders": self.attributes.get("mstc"),
+            "safety_order_step_percentage": self.attributes.get("sos"),
             "take_profit_type": "total",
-            "active_safety_orders_count": self.config["dcabot"].getint("max"),
+            "active_safety_orders_count": self.attributes.get("max"),
             "strategy_list": self.strategy(),
-            "trailing_enabled": self.config["trading"].getboolean("trailing"),
-            "trailing_deviation": self.config["trading"].getfloat("trailing_deviation"),
-            "allowed_deals_on_same_pair": self.config["dcabot"].getint("sdsp"),
-            "min_volume_btc_24h": self.config["dcabot"].getfloat("btc_min_vol"),
+            "trailing_enabled": self.attributes.get("trailing"),
+            "trailing_deviation": self.attributes.get("trailing_deviation"),
+            "allowed_deals_on_same_pair": self.attributes.get("sdsp"),
+            "min_volume_btc_24h": self.attributes.get("btc_min_vol"),
         }
 
         return payload
@@ -74,9 +74,7 @@ class MultiBot:
                 entity="bots",
                 action="enable",
                 action_id=str(bot["id"]),
-                additional_headers={
-                    "Forced-Mode": self.config["trading"]["trade_mode"]
-                },
+                additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
             )
 
             if error:
@@ -98,7 +96,7 @@ class MultiBot:
                     action="disable",
                     action_id=str(bot["id"]),
                     additional_headers={
-                        "Forced-Mode": self.config["trading"]["trade_mode"]
+                        "Forced-Mode": self.attributes.get("trade_mode")
                     },
                 )
 
@@ -112,7 +110,7 @@ class MultiBot:
         if triggerpair:
             pair = triggerpair
         else:
-            if self.config["filter"].getboolean("random_pair"):
+            if self.attributes.get("random_pair"):
                 pair = random.choice(bot["pairs"])
             else:
                 pair = ""
@@ -123,9 +121,7 @@ class MultiBot:
                 entity="bots",
                 action="start_new_deal",
                 action_id=str(bot["id"]),
-                additional_headers={
-                    "Forced-Mode": self.config["trading"]["trade_mode"]
-                },
+                additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
                 payload={"pair": pair},
             )
 
@@ -142,7 +138,7 @@ class MultiBot:
         new_bot = True
         pairs = []
         botnames = []
-        mad = self.config["dcabot"].getint("mad")
+        mad = self.attributes.get("mad")
 
         # Check for existing or new bot
         for bot in self.bot_data:
@@ -160,12 +156,12 @@ class MultiBot:
         # Filter topcoins (if set)
         pairlist = self.signal.topcoin(
             self.tg_data,
-            self.config["filter"].getint("topcoin_limit"),
-            self.config["filter"].getint("topcoin_volume"),
-            self.config["filter"]["topcoin_exchange"],
+            self.attributes.get("topcoin_limit"),
+            self.attributes.get("topcoin_volume"),
+            self.attributes.get("topcoin_exchange"),
         )
         for pair in pairlist:
-            pair = self.config["trading"]["market"] + "_" + pair
+            pair = self.attributes.get("market") + "_" + pair
             # Traded on our exchange?
             if pair in self.pair_data:
                 self.logging.debug("Pair " + pair + " added to the list.")
@@ -174,12 +170,12 @@ class MultiBot:
         self.logging.debug("Pairs after topcoin filter " + str(pairs))
 
         # Run filters to adapt pair list
-        if self.config["filter"].getboolean("limit_initial_pairs"):
+        if self.attributes.get("limit_initial_pairs"):
             # Limit pairs to the maximal deals (mad)
-            if self.config["dcabot"].getint("mad") == 1:
+            if self.attributes.get("mad") == 1:
                 maxpairs = 2
-            elif self.config["dcabot"].getint("mad") <= len(pairs):
-                maxpairs = self.config["dcabot"].getint("mad")
+            elif self.attributes.get("mad") <= len(pairs):
+                maxpairs = self.attributes.get("mad")
             else:
                 maxpairs = len(pairs)
             pairs = pairs[0:maxpairs]
@@ -195,16 +191,14 @@ class MultiBot:
             error, data = self.p3cw.request(
                 entity="bots",
                 action="create_bot",
-                additional_headers={
-                    "Forced-Mode": self.config["trading"]["trade_mode"]
-                },
+                additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
                 payload=self.payload(pairs, mad),
             )
 
             if error:
                 self.logging.error(error["msg"])
             else:
-                if not self.config["filter"].getboolean("ext_botswitch"):
+                if not self.attributes.get("ext_botswitch"):
                     self.enable(data)
                 else:
                     self.logging.info(
@@ -217,9 +211,7 @@ class MultiBot:
                 entity="bots",
                 action="update",
                 action_id=botid,
-                additional_headers={
-                    "Forced-Mode": self.config["trading"]["trade_mode"]
-                },
+                additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
                 payload=self.payload(pairs, mad),
             )
 
@@ -228,7 +220,7 @@ class MultiBot:
             else:
                 self.logging.info(bot["name"] + " updated with filtered pairs")
                 self.logging.debug("Pairs: " + str(pairs))
-                if not self.config["filter"].getboolean("ext_botswitch"):
+                if not self.attributes.get("ext_botswitch"):
                     self.enable(data)
                 else:
                     self.logging.info(
@@ -238,7 +230,7 @@ class MultiBot:
     def trigger(self, triggeronly=False):
         # Updates multi bot with new pairs
         triggerpair = ""
-        mad = self.config["dcabot"].getint("mad")
+        mad = self.attributes.get("mad")
 
         for bot in self.bot_data:
             if (self.prefix + "_" + self.subprefix + "_" + self.suffix) in bot["name"]:
@@ -263,9 +255,9 @@ class MultiBot:
                         else:
                             pair = self.signal.topcoin(
                                 pair,
-                                self.config["filter"].getint("topcoin_limit"),
-                                self.config["filter"].getint("topcoin_volume"),
-                                self.config["filter"]["topcoin_exchange"],
+                                self.attributes.get("topcoin_limit"),
+                                self.attributes.get("topcoin_volume"),
+                                self.attributes.get("topcoin_exchange"),
                             )
                             if pair:
                                 self.logging.info("Adding pair " + pair)
@@ -296,7 +288,7 @@ class MultiBot:
                         action="update",
                         action_id=str(bot["id"]),
                         additional_headers={
-                            "Forced-Mode": self.config["trading"]["trade_mode"]
+                            "Forced-Mode": self.attributes.get("trade_mode")
                         },
                         payload=self.payload(bot["pairs"], mad),
                     )
@@ -306,5 +298,5 @@ class MultiBot:
                 else:
                     data = bot
 
-                if self.config["filter"]["deal_mode"] == "signal" and data:
+                if self.attributes.get("deal_mode") == "signal" and data:
                     self.new_deal(data, triggerpair)

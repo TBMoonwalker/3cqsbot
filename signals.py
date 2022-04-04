@@ -88,9 +88,25 @@ class Signals:
             for target in exchange["tickers"]:
                 if (
                     target["target"] == "USDT"
-                    and target["converted_volume"]["btc"] >= volume
+                    and target["converted_volume"]["btc"] > volume
                 ):
                     volume_target = True
+                    self.logging.info(
+                        "Topcoin value is "
+                        + str(target["converted_volume"]["btc"])
+                        + " and over the configured value."
+                    )
+                    break
+                elif (
+                    target["target"] == "USDT"
+                    and target["converted_volume"]["btc"] < volume
+                ):
+                    volume_target = False
+                    self.logging.info(
+                        "Topcoin value is "
+                        + str(target["converted_volume"]["btc"])
+                        + " and under the configured value."
+                    )
                     break
                 else:
                     volume_target = False

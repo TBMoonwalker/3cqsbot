@@ -1,7 +1,4 @@
-from cProfile import run
-import configparser
 import argparse
-from distutils.log import debug
 import re
 import logging
 import asyncio
@@ -16,13 +13,14 @@ from singlebot import SingleBot
 from multibot import MultiBot
 from signals import Signals
 from logging.handlers import RotatingFileHandler
+from config import Config
 
 
 ######################################################
 #                       Config                       #
 ######################################################
-config = configparser.ConfigParser()
-config.read("config.ini")
+attributes = Config()
+
 
 parser = argparse.ArgumentParser(
     description="3CQSBot bringing 3CQS signals to 3Commas."
@@ -45,24 +43,24 @@ args = parser.parse_args()
 
 # Initialize 3Commas API client
 p3cw = Py3CW(
-    key=config["commas"]["key"],
-    secret=config["commas"]["secret"],
+    key=attributes.get("key"),
+    secret=attributes.get("secret"),
     request_options={
-        "request_timeout": config["commas"].getint("timeout"),
-        "nr_of_retries": config["commas"].getint("retries"),
-        "retry_backoff_factor": config["commas"].getfloat("delay_between_retries"),
+        "request_timeout": attributes.get("timeout"),
+        "nr_of_retries": attributes.get("retries"),
+        "retry_backoff_factor": attributes.get("delay_between_retries"),
     },
 )
 
 # Initialize Telegram API client
 client = TelegramClient(
-    config["telegram"]["sessionfile"],
-    config["telegram"]["api_id"],
-    config["telegram"]["api_hash"],
+    attributes.get("sessionfile"),
+    attributes.get("api_id"),
+    attributes.get("api_hash"),
 )
 
 # Set logging facility
-if config["general"].getboolean("debug"):
+if attributes.get("debug"):
     loglevel = "DEBUG"
 else:
     loglevel = getattr(logging, args.loglevel.upper(), None)
@@ -70,11 +68,11 @@ else:
 # Set logging output
 handler = logging.StreamHandler()
 
-if config["general"].getboolean("log_to_file"):
+if attributes.get("log_to_file"):
     handler = logging.handlers.RotatingFileHandler(
-        config["general"]["log_file_path"],
-        maxBytes=config["general"].getint("log_file_size"),
-        backupCount=config["general"].getint("log_file_count"),
+        attributes.get("log_file_path"),
+        maxBytes=attributes.get("log_file_size"),
+        backupCount=attributes.get("log_file_count"),
     )
 
 logging.basicConfig(
@@ -139,7 +137,7 @@ def tg_data(text_lines):
 
         data = {
             "signal": signal,
-            "pair": config["trading"]["market"] + "_" + token,
+            "pair": attributes.get("market") + "_" + token,
             "action": action,
             "volatility": float(volatility_score),
             "price_action": float(priceaction_score),
@@ -175,7 +173,7 @@ def tg_data(text_lines):
 
         data = {
             "signal": signal,
-            "pair": config["trading"]["market"] + "_" + token,
+            "pair": attributes.get("market") + "_" + token,
             "action": action,
             "volatility": float(volatility_score),
             "price_action": float(priceaction_score),
@@ -206,7 +204,7 @@ def tg_data(text_lines):
 
 def bot_data():
     # Gets information about existing bot in 3Commas
-    botlimit = 200
+    botlimit = attributes.get("system_bot_value", 300)
     pages = math.ceil(botlimit / 100)
     bots = []
 
@@ -219,7 +217,7 @@ def bot_data():
         error, data = p3cw.request(
             entity="bots",
             action="",
-            additional_headers={"Forced-Mode": config["trading"]["trade_mode"]},
+            additional_headers={"Forced-Mode": attributes.get("trade_mode")},
             payload={"limit": 100, "offset": offset},
         )
 
@@ -241,7 +239,7 @@ def account_data():
     error, data = p3cw.request(
         entity="accounts",
         action="",
-        additional_headers={"Forced-Mode": config["trading"]["trade_mode"]},
+        additional_headers={"Forced-Mode": attributes.get("trade_mode")},
     )
 
     if error:
@@ -250,14 +248,14 @@ def account_data():
         sys.exit("Problem fetching account data from 3commas api - stopping!")
     else:
         for accounts in data:
-            if accounts["name"] == config["trading"]["account_name"]:
+            if accounts["name"] == attributes.get("account_name"):
                 account.update({"id": str(accounts["id"])})
                 account.update({"market_code": str(accounts["market_code"])})
 
         if "id" not in account:
             sys.tracebacklimit = 0
             sys.exit(
-                "Account with name " + config["trading"]["account_name"] + " not found"
+                "Account with name " + attributes.get("account_name") + " not found"
             )
 
     return account
@@ -269,7 +267,7 @@ def pair_data(account):
     error, data = p3cw.request(
         entity="accounts",
         action="market_pairs",
-        additional_headers={"Forced-Mode": config["trading"]["trade_mode"]},
+        additional_headers={"Forced-Mode": attributes.get("trade_mode")},
         payload={"market_code": account["market_code"]},
     )
 
@@ -279,8 +277,8 @@ def pair_data(account):
         sys.exit("Problem fetching pair data from 3commas api - stopping!")
     else:
         for pair in data:
-            if config["trading"]["market"] in pair:
-                if pair not in config["filter"]["token_denylist"]:
+            if attributes.get("market") in pair:
+                if pair not in attributes.get("token_denylist"):
                     pairs.append(pair)
 
     return pairs
@@ -299,7 +297,7 @@ async def botswitch():
             logging.info("Enabling Bot because of BTC uptrend")
             asyncState.botswitch = True
             logging.debug("Botswitch: " + str(asyncState.botswitch))
-            if config["dcabot"].getboolean("single"):
+            if attributes.get("single"):
                 logging.info("Not activating old single bots (waiting for new signals.")
             else:
                 # Send new top 30 for activating the multibot
@@ -309,11 +307,11 @@ async def botswitch():
             logging.info("Disabling Bot because of BTC downtrend")
             asyncState.botswitch = False
             logging.debug("Botswitch: " + str(asyncState.botswitch))
-            if config["dcabot"].getboolean("single"):
-                bot = SingleBot([], bot_data(), {}, config, p3cw, logging)
+            if attributes.get("single"):
+                bot = SingleBot([], bot_data(), {}, attributes, p3cw, logging)
                 bot.disable(bot_data(), True)
             else:
-                bot = MultiBot([], bot_data(), {}, 0, config, p3cw, logging)
+                bot = MultiBot([], bot_data(), {}, 0, attributes, p3cw, logging)
                 bot.disable()
 
         else:
@@ -332,13 +330,13 @@ def _handle_task_result(task: asyncio.Task) -> None:
         logging.exception("Exception raised by task = %r", task)
 
 
-@client.on(events.NewMessage(chats=config["telegram"]["chatroom"]))
+@client.on(events.NewMessage(chats=attributes.get("chatroom")))
 async def my_event_handler(event):
 
     if (
         asyncState.btcbool
-        and config["filter"].getboolean("btc_pulse")
-        and not config["filter"].getboolean("ext_botswitch")
+        and attributes.get("btc_pulse")
+        and not attributes.get("ext_botswitch")
     ):
         logging.info(
             "New 3CQS signal not processed - Bot stopped because of BTC downtrend"
@@ -356,12 +354,12 @@ async def my_event_handler(event):
         if tg_output and not isinstance(tg_output, list):
 
             # Check if it is the right signal
-            if tg_output["signal"] == config["filter"]["symrank_signal"]:
+            if tg_output["signal"] == attributes.get("symrank_signal"):
 
                 # Choose multibot or singlebot
-                if config["dcabot"].getboolean("single"):
+                if attributes.get("single"):
                     bot = SingleBot(
-                        tg_output, bot_output, account_output, config, p3cw, logging
+                        tg_output, bot_output, account_output, attributes, p3cw, logging
                     )
                 else:
                     bot = MultiBot(
@@ -369,7 +367,7 @@ async def my_event_handler(event):
                         bot_output,
                         account_output,
                         pair_output,
-                        config,
+                        attributes,
                         p3cw,
                         logging,
                     )
@@ -380,17 +378,15 @@ async def my_event_handler(event):
                 if tg_output["volatility"] != 0 and tg_output["pair"] in pair_output:
                     if (
                         tg_output["volatility"]
-                        >= config["filter"].getfloat("volatility_limit_min")
+                        >= attributes.get("volatility_limit_min")
                         and tg_output["volatility"]
-                        <= config["filter"].getfloat("volatility_limit_max")
+                        <= attributes.get("volatility_limit_max")
                         and tg_output["price_action"]
-                        >= config["filter"].getfloat("price_action_limit_min")
+                        >= attributes.get("price_action_limit_min")
                         and tg_output["price_action"]
-                        <= config["filter"].getfloat("price_action_limit_max")
-                        and tg_output["symrank"]
-                        >= config["filter"].getint("symrank_limit_min")
-                        and tg_output["symrank"]
-                        <= config["filter"].getint("symrank_limit_max")
+                        <= attributes.get("price_action_limit_max")
+                        and tg_output["symrank"] >= attributes.get("symrank_limit_min")
+                        and tg_output["symrank"] <= attributes.get("symrank_limit_max")
                     ) or tg_output["action"] == "STOP":
 
                         bot.trigger()
@@ -404,25 +400,25 @@ async def my_event_handler(event):
                         "Pair "
                         + tg_output["pair"]
                         + " is not traded on account "
-                        + config["trading"]["account_name"]
+                        + attributes.get("account_name")
                     )
             else:
                 logging.info(
                     tg_output["signal"]
                     + " signal ignored "
-                    + config["filter"]["symrank_signal"]
+                    + attributes.get("symrank_signal")
                     + " is configured."
                 )
 
         elif tg_output and isinstance(tg_output, list):
-            if not config["dcabot"].getboolean("single"):
+            if not attributes.get("single"):
                 # Create or update multibot with pairs from "/symrank"
                 bot = MultiBot(
                     tg_output,
                     bot_output,
                     account_output,
                     pair_output,
-                    config,
+                    attributes,
                     p3cw,
                     logging,
                 )
@@ -445,12 +441,10 @@ async def main():
 
     logging.info("*** 3CQS Bot started ***")
 
-    if not config["dcabot"].getboolean("single"):
+    if not attributes.get("single"):
         await symrank()
 
-    if config["filter"].getboolean("btc_pulse") and not config["filter"].getboolean(
-        "ext_botswitch"
-    ):
+    if attributes.get("btc_pulse") and not attributes.get("ext_botswitch"):
         btcbooltask = client.loop.create_task(signals.getbtcbool(asyncState))
         btcbooltask.add_done_callback(_handle_task_result)
         switchtask = client.loop.create_task(botswitch())
@@ -466,5 +460,5 @@ with client:
 
 client.start()
 
-if not config["filter"].getboolean("btc_pulse"):
+if not attributes.get("btc_pulse"):
     client.run_until_disconnected()

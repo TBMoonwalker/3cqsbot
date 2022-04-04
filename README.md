@@ -66,7 +66,8 @@ key | string | YES |    | 3Commas API Key
 secret | string | YES | | 3Commas API Secret
 timeout | integer | YES | (3) | Timeout waiting for a 3Commas api response
 retries | integer | YES | (5) | Number of retries after a 3Commas api call was not successful
-delay_between_retries | number | YES | (2.0) | Waiting time factor between unsuccessful retries 
+delay_between_retries | number | YES | (2.0) | Waiting time factor between unsuccessful retries
+system_bot_value | integer | NO | (300) | Number of actual bots running on your account. This is important, so that the script can see all running bots and does not start duplicates!
 
 ## DCABot configuration
 

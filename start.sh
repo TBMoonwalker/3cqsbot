@@ -21,6 +21,7 @@ sed -i "s/secret =.*/secret = $API_SECRET/" config.ini
 sed -i "s/timeout =.*/timeout = $API_TIMEOUT/" config.ini
 sed -i "s/retries =.*/retries = $API_RETRIES/" config.ini
 sed -i "s/delay_between_retries =.*/delay_between_retries = $API_RETRY_DELAY/" config.ini
+sed -i "s/system_bot_value =.*/system_bot_value = $SYS_BOT_VALUE/" config.ini
 
 # DCABOT settings
 sed -i "s/prefix = .*/prefix = $DCABOT_PREFIX/" config.ini

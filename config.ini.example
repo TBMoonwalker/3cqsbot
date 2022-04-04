@@ -17,6 +17,7 @@ secret =
 timeout = 3
 retries = 5
 delay_between_retries = 2.0
+system_bot_value = 300
 
 [dcabot]
 prefix = 3CQSBOT
