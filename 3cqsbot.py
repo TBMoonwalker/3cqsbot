@@ -84,12 +84,14 @@ logging.basicConfig(
     handlers=[handler],
 )
 
-# Initialize variables
+# Initialize global variables
 asyncState = type("", (), {})()
 asyncState.btcbool = True
 asyncState.botswitch = True
 asyncState.chatid = ""
 asyncState.fh = 0
+asyncState.accountData = {}
+asyncState.pairData = []
 
 ######################################################
 #                     Methods                        #
@@ -341,8 +343,8 @@ async def my_event_handler(event):
         tg_output = tg_data(parse_tg(event.raw_text))
         logging.debug("TG msg: " + str(tg_output))
         bot_output = bot_data()
-        account_output = account_data()
-        pair_output = pair_data(account_output)
+        account_output = asyncState.accountData
+        pair_output = asyncState.pairData
 
         if tg_output and not isinstance(tg_output, list):
 
@@ -424,6 +426,8 @@ async def my_event_handler(event):
 
 async def main():
     signals = Signals(logging)
+    asyncState.accountData = account_data()
+    asyncState.pairData = pair_data(asyncState.accountData)
 
     logging.debug("Refreshing cache...")
 
