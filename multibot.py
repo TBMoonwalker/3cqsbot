@@ -159,6 +159,7 @@ class MultiBot:
             self.attributes.get("topcoin_limit"),
             self.attributes.get("topcoin_volume"),
             self.attributes.get("topcoin_exchange"),
+            self.attributes.get("market"),
         )
         for pair in pairlist:
             pair = self.attributes.get("market") + "_" + pair
@@ -258,6 +259,7 @@ class MultiBot:
                                 self.attributes.get("topcoin_limit"),
                                 self.attributes.get("topcoin_volume"),
                                 self.attributes.get("topcoin_exchange"),
+                                self.attributes.get("market"),
                             )
                             if pair:
                                 self.logging.info("Adding pair " + pair)

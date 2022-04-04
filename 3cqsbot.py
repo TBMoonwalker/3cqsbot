@@ -167,7 +167,7 @@ def tg_data(text_lines):
         if signal == "SymRank Top 30":
             signal = "top30"
         elif signal == "SymRank Top 100 Triple Tracker":
-            signal = "tripple100"
+            signal = "triple100"
         else:
             signal = "xvol"
 

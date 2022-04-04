@@ -165,7 +165,7 @@ Everything is the same as with the other multi mode, but the deals are started d
 
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
-symrank_signal | string | YES | (old), tripple100, top30, xvol | Decide which signal the bot should parse. "Old" is default and should be used as long as the new signals are not available for everyone. For more information see "Signals"
+symrank_signal | string | YES | (old), triple100, top30, xvol | Decide which signal the bot should parse. "Old" is default and should be used as long as the new signals are not available for everyone. For more information see "Signals"
 symrank_limit | integer | YES | (10000) | Bots will be created when the symrank value is under this limit
 volatility_limit | number | YES | (10000) | Bots will be created when the volatility value is under this limit
 price_action_limit | number | YES | (10000) | Bots will be created when the price_action value is under this limit
@@ -182,7 +182,7 @@ token_denylist | array | NO | ([BTC_USDT, ETH_USDT, BUSD_USDT, USDC_USDT, USDT
 ### Signals
 The new version of 3cqs signals is now separated into three main versions. To decide which version fit your needs, please take a look at the indicators beneath. The description can be found on Discord too: https://discord.com/channels/720875074806349874/835100061583015947/958724423513419876
 
-#### tripple100
+#### triple100
 SIGNAL NAME: SymRank Top 100 Triple Tracker
 BOT_START: SymRank <= 100
 Volatility Score >= 3, 

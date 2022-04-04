@@ -75,7 +75,7 @@ class Signals:
 
         return market
 
-    def topvolume(self, id, volume, exchange):
+    def topvolume(self, id, volume, exchange, market):
         # Check if topcoin has enough volume
         volume_target = True
 
@@ -87,8 +87,8 @@ class Signals:
 
             for target in exchange["tickers"]:
                 if (
-                    target["target"] == "USDT"
-                    and target["converted_volume"]["btc"] > volume
+                    target["target"] == market
+                    and target["converted_volume"]["btc"] >= volume
                 ):
                     volume_target = True
                     self.logging.info(
@@ -98,7 +98,7 @@ class Signals:
                     )
                     break
                 elif (
-                    target["target"] == "USDT"
+                    target["target"] == market
                     and target["converted_volume"]["btc"] < volume
                 ):
                     volume_target = False
@@ -113,7 +113,7 @@ class Signals:
 
         return volume_target
 
-    def topcoin(self, pairs, rank, volume, exchange):
+    def topcoin(self, pairs, rank, volume, exchange, market):
 
         market = self.cgvalues(rank)
 
@@ -142,7 +142,7 @@ class Signals:
                         and int(symbol["market_cap_rank"]) <= rank
                     ):
                         # Check if topcoin has enough volume
-                        if self.topvolume(symbol["id"], volume, exchange):
+                        if self.topvolume(symbol["id"], volume, exchange, market):
                             pairlist.append(pair)
                             break
         else:
@@ -156,7 +156,7 @@ class Signals:
                     and int(symbol["market_cap_rank"]) <= rank
                 ):
                     # Check if topcoin has enough volume
-                    if self.topvolume(symbol["id"], volume, exchange):
+                    if self.topvolume(symbol["id"], volume, exchange, market):
                         pairlist = pairs
                         break
 

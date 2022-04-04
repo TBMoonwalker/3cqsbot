@@ -248,6 +248,7 @@ class SingleBot:
                             self.attributes.get("topcoin_limit"),
                             self.attributes.get("topcoin_volume"),
                             self.attributes.get("topcoin_exchange"),
+                            self.attributes.get("market"),
                         )
 
                         if pair:
