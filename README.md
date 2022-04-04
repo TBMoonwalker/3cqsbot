@@ -164,7 +164,7 @@ Everything is the same as with the other multi mode, but the deals are started d
 
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
-symrank_signal | string | YES | (old), SymRank Top 100 Triple Tracker, SymRank Top 30, X-Treme Volatility | Decide which signal the bot should parse. "Old" is default and should be used as long as the new signals are not available for everyone
+symrank_signal | string | YES | (old), SymRank Top 100 Triple Tracker, SymRank Top 30, X-Treme Volatility | Decide which signal the bot should parse. "Old" is default and should be used as long as the new signals are not available for everyone. For more information see "Signals"
 symrank_limit | integer | YES | (10000) | Bots will be created when the symrank value is under this limit
 volatility_limit | number | YES | (10000) | Bots will be created when the volatility value is under this limit
 price_action_limit | number | YES | (10000) | Bots will be created when the price_action value is under this limit
@@ -177,6 +177,20 @@ random_pair | boolean | NO | (false), true | If true then random pairs from the 
 btc_pulse | boolean | YES | (false), true | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
 ext_botswitch | boolean | NO | (false), true | If enabled the automatic multibot enablement will be disabled and only triggered by external events - you must disable BTC Pulse if you enable this switch !!!
 token_denylist | array | NO | ([BTC_USDT, ETH_USDT, BUSD_USDT, USDC_USDT, USDT_USDT]) | Denylist of pairs which not be used by the bot for new deals
+
+### Signals
+The new version of 3cqs signals is now separated into three main versions. To decide which version fit your needs, please take a look at the indicators beneath. The description can be found on Discord too: https://discord.com/channels/720875074806349874/835100061583015947/958724423513419876
+
+#### SymRank Top 100 Triple Tracker
+BOT_START: SymRank <= 100
+Volatility Score >= 3, 
+Price Action Score >= 2
+
+#### SymRank Top 30
+BOT_START: SymRank <= 30
+
+#### X-treme Volatility
+BOT_START: Volatility Score >= 10
 
 ### BTC Pulse
 BTCPulse is a simple strategy which monitors BTC Price Action to start new deals or just put the bot to sleep ( no new deals but active deals keep running) based on:-
