@@ -113,7 +113,7 @@ class Signals:
 
         return volume_target
 
-    def topcoin(self, pairs, rank, volume, exchange, market):
+    def topcoin(self, pairs, rank, volume, exchange, trademarket):
 
         market = self.cgvalues(rank)
 
@@ -142,7 +142,7 @@ class Signals:
                         and int(symbol["market_cap_rank"]) <= rank
                     ):
                         # Check if topcoin has enough volume
-                        if self.topvolume(symbol["id"], volume, exchange, market):
+                        if self.topvolume(symbol["id"], volume, exchange, trademarket):
                             pairlist.append(pair)
                             break
         else:
@@ -156,7 +156,7 @@ class Signals:
                     and int(symbol["market_cap_rank"]) <= rank
                 ):
                     # Check if topcoin has enough volume
-                    if self.topvolume(symbol["id"], volume, exchange, market):
+                    if self.topvolume(symbol["id"], volume, exchange, trademarket):
                         pairlist = pairs
                         break
 
