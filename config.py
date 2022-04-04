@@ -8,6 +8,8 @@ class Config:
         self.dataset = self.config.read("config.ini")
 
     def get(self, attribute, defaultvalue=""):
+        data = ""
+
         if len(self.dataset) != 1:
             sys.tracebacklimit = 0
             sys.exit(
