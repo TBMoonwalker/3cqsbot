@@ -26,7 +26,7 @@ class MultiBot:
             strategy = [{"strategy": "manual"}]
         else:
             try:
-               strategy = json.loads(self.config["filter"]["deal_mode"])
+               strategy = json.loads(self.attributes.get("deal_mode"))
             except ValueError:
                 self.logging.error(
                     "Decoding JSON string of deal_mode failed. Please check https://jsonformatter.curiousconcept.com/ for correct format"
