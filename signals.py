@@ -92,9 +92,9 @@ class Signals:
                 ):
                     volume_target = True
                     self.logging.info(
-                        "Topcoin value is "
-                        + str(target["converted_volume"]["btc"])
-                        + " and over the configured value."
+                        "Topcoin BTC volume for " + str(id)
+                        + " is " + str(target["converted_volume"]["btc"])
+                        + " and over the configured value of " + str(volume)
                     )
                     break
                 elif (
@@ -103,9 +103,9 @@ class Signals:
                 ):
                     volume_target = False
                     self.logging.info(
-                        "Topcoin value is "
-                        + str(target["converted_volume"]["btc"])
-                        + " and under the configured value."
+                        "Topcoin BTC volume for " + str(id)
+                        + " is " + str(target["converted_volume"]["btc"])
+                        + " and under the configured value of " + str(volume)
                     )
                     break
                 else:
@@ -138,7 +138,7 @@ class Signals:
                 for symbol in market:
                     coin = pair
                     if (
-                        coin.lower() in symbol["symbol"]
+                        coin.lower()==symbol["symbol"]
                         and int(symbol["market_cap_rank"]) <= rank
                     ):
                         # Check if topcoin has enough volume
