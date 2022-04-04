@@ -166,6 +166,13 @@ def tg_data(text_lines):
         if symrank == "N/A":
             symrank = 9999999
 
+        if signal == "SymRank Top 30":
+            signal = "top30"
+        elif signal == "SymRank Top 100 Triple Tracker":
+            signal = "tripple100"
+        else:
+            signal = "xvol"
+
         data = {
             "signal": signal,
             "pair": config["trading"]["market"] + "_" + token,
