@@ -396,7 +396,12 @@ async def my_event_handler(event):
                         + config["trading"]["account_name"]
                     )
             else:
-                logging.info(tg_output["signal"]+" signal ignored")
+                logging.info(
+                    tg_output["signal"]
+                    + " signal ignored "
+                    + config["filter"]["symrank_signal"]
+                    + " is configured."
+                )
 
         elif tg_output and isinstance(tg_output, list):
             if not config["dcabot"].getboolean("single"):
