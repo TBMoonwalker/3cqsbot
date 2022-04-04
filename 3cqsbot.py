@@ -396,7 +396,9 @@ async def my_event_handler(event):
                         bot.trigger()
 
                     else:
-                        logging.info("Trading limits reached. Deal not placed.")
+                        logging.info(
+                            "Trading limits reached according to your [filter] settings in config.ini - Deal not placed."
+                        )
                 else:
                     logging.info(
                         "Pair "
