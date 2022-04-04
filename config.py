@@ -34,6 +34,9 @@ class Config:
                     data = defaultvalue
                     break
 
+        if not data:
+            data = defaultvalue
+
         return data
 
     def isfloat(self, element):
