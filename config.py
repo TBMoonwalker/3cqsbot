@@ -50,8 +50,10 @@ class Config:
 
         if raw_value.isdigit():
             data = int(raw_value)
-        elif raw_value.lower() == "true" or raw_value.lower() == "false":
-            data = bool(raw_value)
+        elif raw_value.lower() == "true":
+            data = True
+        elif raw_value.lower() == "false":
+            data = False
         elif self.isfloat(raw_value):
             data = float(raw_value)
         else:
