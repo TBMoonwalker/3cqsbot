@@ -26,9 +26,9 @@ class Config:
                     data = self.check_type(raw_value)
                     break
 
-        if not data and str(defaultvalue):
+        if data == "" and str(defaultvalue):
             data = defaultvalue
-        elif not data and not str(defaultvalue):
+        elif data == "" and not defaultvalue == "":
             sys.tracebacklimit = 0
             sys.exit(
                 "Attribute "
