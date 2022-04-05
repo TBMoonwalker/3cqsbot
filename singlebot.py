@@ -41,10 +41,10 @@ class SingleBot:
         )
 
         if error:
-            self.logging.error(error["msg"])
             self.logging.error(
                 "Setting deal count temporary to maximum - because of API errors!"
             )
+            self.logging.error(error["msg"])
             return self.attributes.get("single_count")
         else:
             for deal in data:
@@ -100,8 +100,9 @@ class SingleBot:
         return payload
 
     def update(self, bot):
-
         # Update settings on an existing bot
+        self.logging.info("Updating bot settings on " + bot["name"])
+        
         error, data = self.p3cw.request(
             entity="bots",
             action="update",
@@ -112,10 +113,12 @@ class SingleBot:
 
         if error:
             self.logging.error(error["msg"])
-        else:
-            self.logging.info("Updating bot settings on " + bot["name"])
 
     def enable(self, bot):
+
+        self.logging.info(
+                "Enabling single bot " + bot["name"] + " because of a START signal"
+            )    
 
         if self.attributes.get("singlebot_update"):
             self.update(bot)
@@ -130,10 +133,6 @@ class SingleBot:
 
         if error:
             self.logging.error(error["msg"])
-        else:
-            self.logging.info(
-                "Enabling single bot " + bot["name"] + " because of a START signal"
-            )
 
     def disable(self, bot, allbots=False):
         # Disable all bots
@@ -151,6 +150,13 @@ class SingleBot:
                     + "_"
                     + self.attributes.get("market")
                 ) in bots["name"]:
+
+                    self.logging.info(
+                            "Disabling single bot "
+                            + bots["name"]
+                            + " because of a STOP signal"
+                        )
+
                     error, data = self.p3cw.request(
                         entity="bots",
                         action="disable",
@@ -162,14 +168,12 @@ class SingleBot:
 
                     if error:
                         self.logging.error(error["msg"])
-                    else:
-                        self.logging.info(
-                            "Disabling single bot "
-                            + bots["name"]
-                            + " because of a STOP signal"
-                        )
         else:
             # Disables an existing bot
+            self.logging.info(
+                    "Disabling single bot " + bot["name"] + " because of a STOP signal"
+                )
+
             error, data = self.p3cw.request(
                 entity="bots",
                 action="disable",
@@ -179,10 +183,6 @@ class SingleBot:
 
             if error:
                 self.logging.error(error["msg"])
-            else:
-                self.logging.info(
-                    "Disabling single bot " + bot["name"] + " because of a STOP signal"
-                )
 
     def create(self):
         # Creates a single bot with start signal

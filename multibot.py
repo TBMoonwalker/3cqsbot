@@ -25,7 +25,12 @@ class MultiBot:
         if self.attributes.get("deal_mode") == "signal":
             strategy = [{"strategy": "manual"}]
         else:
-            strategy = json.loads(self.attributes.get("deal_mode"))
+            try:
+               strategy = json.loads(self.attributes.get("deal_mode"))
+            except ValueError:
+                self.logging.error(
+                    "Decoding JSON string of deal_mode failed. Please check https://jsonformatter.curiousconcept.com/ for correct format"
+                )
 
         return strategy
 
@@ -70,6 +75,8 @@ class MultiBot:
     def enable(self, bot):
         # Enables an existing bot
         if not bot["is_enabled"]:
+            self.logging.info("Enabling bot: " + bot["name"])            
+
             error, data = self.p3cw.request(
                 entity="bots",
                 action="enable",
@@ -79,9 +86,7 @@ class MultiBot:
 
             if error:
                 self.logging.error(error["msg"])
-                self.logging.debug("Error enabling bot: " + bot["name"])
-            else:
-                self.logging.info("Enabling bot: " + bot["name"])
+
         else:
             self.logging.info(bot["name"] + " enabled")
 
@@ -91,6 +96,8 @@ class MultiBot:
             if (self.prefix + "_" + self.subprefix + "_" + self.suffix) in bot["name"]:
 
                 # Disables an existing bot
+                self.logging.info("Disabling bot: " + bot["name"])
+
                 error, data = self.p3cw.request(
                     entity="bots",
                     action="disable",
@@ -101,9 +108,7 @@ class MultiBot:
                 )
 
                 if error:
-                    self.logging.error("Error disabling bot: " + error["msg"])
-                else:
-                    self.logging.info("Disabling bot: " + bot["name"])
+                    self.logging.error(error["msg"])
 
     def new_deal(self, bot, triggerpair):
         # Triggers a new deal
@@ -188,7 +193,7 @@ class MultiBot:
 
         if new_bot:
 
-            self.logging.info("Creating multi bot with pairs " + str(pairs))
+            self.logging.info("Creating multi bot with filtered symrank pairs")
             error, data = self.p3cw.request(
                 entity="bots",
                 action="create_bot",
@@ -207,7 +212,7 @@ class MultiBot:
                     )
                 self.new_deal(data, triggerpair="")
         else:
-
+            self.logging.info("Updating multi bot with filtered symrank pairs")
             error, data = self.p3cw.request(
                 entity="bots",
                 action="update",
@@ -282,6 +287,7 @@ class MultiBot:
                                 + " was not included in the pair list, not removed"
                             )
 
+                    self.logging.info("Adjusting mad if pairs are under value")
                     # Adapt mad if pairs are under value
                     mad = self.adjustmad(bot["pairs"], mad)
 

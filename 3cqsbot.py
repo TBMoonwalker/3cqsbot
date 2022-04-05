@@ -327,7 +327,7 @@ def _handle_task_result(task: asyncio.Task) -> None:
     except asyncio.CancelledError:
         pass  # Task cancellation should not be logged as an error.
     except Exception:  # pylint: disable=broad-except
-        logging.exception("Exception raised by task = %r", task)
+        logging.exception("Exception raised by task = %r. Check if config.ini has all necessary options!", task)
 
 
 @client.on(events.NewMessage(chats=attributes.get("chatroom")))
@@ -405,7 +405,7 @@ async def my_event_handler(event):
             else:
                 logging.info(
                     tg_output["signal"]
-                    + " signal ignored "
+                    + " signal ignored. "
                     + attributes.get("symrank_signal")
                     + " is configured."
                 )
