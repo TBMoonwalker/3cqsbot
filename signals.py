@@ -77,6 +77,7 @@ class Signals:
 
     def topvolume(self, id, volume, exchange, market):
         # Check if topcoin has enough volume
+        volume_target = True
 
         if volume > 0:
 
