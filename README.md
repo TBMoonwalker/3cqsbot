@@ -38,7 +38,7 @@ pip3 install -r requirements.txt
 ```
 
 # Configuration (config.ini)
-Copy the `config.ini.example` to `config.ini` and change your settings regarding the available settings below. The value type doesn't matter, because Pythons configparser is taking care of the types. So you don't need '' or "" around the values.
+Copy the `*.example*` from the examples directory to `config.ini` in the root folder and change your settings regarding the available settings below. The value type doesn't matter, because Pythons configparser is taking care of the types. So you don't need '' or "" around the values.
 
 ## General
 Name | Type | Mandatory | Values(default) | Description
@@ -54,19 +54,19 @@ Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
 api_id | string | YES |   | Telegram API ID
 api_hash | string | YES |   | Telegram API Hash
-sessionfile | string | YES | (tgsession) | Telegram sessionfile location
+sessionfile | string | NO | (tgsession) | Telegram sessionfile location
 
 **!!! ATTENTION - Do not share your sessionfile with other 3cqsbot instances - this will lead to problems and misfunctional bots. For each instance you have to create a new sessionfile !!!**
 
 ## 3Commas
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
-chatroom | string | YES | (3C Quick Stats) | Name of the chatroom - on Windows please use the ID 5011413076
+chatroom | string |NO | (3C Quick Stats) | Name of the chatroom - on Windows please use the ID 5011413076
 key | string | YES |    | 3Commas API Key
 secret | string | YES | | 3Commas API Secret
-timeout | integer | YES | (3) | Timeout waiting for a 3Commas api response
-retries | integer | YES | (5) | Number of retries after a 3Commas api call was not successful
-delay_between_retries | number | YES | (2.0) | Waiting time factor between unsuccessful retries
+timeout | integer | NO | (3) | Timeout waiting for a 3Commas api response
+retries | integer | NO | (5) | Number of retries after a 3Commas api call was not successful
+delay_between_retries | number | NO | (2.0) | Waiting time factor between unsuccessful retries
 system_bot_value | integer | NO | (300) | Number of actual bots running on your account. This is important, so that the script can see all running bots and does not start duplicates!
 
 ## DCABot configuration
@@ -88,7 +88,7 @@ mstc | integer | YES | (25) | Max safety trades count
 sdsp | integer | NO | (1) | Simultaneous deals per same pair (only Multibot)
 single | boolean | YES | (false) true | Type of Bot creation (True for Single DCA Bots)
 single_count | integer | YES | (3) | Maximum single bots - only have to configured for singlebots
-btc_min_vol | number | YES | (100) | Minimum 24h volume trading calculated in BTC
+btc_min_vol | number | NO | (100) | Minimum 24h volume trading calculated in BTC
 
 Configure the 'dcabot' section in the `config.ini` according to your favourite bot configuration. 
 
@@ -125,17 +125,13 @@ Name | Type | Mandatory | Values(default) | Description
 market | string | YES | (USDT)  | Trading market (Example: BUSD, USDT, USDC)
 trade_mode | string | YES | (paper) real   | Real or Paper trading mode
 account_name | string | YES | (Paper trading 123456)  | Account name for trading. Can be found unter "My Exchanges". 
-symrank_limit | integer | YES | (10000) | Maximum value of bot creation according to the Symrank
-volatility_limit | number | YES | (10000) | Maximum value of bot creation according to the volatility
-price_action_limit | number | YES | (10000) | Maximum value of bot creation according to the price action
-topcoin_limit | integer | YES | (10000) | Maximum number of coins according to the CoinGecko toplist
-deal_mode | string | YES | ( [{"options": {"time": "3m", "points": "100"}, "strategy": "rsi"}]) signal | Method how the script is creating new deals in multipair bot
-limit_initial_pairs | boolean | YES | (false) | Limit initial pairs to the max number of deals (MAD) - bot chooses the top pairs
-btc_pulse | boolean | YES | (false) | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
-delete_single_bots | boolean | YES | (false) | If set to true, bots without an active deal will be deleted in single bot configuration
-singlebot_update | boolean | NO | (true) | If set to true, singlebots settings will be updated when enabled again (new settings only work after restart of the script)
-trailing | boolean | YES | (false) true | Trailing profit enabled
-trailing_deviation | number | YES | (0.2) | Deviation of trailing profit
+deal_mode | string | NO | ([{"options": {"time": "3m", "points": "100", "time_period": "7", "trigger_condition": "less"}, "strategy": "rsi"}]) signal | Method how the script is creating new deals in  multipair bot
+limit_initial_pairs | boolean |NO | (false) | Limit initial pairs to the max number of deals (MAD) - bot chooses the top pairs
+btc_pulse | boolean | NO | (false), true | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
+delete_single_bots | boolean | NO | (false), true | If set to true, bots without an active deal will be deleted in single bot configuration
+singlebot_update | boolean | NO | (true), false | If set to true, singlebots settings will be updated when enabled again (new settings only work after restart of the script)
+trailing | boolean | NO | (false), true | Trailing profit enabled
+trailing_deviation | number | NO | (0.2) | Deviation of trailing profit
 
 ### Deal Mode explanation
 
@@ -165,19 +161,22 @@ Everything is the same as with the other multi mode, but the deals are started d
 
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
-symrank_signal | string | YES | (old), triple100, top30, xvol | Decide which signal the bot should parse. "Old" is default and should be used as long as the new signals are not available for everyone. For more information see "Signals"
-symrank_limit | integer | YES | (10000) | Bots will be created when the symrank value is under this limit
-volatility_limit | number | YES | (10000) | Bots will be created when the volatility value is under this limit
-price_action_limit | number | YES | (10000) | Bots will be created when the price_action value is under this limit
-topcoin_limit | integer | NO | (10000) | Token pair has to be in the configured topcoin limit to be traded by the bot
+symrank_signal | string | YES | (triple100), top30, xvol | Decide which signal the bot should parse.
+symrank_limit_min | integer | NO | (1) | Bots will be created when the symrank value is over this limit
+symrank_limit_max | integer | NO | (100) | Bots will be created when the symrank value is under this limit
+volatility_limit_min | number | NO | (0.1) | Bots will be created when the volatility value is over this limit
+volatility_limit_max | number | NO | (100) | Bots will be created when the volatility value is under this limit
+price_action_limit_min | number | NO | (0.1) | Bots will be created when the price_action value is over this limit
+price_action_limit_max | number | NO | (100) | Bots will be created when the price_action value is under this limit
+topcoin_limit | integer | NO | (3500) | Token pair has to be in the configured topcoin limit to be traded by the bot
 topcoin_volume | integer | NO | (0) | Volume check against Coingecko (btc_min_vol means volume check directly in 3commas - not before like this setting). Only pairs with the given volume are traded. Default is 0 and means volume check is disabled
 topcoin_exchange | string | NO | (binance), gdax | Name of the exchange to check the volume. Because every exchange has another id, please contact me for your exchange and I will update this list here for configuration
-deal_mode | string | YES | ([{"options": {"time": "3m", "points": "100"}, "strategy": "rsi"}]) signal | Deal strategy how the script is creating new deals in multipair bot - for more see the "Deal Modes" section
-limit_initial_pairs | boolean | YES | (false) true | Limit initial pairs to the max number of deals (MAD) - bot chooses the top pairs
+deal_mode | string | NO | ([{"options": {"time": "3m", "points": "100"}, "strategy": "rsi"}]) signal | Deal strategy how the script is creating new deals in multipair bot - for more see the "Deal Modes" section
+limit_initial_pairs | boolean |NO | (false), true | Limit initial pairs to the max number of deals (MAD) - bot chooses the top pairs
 random_pair | boolean | NO | (false), true | If true then random pairs from the symrank list will be used for new deals in multibot
-btc_pulse | boolean | YES | (false), true | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
+btc_pulse | boolean | NO | (false), true | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
 ext_botswitch | boolean | NO | (false), true | If enabled the automatic multibot enablement will be disabled and only triggered by external events - you must disable BTC Pulse if you enable this switch !!!
-token_denylist | array | NO | ([BTC_USDT, ETH_USDT, BUSD_USDT, USDC_USDT, USDT_USDT]) | Denylist of pairs which not be used by the bot for new deals
+token_denylist | array |YES | ([BUSD_USDT, USDC_USDT, USDT_USDT, USDT_USDP]) | Denylist of pairs which not be used by the bot for new deals
 
 ### Signals
 The new version of 3cqs signals is now separated into three main versions. To decide which version fit your needs, please take a look at the indicators beneath. The description can be found on Discord too: https://discord.com/channels/720875074806349874/835100061583015947/958724423513419876
@@ -238,7 +237,7 @@ docker volume create session
 ```
 
 ## Create your .env file
-Copy the `.env.example` file to `.env`and change the settings. The same settings as in the config.ini can be used
+Copy one of the `.env.*.example` files from the example directory to `.env` in the root directory and change the settings. The same settings as in the config.ini can be used
 
 ## Run your container
 ```
