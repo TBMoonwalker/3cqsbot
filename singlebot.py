@@ -21,10 +21,15 @@ class SingleBot:
         self.suffix = self.attributes.get("suffix")
 
     def strategy(self):
-        if self.attributes.get("deal_mode") == "signal":
+        if self.attributes.get("deal_mode", "signal") == "signal":
             strategy = [{"strategy": "nonstop"}]
         else:
-            strategy = json.loads(self.attributes.get("deal_mode"))
+            try:
+                strategy = json.loads(self.attributes.get("deal_mode"))
+            except ValueError:
+                self.logging.error(
+                    "Decoding JSON string of deal_mode failed. Please check https://jsonformatter.curiousconcept.com/ for correct format"
+                )
 
         return strategy
 
@@ -92,8 +97,8 @@ class SingleBot:
             "take_profit_type": "total",
             "active_safety_orders_count": self.attributes.get("max"),
             "strategy_list": self.strategy(),
-            "trailing_enabled": self.attributes.get("trailing"),
-            "trailing_deviation": self.attributes.get("trailing_deviation"),
+            "trailing_enabled": self.attributes.get("trailing", False),
+            "trailing_deviation": self.attributes.get("trailing_deviation", 0.2),
             "min_volume_btc_24h": self.attributes.get("btc_min_vol"),
         }
 
@@ -102,7 +107,7 @@ class SingleBot:
     def update(self, bot):
         # Update settings on an existing bot
         self.logging.info("Updating bot settings on " + bot["name"])
-        
+
         error, data = self.p3cw.request(
             entity="bots",
             action="update",
@@ -117,10 +122,10 @@ class SingleBot:
     def enable(self, bot):
 
         self.logging.info(
-                "Enabling single bot " + bot["name"] + " because of a START signal"
-            )    
+            "Enabling single bot " + bot["name"] + " because of a START signal"
+        )
 
-        if self.attributes.get("singlebot_update"):
+        if self.attributes.get("singlebot_update", "true"):
             self.update(bot)
 
         # Enables an existing bot
@@ -152,10 +157,10 @@ class SingleBot:
                 ) in bots["name"]:
 
                     self.logging.info(
-                            "Disabling single bot "
-                            + bots["name"]
-                            + " because of a STOP signal"
-                        )
+                        "Disabling single bot "
+                        + bots["name"]
+                        + " because of a STOP signal"
+                    )
 
                     error, data = self.p3cw.request(
                         entity="bots",
@@ -171,8 +176,8 @@ class SingleBot:
         else:
             # Disables an existing bot
             self.logging.info(
-                    "Disabling single bot " + bot["name"] + " because of a STOP signal"
-                )
+                "Disabling single bot " + bot["name"] + " because of a STOP signal"
+            )
 
             error, data = self.p3cw.request(
                 entity="bots",
@@ -203,7 +208,9 @@ class SingleBot:
             self.enable(data)
 
     def delete(self, bot):
-        if bot["active_deals_count"] == 0 and self.attributes.get("delete_single_bots"):
+        if bot["active_deals_count"] == 0 and self.attributes.get(
+            "delete_single_bots", False
+        ):
             # Deletes a single bot with stop signal
             self.logging.info("Delete single bot with pair " + self.tg_data["pair"])
             error, data = self.p3cw.request(
@@ -245,9 +252,9 @@ class SingleBot:
 
                         pair = self.signal.topcoin(
                             pair,
-                            self.attributes.get("topcoin_limit"),
-                            self.attributes.get("topcoin_volume"),
-                            self.attributes.get("topcoin_exchange"),
+                            self.attributes.get("topcoin_limit", 3500),
+                            self.attributes.get("topcoin_volume", 0),
+                            self.attributes.get("topcoin_exchange", "binance"),
                             self.attributes.get("market"),
                         )
 

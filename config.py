@@ -23,21 +23,18 @@ class Config:
                 raw_value = self.config[section].get(attribute)
 
                 if raw_value:
-                    if raw_value.isdigit():
-                        data = self.config[section].getint(attribute)
-                    elif raw_value.lower() == "true" or raw_value.lower() == "false":
-                        data = self.config[section].getboolean(attribute)
-                    elif self.isfloat(raw_value):
-                        data = self.config[section].getfloat(attribute)
-                    else:
-                        data = self.config[section][attribute]
-                    break
-                else:
-                    data = defaultvalue
+                    data = self.check_type(raw_value)
                     break
 
-        if not data:
+        if not data and str(defaultvalue):
             data = defaultvalue
+        elif not data and not str(defaultvalue):
+            sys.tracebacklimit = 0
+            sys.exit(
+                "Attribute "
+                + attribute
+                + " is not set, but mandatory! Please check the readme for configuration."
+            )
 
         return data
 
@@ -47,3 +44,17 @@ class Config:
             return True
         except ValueError:
             return False
+
+    def check_type(self, raw_value):
+        data = ""
+
+        if raw_value.isdigit():
+            data = int(raw_value)
+        elif raw_value.lower() == "true" or raw_value.lower() == "false":
+            data = bool(raw_value)
+        elif self.isfloat(raw_value):
+            data = float(raw_value)
+        else:
+            data = str(raw_value)
+
+        return data

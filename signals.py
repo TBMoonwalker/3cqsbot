@@ -77,7 +77,6 @@ class Signals:
 
     def topvolume(self, id, volume, exchange, market):
         # Check if topcoin has enough volume
-        volume_target = True
 
         if volume > 0:
 
@@ -92,9 +91,12 @@ class Signals:
                 ):
                     volume_target = True
                     self.logging.info(
-                        "Topcoin BTC volume for " + str(id)
-                        + " is " + str(target["converted_volume"]["btc"])
-                        + " and over the configured value of " + str(volume)
+                        "Topcoin BTC volume for "
+                        + str(id)
+                        + " is "
+                        + str(target["converted_volume"]["btc"])
+                        + " and over the configured value of "
+                        + str(volume)
                     )
                     break
                 elif (
@@ -103,13 +105,18 @@ class Signals:
                 ):
                     volume_target = False
                     self.logging.info(
-                        "Topcoin BTC volume for " + str(id)
-                        + " is " + str(target["converted_volume"]["btc"])
-                        + " and under the configured value of " + str(volume)
+                        "Topcoin BTC volume for "
+                        + str(id)
+                        + " is "
+                        + str(target["converted_volume"]["btc"])
+                        + " and under the configured value of "
+                        + str(volume)
                     )
                     break
                 else:
                     volume_target = False
+        else:
+            volume_target = True
 
         return volume_target
 
@@ -138,7 +145,7 @@ class Signals:
                 for symbol in market:
                     coin = pair
                     if (
-                        coin.lower()==symbol["symbol"]
+                        coin.lower() == symbol["symbol"]
                         and int(symbol["market_cap_rank"]) <= rank
                     ):
                         # Check if topcoin has enough volume
@@ -152,7 +159,7 @@ class Signals:
 
             for symbol in market:
                 if (
-                    coin.lower() in symbol["symbol"]
+                    coin.lower() == symbol["symbol"]
                     and int(symbol["market_cap_rank"]) <= rank
                 ):
                     # Check if topcoin has enough volume

@@ -22,11 +22,11 @@ class MultiBot:
         self.suffix = self.attributes.get("suffix")
 
     def strategy(self):
-        if self.attributes.get("deal_mode") == "signal":
+        if self.attributes.get("deal_mode", "signal") == "signal":
             strategy = [{"strategy": "manual"}]
         else:
             try:
-               strategy = json.loads(self.attributes.get("deal_mode"))
+                strategy = json.loads(self.attributes.get("deal_mode"))
             except ValueError:
                 self.logging.error(
                     "Decoding JSON string of deal_mode failed. Please check https://jsonformatter.curiousconcept.com/ for correct format"
@@ -64,10 +64,10 @@ class MultiBot:
             "take_profit_type": "total",
             "active_safety_orders_count": self.attributes.get("max"),
             "strategy_list": self.strategy(),
-            "trailing_enabled": self.attributes.get("trailing"),
-            "trailing_deviation": self.attributes.get("trailing_deviation"),
+            "trailing_enabled": self.attributes.get("trailing", False),
+            "trailing_deviation": self.attributes.get("trailing_deviation", 0.2),
             "allowed_deals_on_same_pair": self.attributes.get("sdsp"),
-            "min_volume_btc_24h": self.attributes.get("btc_min_vol"),
+            "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0),
         }
 
         return payload
@@ -75,7 +75,7 @@ class MultiBot:
     def enable(self, bot):
         # Enables an existing bot
         if not bot["is_enabled"]:
-            self.logging.info("Enabling bot: " + bot["name"])            
+            self.logging.info("Enabling bot: " + bot["name"])
 
             error, data = self.p3cw.request(
                 entity="bots",
@@ -115,7 +115,7 @@ class MultiBot:
         if triggerpair:
             pair = triggerpair
         else:
-            if self.attributes.get("random_pair"):
+            if self.attributes.get("random_pair", "true"):
                 pair = random.choice(bot["pairs"])
             else:
                 pair = ""
@@ -161,9 +161,9 @@ class MultiBot:
         # Filter topcoins (if set)
         pairlist = self.signal.topcoin(
             self.tg_data,
-            self.attributes.get("topcoin_limit"),
-            self.attributes.get("topcoin_volume"),
-            self.attributes.get("topcoin_exchange"),
+            self.attributes.get("topcoin_limit", 3500),
+            self.attributes.get("topcoin_volume", 0),
+            self.attributes.get("topcoin_exchange", "binance"),
             self.attributes.get("market"),
         )
         for pair in pairlist:
@@ -176,7 +176,7 @@ class MultiBot:
         self.logging.debug("Pairs after topcoin filter " + str(pairs))
 
         # Run filters to adapt pair list
-        if self.attributes.get("limit_initial_pairs"):
+        if self.attributes.get("limit_initial_pairs", False):
             # Limit pairs to the maximal deals (mad)
             if self.attributes.get("mad") == 1:
                 maxpairs = 2
@@ -204,7 +204,7 @@ class MultiBot:
             if error:
                 self.logging.error(error["msg"])
             else:
-                if not self.attributes.get("ext_botswitch"):
+                if not self.attributes.get("ext_botswitch", False):
                     self.enable(data)
                 else:
                     self.logging.info(
@@ -226,7 +226,7 @@ class MultiBot:
             else:
                 self.logging.info(bot["name"] + " updated with filtered pairs")
                 self.logging.debug("Pairs: " + str(pairs))
-                if not self.attributes.get("ext_botswitch"):
+                if not self.attributes.get("ext_botswitch", False):
                     self.enable(data)
                 else:
                     self.logging.info(
@@ -261,9 +261,9 @@ class MultiBot:
                         else:
                             pair = self.signal.topcoin(
                                 pair,
-                                self.attributes.get("topcoin_limit"),
-                                self.attributes.get("topcoin_volume"),
-                                self.attributes.get("topcoin_exchange"),
+                                self.attributes.get("topcoin_limit", 3500),
+                                self.attributes.get("topcoin_volume", 0),
+                                self.attributes.get("topcoin_exchange", "binance"),
                                 self.attributes.get("market"),
                             )
                             if pair:

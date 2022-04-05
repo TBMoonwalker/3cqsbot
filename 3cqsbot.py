@@ -46,21 +46,21 @@ p3cw = Py3CW(
     key=attributes.get("key"),
     secret=attributes.get("secret"),
     request_options={
-        "request_timeout": attributes.get("timeout"),
-        "nr_of_retries": attributes.get("retries"),
-        "retry_backoff_factor": attributes.get("delay_between_retries"),
+        "request_timeout": attributes.get("timeout", 3),
+        "nr_of_retries": attributes.get("retries", 5),
+        "retry_backoff_factor": attributes.get("delay_between_retries", 2.0),
     },
 )
 
 # Initialize Telegram API client
 client = TelegramClient(
-    attributes.get("sessionfile"),
+    attributes.get("sessionfile", "tgsesssion"),
     attributes.get("api_id"),
     attributes.get("api_hash"),
 )
 
 # Set logging facility
-if attributes.get("debug"):
+if attributes.get("debug", False):
     loglevel = "DEBUG"
 else:
     loglevel = getattr(logging, args.loglevel.upper(), None)
@@ -68,11 +68,11 @@ else:
 # Set logging output
 handler = logging.StreamHandler()
 
-if attributes.get("log_to_file"):
+if attributes.get("log_to_file", False):
     handler = logging.handlers.RotatingFileHandler(
-        attributes.get("log_file_path"),
-        maxBytes=attributes.get("log_file_size"),
-        backupCount=attributes.get("log_file_count"),
+        attributes.get("log_file_path", "3cqsbot.log"),
+        maxBytes=attributes.get("log_file_size", 200000),
+        backupCount=attributes.get("log_file_count", 5),
     )
 
 logging.basicConfig(
@@ -327,16 +327,19 @@ def _handle_task_result(task: asyncio.Task) -> None:
     except asyncio.CancelledError:
         pass  # Task cancellation should not be logged as an error.
     except Exception:  # pylint: disable=broad-except
-        logging.exception("Exception raised by task = %r. Check if config.ini has all necessary options!", task)
+        logging.exception(
+            "Exception raised by task = %r. Check if config.ini has all necessary options!",
+            task,
+        )
 
 
-@client.on(events.NewMessage(chats=attributes.get("chatroom")))
+@client.on(events.NewMessage(chats=attributes.get("chatroom", "3C Quick Stats")))
 async def my_event_handler(event):
 
     if (
         asyncState.btcbool
-        and attributes.get("btc_pulse")
-        and not attributes.get("ext_botswitch")
+        and attributes.get("btc_pulse", False)
+        and not attributes.get("ext_botswitch", False)
     ):
         logging.info(
             "New 3CQS signal not processed - Bot stopped because of BTC downtrend"
@@ -378,15 +381,17 @@ async def my_event_handler(event):
                 if tg_output["volatility"] != 0 and tg_output["pair"] in pair_output:
                     if (
                         tg_output["volatility"]
-                        >= attributes.get("volatility_limit_min")
+                        >= attributes.get("volatility_limit_min", 0.1)
                         and tg_output["volatility"]
-                        <= attributes.get("volatility_limit_max")
+                        <= attributes.get("volatility_limit_max", 100)
                         and tg_output["price_action"]
-                        >= attributes.get("price_action_limit_min")
+                        >= attributes.get("price_action_limit_min", 0.1)
                         and tg_output["price_action"]
-                        <= attributes.get("price_action_limit_max")
-                        and tg_output["symrank"] >= attributes.get("symrank_limit_min")
-                        and tg_output["symrank"] <= attributes.get("symrank_limit_max")
+                        <= attributes.get("price_action_limit_max", 100)
+                        and tg_output["symrank"]
+                        >= attributes.get("symrank_limit_min", 1)
+                        and tg_output["symrank"]
+                        <= attributes.get("symrank_limit_max", 100)
                     ) or tg_output["action"] == "STOP":
 
                         bot.trigger()
@@ -444,7 +449,9 @@ async def main():
     if not attributes.get("single"):
         await symrank()
 
-    if attributes.get("btc_pulse") and not attributes.get("ext_botswitch"):
+    if attributes.get("btc_pulse", False) and not attributes.get(
+        "ext_botswitch", False
+    ):
         btcbooltask = client.loop.create_task(signals.getbtcbool(asyncState))
         btcbooltask.add_done_callback(_handle_task_result)
         switchtask = client.loop.create_task(botswitch())
@@ -460,5 +467,5 @@ with client:
 
 client.start()
 
-if not attributes.get("btc_pulse"):
+if not attributes.get("btc_pulse", False):
     client.run_until_disconnected()
