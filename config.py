@@ -28,7 +28,7 @@ class Config:
 
         if data == "" and str(defaultvalue):
             data = defaultvalue
-        elif data == "" and not defaultvalue == "":
+        elif data == "" and defaultvalue == "":
             sys.tracebacklimit = 0
             sys.exit(
                 "Attribute "

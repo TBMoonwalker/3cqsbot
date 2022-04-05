@@ -346,8 +346,6 @@ async def my_event_handler(event):
         )
     else:
 
-        logging.info("New 3CQS signal incoming...")
-
         tg_output = tg_data(parse_tg(event.raw_text))
         logging.debug("TG msg: " + str(tg_output))
         bot_output = bot_data()
@@ -355,6 +353,10 @@ async def my_event_handler(event):
         pair_output = asyncState.pairData
 
         if tg_output and not isinstance(tg_output, list):
+
+            logging.info("New 3CQS signal " 
+                + str(tg_output["signal"]) 
+                + " incoming...")
 
             # Check if it is the right signal
             if tg_output["signal"] == attributes.get("symrank_signal"):
@@ -410,7 +412,7 @@ async def my_event_handler(event):
             else:
                 logging.info(
                     tg_output["signal"]
-                    + " signal ignored. "
+                    + " signal ignored because "
                     + attributes.get("symrank_signal")
                     + " is configured."
                 )

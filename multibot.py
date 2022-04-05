@@ -271,9 +271,7 @@ class MultiBot:
                                 bot["pairs"].append(pair)
                             else:
                                 self.logging.info(
-                                    "Pair "
-                                    + pair
-                                    + " is not in filtered Coingecko's top coin list!"
+                                    "This pair did not meet top coin filter criteria!"
                                 )
 
                     else:
