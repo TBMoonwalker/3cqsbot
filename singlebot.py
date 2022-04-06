@@ -279,7 +279,7 @@ class SingleBot:
                         else:
                             self.logging.info(
                                 "Pair "
-                                + pair
+                                + str(self.tg_data["pair"])
                                 + " is not in the top coin list - not added!"
                             )
 
