@@ -115,36 +115,7 @@ def parse_tg(raw_text):
 def tg_data(text_lines):
     # Make sure the message is a signal
     # 6 Lines old Telegram signal - will be removed after @Mantis update
-    if len(text_lines) == 6:
-        data = {}
-        signal = "old"
-        token = text_lines[1].replace("#", "")
-        action = text_lines[2].replace("BOT_", "")
-        volatility_score = text_lines[3].replace("Volatility Score ", "")
-
-        if volatility_score == "N/A":
-            volatility_score = 9999999
-
-        priceaction_score = text_lines[4].replace("Price Action Score ", "")
-
-        if priceaction_score == "N/A":
-            priceaction_score = 9999999
-
-        symrank = text_lines[5].replace("SymRank #", "")
-
-        if symrank == "N/A":
-            symrank = 9999999
-
-        data = {
-            "signal": signal,
-            "pair": attributes.get("market") + "_" + token,
-            "action": action,
-            "volatility": float(volatility_score),
-            "price_action": float(priceaction_score),
-            "symrank": int(symrank),
-        }
-    # 7 Lines new Telegram signal
-    elif len(text_lines) == 7:
+    if len(text_lines) == 7:
         data = {}
         signal = text_lines[1]
         token = text_lines[2].replace("#", "")
@@ -354,12 +325,13 @@ async def my_event_handler(event):
 
         if tg_output and not isinstance(tg_output, list):
 
-            logging.info("New 3CQS signal " 
-                + str(tg_output["signal"]) 
-                + " incoming...")
+            logging.info("New 3CQS signal " + str(tg_output["signal"]) + " incoming...")
 
             # Check if it is the right signal
-            if tg_output["signal"] == attributes.get("symrank_signal"):
+            if (
+                tg_output["signal"] == attributes.get("symrank_signal")
+                or attributes.get("symrank_signal") == "all"
+            ):
 
                 # Choose multibot or singlebot
                 if attributes.get("single"):

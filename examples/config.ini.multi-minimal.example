@@ -23,6 +23,7 @@ mad = 2
 max = 1
 mstc = 25
 sdsp = 1
+single = false
 
 [trading]
 market = USDT
