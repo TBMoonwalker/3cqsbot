@@ -132,6 +132,13 @@ delete_single_bots | boolean | NO | (false), true | If set to true, bots witho
 singlebot_update | boolean | NO | (true), false | If set to true, singlebots settings will be updated when enabled again (new settings only work after restart of the script)
 trailing | boolean | NO | (false), true | Trailing profit enabled
 trailing_deviation | number | NO | (0.2) | Deviation of trailing profit
+trade_future | boolean | NO | (false), true | Enable futures trading
+leverage_type | string | NO | (cross), custom, not_specified, isolated | Different leverage types for futures trading from 3commas
+leverage_value | integer | NO | (2) | Leverage value for futures trading
+stop_loss_percent | integer | NO | (1) | Stop loss value in percent for futures trading
+stop_loss_type | string | NO | (stop_loss_and_disable_bot), stop_loss | Stop Loss type for futures trading
+stop_loss_timeout_enabled | boolean | NO | (false), true | Enable stop loss timeout for futures trading
+stop_loss_timeout_seconds | integer | NO | (5) | Time interval for stop loss in seconds for futures trading
 
 ### Deal Mode explanation
 
