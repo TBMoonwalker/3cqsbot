@@ -1,0 +1,13 @@
+[Unit]
+Description=3CQSBot Daemon
+After=multi-user.target
+ 
+[Service]
+# Set WorkingDirectory and ExecStart to your file paths accordingly
+WorkingDirectory=/home/ubuntu/3cqsbot/
+ExecStart=/usr/bin/python3 /home/ubuntu/3cqsbot/3cqsbot.py
+User=ubuntu
+Restart=on-failure
+ 
+[Install]
+WantedBy=default.target
