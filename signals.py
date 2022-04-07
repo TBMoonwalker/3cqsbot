@@ -3,6 +3,7 @@ import numpy as np
 import asyncio
 import math
 import re
+import babel.numbers
 
 from pycoingecko import CoinGeckoAPI
 from tenacity import retry, wait_fixed
@@ -91,13 +92,32 @@ class Signals:
                     and target["converted_volume"]["btc"] >= volume
                 ):
                     volume_target = True
+                    converted_usd = babel.numbers.format_currency(
+                        target["converted_volume"]["usd"], "USD", locale="en_US"
+                    )
+                    btc_price = (
+                        target["converted_volume"]["usd"]
+                        / target["converted_volume"]["btc"]
+                    )
+                    self.logging.debug("price")
+                    configured_usd = babel.numbers.format_currency(
+                        (volume * btc_price),
+                        "USD",
+                        locale="en_US",
+                    )
                     self.logging.info(
                         "Topcoin BTC volume for "
                         + str(id)
                         + " is "
                         + str(target["converted_volume"]["btc"])
+                        + " ("
+                        + converted_usd
+                        + ") "
                         + " and over the configured value of "
                         + str(volume)
+                        + " ("
+                        + configured_usd
+                        + ") "
                     )
                     break
                 elif (
@@ -105,13 +125,32 @@ class Signals:
                     and target["converted_volume"]["btc"] < volume
                 ):
                     volume_target = False
+                    converted_usd = babel.numbers.format_currency(
+                        target["converted_volume"]["usd"], "USD", locale="en_US"
+                    )
+                    btc_price = (
+                        target["converted_volume"]["usd"]
+                        / target["converted_volume"]["btc"]
+                    )
+                    self.logging.debug("price")
+                    configured_usd = babel.numbers.format_currency(
+                        (volume * btc_price),
+                        "USD",
+                        locale="en_US",
+                    )
                     self.logging.info(
                         "Topcoin BTC volume for "
                         + str(id)
                         + " is "
                         + str(target["converted_volume"]["btc"])
+                        + " ("
+                        + converted_usd
+                        + ") "
                         + " and under the configured value of "
                         + str(volume)
+                        + " ("
+                        + configured_usd
+                        + ") "
                     )
                     break
                 else:
