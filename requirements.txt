@@ -5,3 +5,4 @@ yfinance
 numpy
 tenacity
 portalocker
+Babel
