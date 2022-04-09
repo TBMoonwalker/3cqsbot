@@ -6,6 +6,7 @@ class Config:
     def __init__(self):
         self.config = configparser.ConfigParser()
         self.dataset = self.config.read("config.ini")
+        self.fixstrings = ["account_name", "prefix", "subprefix", "suffix"]
 
     def get(self, attribute, defaultvalue=""):
         data = ""
@@ -23,7 +24,10 @@ class Config:
                 raw_value = self.config[section].get(attribute)
 
                 if raw_value:
-                    data = self.check_type(raw_value)
+                    if attribute in self.fixstrings:
+                        data = raw_value
+                    else:
+                        data = self.check_type(raw_value)
                     break
 
         if data == "" and str(defaultvalue):
