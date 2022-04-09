@@ -264,7 +264,7 @@ class MultiBot:
                     self.logging.info(
                         "Got new 3cqs "
                         + self.tg_data["action"]
-                        + " signal for pair "
+                        + " signal for "
                         + pair
                     )
 
@@ -273,7 +273,7 @@ class MultiBot:
 
                         if pair in bot["pairs"]:
                             self.logging.info(
-                                "Pair " + pair + " is already included in the pair list"
+                                pair + " is already included in the pair list"
                             )
                         else:
                             pair = self.signal.topcoin(
@@ -286,25 +286,19 @@ class MultiBot:
                             if pair:
                                 self.logging.info("Adding pair " + pair)
                                 bot["pairs"].append(pair)
-                            else:
-                                self.logging.info(
-                                    "This pair did not meet top coin filter criteria!"
-                                )
-
                     else:
                         if pair in bot["pairs"]:
                             self.logging.info("Remove pair " + pair)
                             bot["pairs"].remove(pair)
                         else:
                             self.logging.info(
-                                "Pair "
-                                + pair
+                                pair
                                 + " was not included in the pair list, not removed"
                             )
 
-                    self.logging.info("Adjusting mad if pairs are under value")
                     # Adapt mad if pairs are under value
                     mad = self.adjustmad(bot["pairs"], mad)
+                    self.logging.info("Adjusting mad to amount of included symrank pairs: " + str(mad))
 
                     error, data = self.p3cw.request(
                         entity="bots",

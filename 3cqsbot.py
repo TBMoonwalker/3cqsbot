@@ -376,17 +376,16 @@ async def my_event_handler(event):
                         )
                 else:
                     logging.info(
-                        "Pair "
-                        + tg_output["pair"]
+                        tg_output["pair"]
                         + " is not traded on account "
                         + attributes.get("account_name")
                     )
             else:
                 logging.info(
-                    tg_output["signal"]
-                    + " signal ignored because "
+                    "Signal " + tg_output["signal"]
+                    + " ignored because "
                     + attributes.get("symrank_signal")
-                    + " is configured."
+                    + " is configured"
                 )
 
         elif tg_output and isinstance(tg_output, list):
