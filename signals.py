@@ -87,37 +87,36 @@ class Signals:
             self.logging.debug(self.cgvalues.cache_info())
 
             for target in exchange["tickers"]:
+                converted_btc = babel.numbers.format_currency(
+                    target["converted_volume"]["btc"], "", locale="en_US"
+                )
+                converted_usd = babel.numbers.format_currency(
+                    target["converted_volume"]["usd"], "USD", locale="en_US"
+                )
+                btc_price = (
+                    target["converted_volume"]["usd"]
+                    / target["converted_volume"]["btc"]
+                )
+                configured_usd = babel.numbers.format_currency(
+                    (volume * btc_price), "USD", locale="en_US",
+                )
                 if (
                     target["target"] == market
                     and target["converted_volume"]["btc"] >= volume
                 ):
                     volume_target = True
-                    converted_usd = babel.numbers.format_currency(
-                        target["converted_volume"]["usd"], "USD", locale="en_US"
-                    )
-                    btc_price = (
-                        target["converted_volume"]["usd"]
-                        / target["converted_volume"]["btc"]
-                    )
                     self.logging.debug("price")
-                    configured_usd = babel.numbers.format_currency(
-                        (volume * btc_price),
-                        "USD",
-                        locale="en_US",
-                    )
                     self.logging.info(
-                        "Topcoin BTC volume for "
-                        + str(id)
-                        + " is "
-                        + str(target["converted_volume"]["btc"])
-                        + " ("
+                        str(target["base"])
+                        + " daily volume is "
+                        + converted_btc
+                        + " BTC ("
                         + converted_usd
-                        + ") "
-                        + " and over the configured value of "
+                        + ") and over the configured value of "
                         + str(volume)
-                        + " ("
+                        + " BTC ("
                         + configured_usd
-                        + ") "
+                        + ")"
                     )
                     break
                 elif (
@@ -125,32 +124,18 @@ class Signals:
                     and target["converted_volume"]["btc"] < volume
                 ):
                     volume_target = False
-                    converted_usd = babel.numbers.format_currency(
-                        target["converted_volume"]["usd"], "USD", locale="en_US"
-                    )
-                    btc_price = (
-                        target["converted_volume"]["usd"]
-                        / target["converted_volume"]["btc"]
-                    )
                     self.logging.debug("price")
-                    configured_usd = babel.numbers.format_currency(
-                        (volume * btc_price),
-                        "USD",
-                        locale="en_US",
-                    )
                     self.logging.info(
-                        "Topcoin BTC volume for "
-                        + str(id)
-                        + " is "
-                        + str(target["converted_volume"]["btc"])
-                        + " ("
+                        str(target["base"])
+                        + " daily volume is "
+                        + converted_btc
+                        + " BTC ("
                         + converted_usd
-                        + ") "
-                        + " and under the configured value of "
+                        + ") not passing the minimum daily BTC volume of "
                         + str(volume)
-                        + " ("
+                        + "BTC ("
                         + configured_usd
-                        + ") "
+                        + ")"
                     )
                     break
                 else:
@@ -166,7 +151,7 @@ class Signals:
 
         self.logging.debug(self.cgvalues.cache_info())
         self.logging.info(
-            "Applying CG's Top coin filter settings: marketcap <= "
+            "Applying CG's top coin filter settings: marketcap <= "
             + str(rank)
             + " with daily BTC volume >= "
             + str(volume)
@@ -177,7 +162,7 @@ class Signals:
         if isinstance(pairs, list):
             self.logging.info(
                 str(len(pairs))
-                + " Symrank pair(s) BEFORE Top coin filter: "
+                + " symrank pair(s) BEFORE top coin filter: "
                 + str(pairs)
             )
             pairlist = []
@@ -188,12 +173,17 @@ class Signals:
                         coin.lower() == symbol["symbol"]
                         and int(symbol["market_cap_rank"]) <= rank
                     ):
+                        self.logging.info(
+                            str(pair)
+                            + " ranked " 
+                            + str(symbol["market_cap_rank"]) 
+                            + " passed marketcap filter"
+                        )
                         # Check if topcoin has enough volume
                         if self.topvolume(symbol["id"], volume, exchange, trademarket):
                             pairlist.append(pair)
                             break
         else:
-            self.logging.info("Symrank pair BEFORE Top coin filter: " + str(pairs))
             pairlist = ""
             coin = re.search("(\w+)_(\w+)", pairs).group(2)
 
@@ -202,20 +192,32 @@ class Signals:
                     coin.lower() == symbol["symbol"]
                     and int(symbol["market_cap_rank"]) <= rank
                 ):
+                    self.logging.info(
+                        str(pairs)
+                        + " ranked "
+                        + str(symbol["market_cap_rank"]) 
+                        + " passed marketcap filter"
+                    )                    
                     # Check if topcoin has enough volume
                     if self.topvolume(symbol["id"], volume, exchange, trademarket):
                         pairlist = pairs
                         break
 
         if not pairlist:
-            self.logging.info(str(pairs) + " not ranging under CG's Top coins")
+            self.logging.info(str(pairs) 
+            + " ranked " 
+            + str(symbol["market_cap_rank"]) 
+            + " in marketcap not under the top " 
+            + str(rank)
+            + " coins"
+            )
         else:
             if isinstance(pairlist, str):
-                self.logging.info(str(pairlist) + " matching with CG's Top coins")
+                self.logging.info(str(pairlist) + " matching top coin filter criteria")
             else:
                 self.logging.info(
                     str(len(pairlist))
-                    + " Symrank pair(s) AFTER Top coin filter: "
+                    + " symrank pair(s) AFTER top coin filter: "
                     + str(pairlist)
                 )
 
