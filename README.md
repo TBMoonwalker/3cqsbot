@@ -168,7 +168,7 @@ Everything is the same as with the other multi mode, but the deals are started d
 
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
-symrank_signal | string | YES | (triple100), top30, xvol, all | Decide which signal the bot should parse.
+symrank_signal | string | YES | (triple100), top30, xvol, hvol, all | Decide which signal the bot should parse.
 symrank_limit_min | integer | NO | (1) | Bots will be created when the symrank value is over this limit
 symrank_limit_max | integer | NO | (100) | Bots will be created when the symrank value is under this limit
 volatility_limit_min | number | NO | (0.1) | Bots will be created when the volatility value is over this limit
@@ -201,6 +201,10 @@ BOT_START: SymRank <= 30
 #### xvol
 SIGNAL NAME: X-treme Volatility
 BOT_START: Volatility Score >= 10
+
+#### hvol
+SIGNAL NAME: X-treme Volatility
+BOT_START: Volatility Score >= 6
 
 #### all
 Pass through all signals

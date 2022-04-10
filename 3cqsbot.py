@@ -139,6 +139,8 @@ def tg_data(text_lines):
             signal = "top30"
         elif signal == "SymRank Top 100 Triple Tracker":
             signal = "triple100"
+        elif signal == "Hyper Volatility":
+            signal = "hvol"
         else:
             signal = "xvol"
 
@@ -382,7 +384,8 @@ async def my_event_handler(event):
                     )
             else:
                 logging.info(
-                    "Signal " + tg_output["signal"]
+                    "Signal "
+                    + tg_output["signal"]
                     + " ignored because "
                     + attributes.get("symrank_signal")
                     + " is configured"
