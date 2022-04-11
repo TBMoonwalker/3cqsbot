@@ -240,6 +240,9 @@ python3 3cqsbot.py
 ```
 When running for the first time, you will be asked for your Telegram phonenumber and you will get a code you have to insert!
 
+## You don't get the code
+Some users had to put spaces in the phone number. It seems the number has to be the same format as in Telegram. For example type in your telephone number as `+XXX XXX XXX XXX` to receive the code.
+
 # Docker
 ## Create the docker image
 ```

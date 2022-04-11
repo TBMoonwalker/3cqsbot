@@ -98,7 +98,9 @@ class Signals:
                     / target["converted_volume"]["btc"]
                 )
                 configured_usd = babel.numbers.format_currency(
-                    (volume * btc_price), "USD", locale="en_US",
+                    (volume * btc_price),
+                    "USD",
+                    locale="en_US",
                 )
                 if (
                     target["target"] == market
@@ -133,7 +135,7 @@ class Signals:
                         + converted_usd
                         + ") not passing the minimum daily BTC volume of "
                         + str(volume)
-                        + "BTC ("
+                        + " BTC ("
                         + configured_usd
                         + ")"
                     )
@@ -175,8 +177,8 @@ class Signals:
                     ):
                         self.logging.info(
                             str(pair)
-                            + " ranked " 
-                            + str(symbol["market_cap_rank"]) 
+                            + " ranked "
+                            + str(symbol["market_cap_rank"])
                             + " passed marketcap filter"
                         )
                         # Check if topcoin has enough volume
@@ -195,21 +197,22 @@ class Signals:
                     self.logging.info(
                         str(pairs)
                         + " ranked "
-                        + str(symbol["market_cap_rank"]) 
+                        + str(symbol["market_cap_rank"])
                         + " passed marketcap filter"
-                    )                    
+                    )
                     # Check if topcoin has enough volume
                     if self.topvolume(symbol["id"], volume, exchange, trademarket):
                         pairlist = pairs
                         break
 
         if not pairlist:
-            self.logging.info(str(pairs) 
-            + " ranked " 
-            + str(symbol["market_cap_rank"]) 
-            + " in marketcap not under the top " 
-            + str(rank)
-            + " coins"
+            self.logging.info(
+                str(pairs)
+                + " ranked "
+                + str(symbol["market_cap_rank"])
+                + " in marketcap not under the top "
+                + str(rank)
+                + " coins"
             )
         else:
             if isinstance(pairlist, str):
