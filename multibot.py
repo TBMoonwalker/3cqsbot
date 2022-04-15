@@ -191,7 +191,12 @@ class MultiBot:
                 self.logging.debug(pair + " added to the list")
                 pairs.append(pair)
             else:
-                self.logging.info(pair + " passed top coin filter but removed because not tradable on " + self.attributes.get("account_name"))
+                self.logging.info(
+                pair 
+                + " removed because pair is blacklisted on 3commas or in config.ini or not tradable on '" 
+                + self.attributes.get("account_name")
+                + "'"
+                )
 
         self.logging.debug("Pairs after topcoin filter " + str(pairs))
 

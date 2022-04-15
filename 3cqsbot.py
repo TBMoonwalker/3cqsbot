@@ -248,10 +248,20 @@ def pair_data(account):
         logging.debug(error["msg"])
         sys.tracebacklimit = 0
         sys.exit("Problem fetching pair data from 3commas api - stopping!")
+
+    error, blacklist_data = p3cw.request(
+        entity="bots",
+        action="pairs_black_list"
+    )
+
+    if error:
+        logging.debug(error["msg"])
+        sys.tracebacklimit = 0
+        sys.exit("Problem fetching pairs blacklist data from 3commas api - stopping!")
     else:
         for pair in data:
             if attributes.get("market") in pair:
-                if pair not in attributes.get("token_denylist"):
+                if pair not in attributes.get("token_denylist") and pair not in blacklist_data["pairs"]:
                     pairs.append(pair)
 
     return pairs
@@ -385,8 +395,9 @@ async def my_event_handler(event):
                 else:
                     logging.info(
                         str(tg_output["pair"])
-                        + " is not traded on "
+                        + " is not traded on '"
                         + attributes.get("account_name")
+                        + "'"
                     )
             else:
                 logging.info(
