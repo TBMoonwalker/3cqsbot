@@ -66,6 +66,7 @@ else:
     loglevel = getattr(logging, args.loglevel.upper(), None)
 
 # Set logging output
+# Thanks to @M1cha3l for improving logging output
 handler = logging.StreamHandler()
 
 if attributes.get("log_to_file", False):
@@ -114,7 +115,6 @@ def parse_tg(raw_text):
 
 def tg_data(text_lines):
     # Make sure the message is a signal
-    # 6 Lines old Telegram signal - will be removed after @Mantis update
     if len(text_lines) == 7:
         data = {}
         signal = text_lines[1]
@@ -228,7 +228,7 @@ def account_data():
         if "id" not in account:
             sys.tracebacklimit = 0
             sys.exit(
-                "Account with name " + attributes.get("account_name") + " not found"
+                "Account with name '" + attributes.get("account_name") + "' not found"
             )
 
     return account
@@ -327,7 +327,7 @@ async def my_event_handler(event):
 
         if tg_output and not isinstance(tg_output, list):
 
-            logging.info("New 3CQS signal " + str(tg_output["signal"]) + " incoming...")
+            logging.info("New 3CQS signal '" + str(tg_output["signal"]) + "' incoming...")
 
             # Check if it is the right signal
             if (
@@ -374,21 +374,27 @@ async def my_event_handler(event):
 
                     else:
                         logging.info(
-                            "Trading limits reached according to your [filter] settings in config.ini - Deal not placed."
+                            "Start signal for "
+                            + str(tg_output["pair"])
+                            + " with symrank: "
+                            + str(tg_output["symrank"])
+                            + ", volatility: "
+                            + str(tg_output["volatility"]) 
+                            + " and price action: "
+                            + str(tg_output["price_action"])
+                            + " not meeting config filter limits - signal ignored"
                         )
                 else:
                     logging.info(
-                        tg_output["pair"]
-                        + " is not traded on account "
+                        str(tg_output["pair"])
+                        + " is not traded on "
                         + attributes.get("account_name")
                     )
             else:
                 logging.info(
-                    "Signal "
-                    + tg_output["signal"]
-                    + " ignored because "
+                    "Signal ignored because '"
                     + attributes.get("symrank_signal")
-                    + " is configured"
+                    + "' is configured"
                 )
 
         elif tg_output and isinstance(tg_output, list):

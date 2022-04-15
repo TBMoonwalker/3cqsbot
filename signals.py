@@ -179,7 +179,8 @@ class Signals:
                             str(pair)
                             + " ranked "
                             + str(symbol["market_cap_rank"])
-                            + " passed marketcap filter"
+                            + " and passed marketcap filter of <= "
+                            + str(rank)
                         )
                         # Check if topcoin has enough volume
                         if self.topvolume(symbol["id"], volume, exchange, trademarket):
