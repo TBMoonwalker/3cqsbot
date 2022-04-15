@@ -264,7 +264,7 @@ class Signals:
     # https://discord.gg/tradealts
     async def getbtcbool(self, asyncState):
 
-        self.logging.info("Starting btc pulse")
+        self.logging.info("Starting btc-pulse")
 
         while True:
             btcusdt = self.btctechnical("BTC-USD")
@@ -274,9 +274,10 @@ class Signals:
                 btcusdt.percentchange_15mins[-1] < -1
                 or btcusdt.EMA50[-1] > btcusdt.EMA9[-1]
             ):
-                self.logging.info(
-                    "BTC pulse signaling Downtrend. Waiting 5m more to confirm Downtrend."
-                )
+                if asyncState.btcbool: 
+                    self.logging.info("btc-pulse signaling downtrend, disabling 3cqsbot, next check in 5min")
+                else:
+                    self.logging.info("btc-pulse signaling downtrend, waiting for confirmation in 5min")
 
                 # after 5mins getting the latest BTC data to see if it has had a sharp rise in previous 5 mins
                 await asyncio.sleep(300)
@@ -288,17 +289,15 @@ class Signals:
                     btcusdt.EMA9[-1] > btcusdt.EMA50[-1]
                     and btcusdt.EMA50[-2] > btcusdt.EMA9[-2]
                 ):
-                    self.logging.info("No Downtrend proved. BTC still in Uptrend")
+                    self.logging.info("Downtrend not proved, enabling 3cqsbot if not enabled")
                     asyncState.btcbool = False
                 else:
-                    self.logging.info(
-                        "Downtrend proved. BTC pulse sending 3cqsbot to sleep"
-                    )
+                    self.logging.info("Downtrend proved, disabling 3cqsbot if not disabled")
                     asyncState.btcbool = True
 
             else:
-                self.logging.info("BTC pulse signaling Uptrend")
+                self.logging.info("btc-pulse signaling uptrend")
                 asyncState.btcbool = False
 
-            self.logging.info("Next BTC pulse check in 5m")
+            self.logging.info("Next btc-pulse check in 5m")
             await asyncio.sleep(300)

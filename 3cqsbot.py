@@ -267,7 +267,6 @@ async def symrank():
 async def botswitch():
     while True:
         if not asyncState.btcbool and not asyncState.botswitch:
-            logging.info("Enabling Bot because of BTC uptrend")
             asyncState.botswitch = True
             logging.debug("Botswitch: " + str(asyncState.botswitch))
             if attributes.get("single"):
@@ -277,7 +276,6 @@ async def botswitch():
                 await symrank()
 
         elif asyncState.btcbool and asyncState.botswitch:
-            logging.info("Disabling Bot because of BTC downtrend")
             asyncState.botswitch = False
             logging.debug("Botswitch: " + str(asyncState.botswitch))
             if attributes.get("single"):
@@ -442,6 +440,9 @@ async def main():
         while True:
             await btcbooltask
             await switchtask
+    elif attributes.get("btc_pulse", False) and attributes.get("ext_botswitch", False):
+        sys.tracebacklimit = 0
+        sys.exit("Check config.ini, btc_pulse and ext_botswitch both set to true - not allowed")
 
 
 with client:
