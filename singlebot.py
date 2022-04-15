@@ -1,6 +1,7 @@
 import re
 import json
 import time
+import fnmatch
 
 from signals import Signals
 
@@ -19,6 +20,16 @@ class SingleBot:
         self.prefix = self.attributes.get("prefix")
         self.subprefix = self.attributes.get("subprefix")
         self.suffix = self.attributes.get("suffix")
+        self.bot_name = (
+            self.prefix
+            + "_"
+            + self.subprefix
+            + "_"
+            + self.attributes.get("market")
+            + "(.*)"
+            + "_"
+            + self.suffix
+        )
 
     def strategy(self):
         if self.attributes.get("deal_mode", "signal") == "signal":
@@ -42,7 +53,7 @@ class SingleBot:
             action="",
             action_id=account["id"],
             additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-            payload={"limit": 1000, "scope": "active"},
+            payload={"limit": 1000, "scope": "active", "account_id": account["id"]},
         )
 
         if error:
@@ -53,13 +64,7 @@ class SingleBot:
             return self.attributes.get("single_count")
         else:
             for deal in data:
-                if (
-                    self.prefix
-                    + "_"
-                    + self.subprefix
-                    + "_"
-                    + self.attributes.get("market")
-                ) in deal["bot_name"]:
+                if re.search(self.bot_name, deal["bot_name"]):
                     deals.append(deal["bot_name"])
 
         self.logging.debug(str(deals))
@@ -72,9 +77,7 @@ class SingleBot:
         bots = []
 
         for bot in self.bot_data:
-            if (
-                self.prefix + "_" + self.subprefix + "_" + self.attributes.get("market")
-            ) in bot["name"] and bot["is_enabled"]:
+            if re.search(self.bot_name, bot["name"]) and bot["is_enabled"]:
                 bots.append(bot["name"])
 
         self.logging.info("Enabled single bot count: " + str(len(bots)))
@@ -298,16 +301,16 @@ class SingleBot:
                                 + str(self.tg_data["pair"])
                                 + " is not in the top coin list - not added!"
                             )
+                    else:
+                        self.logging.info(
+                            "Maximum bots/deals reached. Bot with pair: "
+                            + pair
+                            + " not added."
+                        )
 
                 elif self.tg_data["action"] == "STOP":
                     self.logging.info(
                         "Stop command on a non-existing single bot with pair: " + pair
-                    )
-                else:
-                    self.logging.info(
-                        "Maximum bots/deals reached. Bot with pair: "
-                        + pair
-                        + " not added."
                     )
             else:
                 self.logging.debug("Pair: " + pair)
