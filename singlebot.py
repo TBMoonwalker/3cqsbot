@@ -1,7 +1,6 @@
 import re
 import json
 import time
-import fnmatch
 
 from signals import Signals
 
