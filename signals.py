@@ -177,9 +177,9 @@ class Signals:
                     ):
                         self.logging.info(
                             str(pair)
-                            + " ranked "
+                            + " is ranked #"
                             + str(symbol["market_cap_rank"])
-                            + " and passed marketcap filter of <= "
+                            + " and has passed marketcap filter minimum of #"
                             + str(rank)
                         )
                         # Check if topcoin has enough volume
@@ -197,9 +197,10 @@ class Signals:
                 ):
                     self.logging.info(
                         str(pairs)
-                        + " ranked "
+                        + " is ranked #"
                         + str(symbol["market_cap_rank"])
-                        + " passed marketcap filter"
+                        + " and has passed marketcap filter minimum of #"
+                        + str(rank)
                     )
                     # Check if topcoin has enough volume
                     if self.topvolume(symbol["id"], volume, exchange, trademarket):
@@ -207,14 +208,7 @@ class Signals:
                         break
 
         if not pairlist:
-            self.logging.info(
-                str(pairs)
-                + " ranked "
-                + str(symbol["market_cap_rank"])
-                + " in marketcap not under the top "
-                + str(rank)
-                + " coins"
-            )
+            self.logging.info(str(pairs) + " did not match the topcoin filter criteria")
         else:
             if isinstance(pairlist, str):
                 self.logging.info(str(pairlist) + " matching top coin filter criteria")
