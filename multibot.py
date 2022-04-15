@@ -110,7 +110,7 @@ class MultiBot:
     def disable(self):
         # Disables an existing bot
         for bot in self.bot_data:
-            if (self.prefix + "_" + self.subprefix + "_" + self.suffix) in bot["name"]:
+            if (self.prefix + "_" + self.subprefix + "_" + self.suffix) == bot["name"]:
 
                 # Disables an existing bot
                 self.logging.info("Disabling bot: " + bot["name"])
@@ -167,7 +167,7 @@ class MultiBot:
 
             botnames.append(bot["name"])
 
-            if (self.prefix + "_" + self.subprefix + "_" + self.suffix) in bot["name"]:
+            if (self.prefix + "_" + self.subprefix + "_" + self.suffix) == bot["name"]:
                 botid = str(bot["id"])
                 new_bot = False
                 break
@@ -187,8 +187,10 @@ class MultiBot:
             pair = self.attributes.get("market") + "_" + pair
             # Traded on our exchange?
             if pair in self.pair_data:
-                self.logging.debug("Pair " + pair + " added to the list.")
+                self.logging.debug(pair + " added to the list")
                 pairs.append(pair)
+            else:
+                self.logging.info(pair + " passed top coin filter but removed because not tradable on " + self.attributes.get("account_name"))
 
         self.logging.debug("Pairs after topcoin filter " + str(pairs))
 
@@ -210,7 +212,7 @@ class MultiBot:
 
         if new_bot:
 
-            self.logging.info("Creating multi bot with filtered symrank pairs")
+            self.logging.info("Creating multi bot " + bot["name"] + " with filtered symrank pairs")
             error, data = self.p3cw.request(
                 entity="bots",
                 action="create_bot",
@@ -229,7 +231,7 @@ class MultiBot:
                     )
                 self.new_deal(data, triggerpair="")
         else:
-            self.logging.info("Updating multi bot with filtered symrank pairs")
+            self.logging.info("Updating multi bot " + bot["name"] + " with filtered symrank pairs")
             error, data = self.p3cw.request(
                 entity="bots",
                 action="update",
@@ -241,7 +243,6 @@ class MultiBot:
             if error:
                 self.logging.error(error["msg"])
             else:
-                self.logging.info(bot["name"] + " updated with filtered pairs")
                 self.logging.debug("Pairs: " + str(pairs))
                 if not self.attributes.get("ext_botswitch", False):
                     self.enable(data)
@@ -256,7 +257,7 @@ class MultiBot:
         mad = self.attributes.get("mad")
 
         for bot in self.bot_data:
-            if (self.prefix + "_" + self.subprefix + "_" + self.suffix) in bot["name"]:
+            if (self.prefix + "_" + self.subprefix + "_" + self.suffix) == bot["name"]:
 
                 if not triggeronly:
                     pair = self.tg_data["pair"]
