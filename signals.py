@@ -133,7 +133,7 @@ class Signals:
                         + converted_btc
                         + " BTC ("
                         + converted_usd
-                        + ") not passing the minimum daily BTC volume of "
+                        + ") NOT passing the minimum daily BTC volume of "
                         + str(volume)
                         + " BTC ("
                         + configured_usd
