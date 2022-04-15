@@ -149,11 +149,12 @@ class MultiBot:
 
             if error:
                 if bot["active_deals_count"] == bot["max_active_deals"]:
-                    self.logging.info("Max deals count reached, not adding a new one.")
+                    self.logging.info("Max active deals of " 
+                    + str(bot["max_active_deals"]) 
+                    + " reached, not adding a new one.")
                 else:
                     self.logging.error(error["msg"])
-        else:
-            self.logging.info("Pair was not part of the START signal, ignoring it.")
+
 
     def create(self):
         # Creates a multi bot with start signal
@@ -212,7 +213,7 @@ class MultiBot:
 
         if new_bot:
 
-            self.logging.info("Creating multi bot " + bot["name"] + " with filtered symrank pairs")
+            self.logging.info("Creating multi bot " + self.prefix + "_" + self.subprefix + "_" + self.suffix + " with filtered symrank pairs")
             error, data = self.p3cw.request(
                 entity="bots",
                 action="create_bot",
