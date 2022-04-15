@@ -203,7 +203,7 @@ SIGNAL NAME: X-treme Volatility
 BOT_START: Volatility Score >= 10
 
 #### hvol
-SIGNAL NAME: X-treme Volatility
+SIGNAL NAME: Hyper Volatility
 BOT_START: Volatility Score >= 6
 
 #### all

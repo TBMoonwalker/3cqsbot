@@ -179,7 +179,7 @@ class Signals:
                             str(pair)
                             + " is ranked #"
                             + str(symbol["market_cap_rank"])
-                            + " and has passed marketcap filter minimum of #"
+                            + " and has passed marketcap filter limit of #"
                             + str(rank)
                         )
                         # Check if topcoin has enough volume
@@ -199,7 +199,7 @@ class Signals:
                         str(pairs)
                         + " is ranked #"
                         + str(symbol["market_cap_rank"])
-                        + " and has passed marketcap filter minimum of #"
+                        + " and has passed marketcap filter limit of #"
                         + str(rank)
                     )
                     # Check if topcoin has enough volume
