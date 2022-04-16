@@ -274,10 +274,7 @@ class Signals:
                 btcusdt.percentchange_15mins[-1] < -1
                 or btcusdt.EMA50[-1] > btcusdt.EMA9[-1]
             ):
-                if asyncState.btcbool: 
-                    self.logging.info("btc-pulse signaling downtrend, disabling 3cqsbot, next check in 5min")
-                else:
-                    self.logging.info("btc-pulse signaling downtrend, waiting for confirmation in 5min")
+                self.logging.info("btc-pulse signaling downtrend")
 
                 # after 5mins getting the latest BTC data to see if it has had a sharp rise in previous 5 mins
                 await asyncio.sleep(300)
@@ -289,10 +286,10 @@ class Signals:
                     btcusdt.EMA9[-1] > btcusdt.EMA50[-1]
                     and btcusdt.EMA50[-2] > btcusdt.EMA9[-2]
                 ):
-                    self.logging.info("Downtrend not proved, enabling 3cqsbot if not enabled")
+                    self.logging.info("btc-pulse signaling uptrend")
                     asyncState.btcbool = False
                 else:
-                    self.logging.info("Downtrend proved, disabling 3cqsbot if not disabled")
+                    self.logging.info("btc-pulse signaling downtrend")
                     asyncState.btcbool = True
 
             else:

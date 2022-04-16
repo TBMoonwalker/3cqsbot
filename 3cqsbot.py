@@ -258,11 +258,11 @@ def pair_data(account):
         logging.debug(error["msg"])
         sys.tracebacklimit = 0
         sys.exit("Problem fetching pairs blacklist data from 3commas api - stopping!")
-    else:
-        for pair in data:
-            if attributes.get("market") in pair:
-                if pair not in attributes.get("token_denylist") and pair not in blacklist_data["pairs"]:
-                    pairs.append(pair)
+    
+    for pair in data:
+        if attributes.get("market") in pair:
+            if pair not in attributes.get("token_denylist") and pair not in blacklist_data["pairs"]:
+                pairs.append(pair)
 
     return pairs
 
@@ -280,7 +280,7 @@ async def botswitch():
             asyncState.botswitch = True
             logging.debug("Botswitch: " + str(asyncState.botswitch))
             if attributes.get("single"):
-                logging.info("Not activating old single bots (waiting for new signals.")
+                logging.info("Not activating old single bots (waiting for new signals)")
             else:
                 # Send new top 30 for activating the multibot
                 await symrank()
@@ -309,7 +309,7 @@ def _handle_task_result(task: asyncio.Task) -> None:
         pass  # Task cancellation should not be logged as an error.
     except Exception:  # pylint: disable=broad-except
         logging.exception(
-            "Exception raised by task = %r. Check if config.ini has all necessary options!",
+            "Exception raised by task = %r",
             task,
         )
 
@@ -323,7 +323,7 @@ async def my_event_handler(event):
         and not attributes.get("ext_botswitch", False)
     ):
         logging.info(
-            "New 3CQS signal not processed - Bot stopped because of BTC downtrend"
+            "New 3CQS signal not processed - 3cqsbot stopped because of BTC downtrend"
         )
     else:
 
