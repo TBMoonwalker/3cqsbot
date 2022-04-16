@@ -1,9 +1,14 @@
+from logging import exception
+from xml.sax.handler import feature_external_ges
 import yfinance as yf
 import numpy as np
 import asyncio
 import math
 import re
 import babel.numbers
+import requests
+import traceback
+import json
 
 from pycoingecko import CoinGeckoAPI
 from tenacity import retry, wait_fixed
@@ -221,6 +226,58 @@ class Signals:
 
         return pairlist
 
+    # Credits go to @M1cha3l
+    # Adjust DCA settings dynamically according to social sentiment: greed = aggressive DCA, neutral = moderate DCA, fear = conservative DCA
+    # if you set no timeout the call never times out! A tuple means "max connect time" and "max read time"
+
+    def log_exception(self, e, verb, url, kwargs):
+        # the reason for making this a separate function will become apparent
+        raw_tb = traceback.extract_stack()
+        if 'data' in kwargs and len(kwargs['data']) > 500: # anticipate giant data string
+            kwargs['data'] = f'{kwargs["data"][:500]}...'  
+            msg = f'BaseException raised: {e.__class__.__module__}.{e.__class__.__qualname__}: {e}\n' \
+            + f'verb {verb}, url {url}, kwargs {kwargs}\n\n' \
+            + 'Stack trace:\n' + ''.join(traceback.format_list(raw_tb[:-2]))
+            self.logging.error(msg)
+        return 
+
+    def requests_call(self, verb, url, **kwargs):
+        response = []
+        exception = None
+        try:
+            if 'timeout' not in kwargs:
+                kwargs['timeout'] = (5, 15)
+            response = requests.request(verb, url, **kwargs)
+        except BaseException as e:
+            self.log_exception(e, verb, url, kwargs)
+            exception = e
+        return (response, exception)
+
+    async def getfearandgreed(self, key, asyncState):
+        
+        url = "https://fear-and-greed-index.p.rapidapi.com/v1/fgi"
+        
+        headers = {
+	        "X-RapidAPI-Host": "fear-and-greed-index.p.rapidapi.com",
+	        "X-RapidAPI-Key": f"{key}"
+        }
+        self.logging.info("Using fear and greed index (FGI) for changing 3cqsbot DCA settings to defensive, moderate or aggressive")
+
+        while True:
+            
+            response, exception = self.requests_call("GET", url, headers=headers)
+            if exception:
+                fearandgreed = []
+                self.logging.info(exception)
+                self.logging.info("Fear and greed index API actually down, retrying....")
+            else:
+                response = json.loads(response.text)
+                fgi = response["fgi"]["now"]["value"]
+                self.logging.info("Current FGI: " + str(fgi) + " - next check in 60m")
+                asyncState.fgi = fgi
+
+            await asyncio.sleep(3600)
+
     # Credits goes to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts
     def ema(self, data, period, smoothing=2):
@@ -286,10 +343,10 @@ class Signals:
                     btcusdt.EMA9[-1] > btcusdt.EMA50[-1]
                     and btcusdt.EMA50[-2] > btcusdt.EMA9[-2]
                 ):
-                    self.logging.info("btc-pulse signaling uptrend")
+                    self.logging.info("btc-pulse singaling uptrend (golden cross check)")
                     asyncState.btcbool = False
                 else:
-                    self.logging.info("btc-pulse signaling downtrend")
+                    self.logging.info("btc-pulse signaling downtrend (golden cross check)")
                     asyncState.btcbool = True
 
             else:
