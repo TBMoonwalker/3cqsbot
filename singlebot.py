@@ -16,6 +16,7 @@ class SingleBot:
         self.p3cw = p3cw
         self.logging = logging
         self.signal = Signals(logging)
+        self.dca_conf = dca_conf
         self.prefix = self.attributes.get("prefix", "3CQSBOT", dca_conf)
         self.subprefix = self.attributes.get("subprefix", "SINGLE", dca_conf)
         self.suffix = self.attributes.get("suffix", "standard", dca_conf)
@@ -56,7 +57,7 @@ class SingleBot:
         )
 
         if error:
-            self.logging.error(
+            self.logging.info(
                 "Setting deal count temporary to maximum - because of API errors!"
             )
             self.logging.error(error["msg"])
@@ -65,6 +66,7 @@ class SingleBot:
             for deal in data:
                 if re.search(self.bot_name, deal["bot_name"]):
                     deals.append(deal["bot_name"])
+                    self.logging.info(str(deals))
 
         self.logging.debug(str(deals))
         self.logging.info("Deal count: " + str(len(deals)))
@@ -85,37 +87,42 @@ class SingleBot:
 
     def payload(self, pair):
         payload = {
-            "name": self.prefix + "_" + self.subprefix + "_" + pair + "_" + self.suffix,
+            "name": self.attributes.get("prefix", "3CQSBOT", self.dca_conf) \
+                    + "_" + self.attributes.get("subprefix", "SINGLE", self.dca_conf) \
+                    + "_" + pair 
+                    + "_" + self.attributes.get("suffix", "standard", self.dca_conf),
             "account_id": self.account_data["id"],
             "pairs": self.tg_data["pair"],
-            "max_active_deals": self.attributes.get("mad"),
-            "base_order_volume": self.attributes.get("bo"),
-            "take_profit": self.attributes.get("tp"),
-            "safety_order_volume": self.attributes.get("so"),
-            "martingale_volume_coefficient": self.attributes.get("os"),
-            "martingale_step_coefficient": self.attributes.get("ss"),
-            "max_safety_orders": self.attributes.get("mstc"),
-            "safety_order_step_percentage": self.attributes.get("sos"),
+            "max_active_deals": self.attributes.get("mad", "", self.dca_conf),
+            "base_order_volume": self.attributes.get("bo", "", self.dca_conf),
+            "take_profit": self.attributes.get("tp", "", self.dca_conf),
+            "safety_order_volume": self.attributes.get("so", "", self.dca_conf),
+            "martingale_volume_coefficient": self.attributes.get("os", "", self.dca_conf),
+            "martingale_step_coefficient": self.attributes.get("ss", "", self.dca_conf),
+            "max_safety_orders": self.attributes.get("mstc", "", self.dca_conf),
+            "safety_order_step_percentage": self.attributes.get("sos", "", self.dca_conf),
             "take_profit_type": "total",
-            "active_safety_orders_count": self.attributes.get("max"),
+            "active_safety_orders_count": self.attributes.get("max", "", self.dca_conf),
+            "cooldown": self.attributes.get("cooldown", 0),
             "strategy_list": self.strategy(),
-            "trailing_enabled": self.attributes.get("trailing", False),
-            "trailing_deviation": self.attributes.get("trailing_deviation", 0.2),
-            "min_volume_btc_24h": self.attributes.get("btc_min_vol"),
+            "trailing_enabled": self.attributes.get("trailing", False, self.dca_conf),
+            "trailing_deviation": self.attributes.get("trailing_deviation", 0.2, self.dca_conf),
+            "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0, self.dca_conf),
+            "disable_after_deals_count": self.attributes.get("deals_count", 1, self.dca_conf),
         }
 
         if self.attributes.get("trade_future", False):
             payload.update(
                 {
-                    "leverage_type": self.attributes.get("leverage_type"),
-                    "leverage_custom_value": self.attributes.get("leverage_value"),
-                    "stop_loss_percentage": self.attributes.get("stop_loss_percent"),
-                    "stop_loss_type": self.attributes.get("stop_loss_type"),
+                    "leverage_type": self.attributes.get("leverage_type", "", self.dca_conf),
+                    "leverage_custom_value": self.attributes.get("leverage_value", "", self.dca_conf),
+                    "stop_loss_percentage": self.attributes.get("stop_loss_percent", "", self.dca_conf),
+                    "stop_loss_type": self.attributes.get("stop_loss_type", "", self.dca_conf),
                     "stop_loss_timeout_enabled": self.attributes.get(
-                        "stop_loss_timeout_enabled"
+                        "stop_loss_timeout_enabled", "", self.dca_conf
                     ),
                     "stop_loss_timeout_in_seconds": self.attributes.get(
-                        "stop_loss_timeout_seconds"
+                        "stop_loss_timeout_seconds", "", self.dca_conf
                     ),
                 }
             )
@@ -140,7 +147,7 @@ class SingleBot:
     def enable(self, bot):
 
         self.logging.info(
-            "Enabling single bot " + bot["name"] + " because of a START signal"
+            "Enabling single bot " + bot["name"] + " because of START signal"
         )
 
         if self.attributes.get("singlebot_update", "true"):
@@ -158,6 +165,10 @@ class SingleBot:
             self.logging.error(error["msg"])
 
     def disable(self, bot, allbots=False):
+        botname = self.attributes.get("prefix", "3CQSBOT", self.dca_conf) \
+        + "_" + self.attributes.get("subprefix", "SINGLE", self.dca_conf) \
+        + "_" + self.attributes.get("market") 
+
         # Disable all bots
         error = {}
 
@@ -166,13 +177,7 @@ class SingleBot:
             self.logging.info("Disabling all single bots, because of BTC Pulse")
 
             for bots in bot:
-                if (
-                    self.prefix
-                    + "_"
-                    + self.subprefix
-                    + "_"
-                    + self.attributes.get("market")
-                ) in bots["name"]:
+                if botname in bots["name"]:
 
                     self.logging.info(
                         "Disabling single bot "
@@ -255,18 +260,22 @@ class SingleBot:
         new_bot = True
         pair = self.tg_data["pair"]
         running_deals = self.deal_count()
+        self.logging.info("running_deals: " + str(running_deals))
+
+        botname = self.attributes.get("prefix", "3CQSBOT", self.dca_conf) \
+        + "_" + self.attributes.get("subprefix", "SINGLE", self.dca_conf) \
+        + "_" + pair + "_" \
+        + self.attributes.get("suffix", "standard", self.dca_conf)
 
         if self.bot_data:
             for bot in self.bot_data:
-                if (
-                    self.prefix + "_" + self.subprefix + "_" + pair + "_" + self.suffix
-                ) in bot["name"]:
+                if botname == bot["name"]:
                     new_bot = False
                     break
 
             if new_bot:
                 if self.tg_data["action"] == "START":
-                    if self.bot_count() < self.attributes.get("single_count"):
+                    if self.bot_count() < self.attributes.get("single_count", "", self.dca_conf):
 
                         pair = self.signal.topcoin(
                             pair,
@@ -281,17 +290,17 @@ class SingleBot:
                                 "No single bot for " + pair + " found - creating one"
                             )
                             # avoid deals over limit
-                            if running_deals < self.attributes.get("single_count") - 1:
+                            if running_deals < self.attributes.get("single_count", "", self.dca_conf) - 1:
                                 self.create()
                                 deal_lock = False
                             elif (
-                                running_deals == self.attributes.get("single_count") - 1
+                                running_deals == self.attributes.get("single_count", "", self.dca_conf) - 1
                             ) and not deal_lock:
                                 self.create()
                                 deal_lock = True
                             else:
                                 self.logging.info(
-                                    "Blocking new deals, because last enabled bot can potentialy reach max deals!"
+                                    "Single bot not created. Blocking new deals, because last enabled bot can potentialy reach max deals!"
                                 )
 
                         else:

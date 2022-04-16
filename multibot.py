@@ -64,18 +64,19 @@ class MultiBot:
             "safety_order_step_percentage": self.attributes.get("sos", "", self.dca_conf),
             "take_profit_type": "total",
             "active_safety_orders_count": self.attributes.get("max", "", self.dca_conf),
+            "cooldown": self.attributes.get("cooldown", 0, self.dca_conf),
             "strategy_list": self.strategy(),
             "trailing_enabled": self.attributes.get("trailing", False, self.dca_conf),
             "trailing_deviation": self.attributes.get("trailing_deviation", 0.2, self.dca_conf),
             "allowed_deals_on_same_pair": self.attributes.get("sdsp", "", self.dca_conf),
-            "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0, self.dca_conf),
+            "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0, self.dca_conf)
         }
 
         if self.attributes.get("trade_future", False):
             payload.update(
                 {
                     "leverage_type": self.attributes.get("leverage_type", "", self.dca_conf),
-                    "leverage_custom_value": self.attributes.get("leverage_value", "", self.ca_conf),
+                    "leverage_custom_value": self.attributes.get("leverage_value", "", self.dca_conf),
                     "stop_loss_percentage": self.attributes.get("stop_loss_percent", "", self.dca_conf),
                     "stop_loss_type": self.attributes.get("stop_loss_type", "", self.dca_conf),
                     "stop_loss_timeout_enabled": self.attributes.get(
@@ -244,7 +245,7 @@ class MultiBot:
         mad = self.adjustmad(pairs, mad)
 
         if new_bot:
-            
+
             self.logging.info("Creating multi bot '" + botname + "' with filtered symrank pairs")
             error, data = self.p3cw.request(
                 entity="bots",
