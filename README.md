@@ -89,6 +89,8 @@ sdsp | integer | NO | (1) | Simultaneous deals per same pair (only Multibot)
 single | boolean | YES | (false) true | Type of Bot creation (True for Single DCA Bots)
 single_count | integer | YES | (3) | Maximum single bots - only have to configured for singlebots
 btc_min_vol | number | NO | (100) | Minimum 24h volume trading calculated in BTC
+cooldown | number | NO | (30) | Number of seconds to wait until starting another deal
+deals_count | integer | NO | (0) | Bot will be disabled after completing this number of deals. If 0 bot will not be disabled (default)
 
 Configure the 'dcabot' section in the `config.ini` according to your favourite bot configuration. 
 
@@ -203,7 +205,7 @@ SIGNAL NAME: X-treme Volatility
 BOT_START: Volatility Score >= 10
 
 #### hvol
-SIGNAL NAME: X-treme Volatility
+SIGNAL NAME: Hyper Volatility
 BOT_START: Volatility Score >= 6
 
 #### all

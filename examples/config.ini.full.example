@@ -36,6 +36,8 @@ sdsp = 1
 single = false
 single_count = 1
 #btc_min_vol = 100
+#cooldown = 30
+#deals_count = 1
 
 [trading]
 market = USDT

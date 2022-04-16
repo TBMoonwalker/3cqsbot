@@ -43,6 +43,8 @@ echo "[dcabot]" >> config.ini
 [ $DCABOT_SINGLE ] && echo "single = $DCABOT_SINGLE" >> config.ini
 [ $DCABOT_SINGLE_COUNT ] && echo "single_count = $DCABOT_SINGLE_COUNT" >> config.ini
 [ $DCABOT_BTC_MIN_VOL ] && echo "btc_min_vol = $DCABOT_BTC_MIN_VOL" >> config.ini
+[ $DCABOT_COOLDOWN ] && echo "cooldown = $DCABOT_COOLDOWN" >> config.ini
+[ $DCABOT_DEALS_COUNT ] && echo "deals_count = $DCABOT_DEALS_COUNT" >> config.ini
 
 # Trading settings
 echo "[trading]" >> config.ini
