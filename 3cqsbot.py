@@ -260,11 +260,11 @@ def pair_data(account):
         logging.debug(error["msg"])
         sys.tracebacklimit = 0
         sys.exit("Problem fetching pairs blacklist data from 3commas api - stopping!")
-    else:
-        for pair in data:
-            if attributes.get("market") in pair:
-                if pair not in attributes.get("token_denylist") and pair not in blacklist_data["pairs"]:
-                    pairs.append(pair)
+
+    for pair in data:
+        if attributes.get("market") in pair:
+            if pair not in attributes.get("token_denylist") and pair not in blacklist_data["pairs"]:
+                pairs.append(pair)
 
     return pairs
 
