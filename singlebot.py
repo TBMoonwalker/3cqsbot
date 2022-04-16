@@ -98,10 +98,12 @@ class SingleBot:
             "safety_order_step_percentage": self.attributes.get("sos"),
             "take_profit_type": "total",
             "active_safety_orders_count": self.attributes.get("max"),
+            "cooldown": self.attributes.get("cooldown", 0),
             "strategy_list": self.strategy(),
             "trailing_enabled": self.attributes.get("trailing", False),
             "trailing_deviation": self.attributes.get("trailing_deviation", 0.2),
             "min_volume_btc_24h": self.attributes.get("btc_min_vol"),
+            "disable_after_deals_count": self.attributes.get("deals_count"),
         }
 
         if self.attributes.get("trade_future", False):
@@ -111,12 +113,8 @@ class SingleBot:
                     "leverage_custom_value": self.attributes.get("leverage_value"),
                     "stop_loss_percentage": self.attributes.get("stop_loss_percent"),
                     "stop_loss_type": self.attributes.get("stop_loss_type"),
-                    "stop_loss_timeout_enabled": self.attributes.get(
-                        "stop_loss_timeout_enabled"
-                    ),
-                    "stop_loss_timeout_in_seconds": self.attributes.get(
-                        "stop_loss_timeout_seconds"
-                    ),
+                    "stop_loss_timeout_enabled": self.attributes.get("stop_loss_timeout_enabled"),
+                    "stop_loss_timeout_in_seconds": self.attributes.get("stop_loss_timeout_seconds"),
                 }
             )
 
