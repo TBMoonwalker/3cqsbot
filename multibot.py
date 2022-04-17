@@ -164,7 +164,8 @@ class MultiBot:
 
     def create(self):
         # Creates a multi bot with start signal
-        new_bot = True
+        bot_by_id = False
+        bot_by_name = False
         pairs = []
         mad = self.attributes.get("mad")
         botname = self.attributes.get("prefix", "3CQSBOT", self.dca_conf) \
@@ -180,14 +181,14 @@ class MultiBot:
                 botnames.append(bot["name"])
 
                 if botid == str(bot["id"]):
-                    new_bot = False
+                    bot_by_id = True
                     self.logging.info("Botid " + botid + " with name '" + bot["name"] + "' found")
                     break
             if new_bot:
                 self.logging.info("3cqsbot not found with botid: " + botid)
 
         # Check for existing name
-        if new_bot:
+        if not bot_by_id:
             botnames = []
             self.logging.info("Searching for 3cqsbot with name '" + botname + "'")
             for bot in self.bot_data:
@@ -195,10 +196,10 @@ class MultiBot:
 
                 if botname == bot["name"]:
                     botid = str(bot["id"])
-                    new_bot = False
+                    bot_by_name = True
                     self.logging.info("3cqsbot '" + bot["name"] + "' with botid " + botid + " found")
                     break
-            if new_bot:
+            if not bot_by_name:
                 self.logging.info("3cqsbot not found with name '" + botname + "' - creating new one")
 
         self.logging.debug("Checked bot ids/names till config id/name found: " + str(botnames))
