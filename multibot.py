@@ -70,9 +70,10 @@ class MultiBot:
             "trailing_deviation": self.attributes.get("trailing_deviation", 0.2),
             "allowed_deals_on_same_pair": self.attributes.get("sdsp"),
             "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0),
-            "disable_after_deals_count": self.attributes.get("deals_count", 0),
+            "disable_after_deals_count": self.attributes.get("deals_count", 0)
         }
-
+        if payload["disable_after_deals_count"]==0:
+            payload.pop("disable_after_deals_count")
         if self.attributes.get("trade_future", False):
             payload.update(
                 {
