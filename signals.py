@@ -9,6 +9,7 @@ import babel.numbers
 import requests
 import traceback
 import json
+from dateutil.relativedelta import relativedelta as rd
 
 from pycoingecko import CoinGeckoAPI
 from tenacity import retry, wait_fixed
@@ -255,28 +256,27 @@ class Signals:
 
     async def getfearandgreed(self, key, asyncState):
         
-        url = "https://fear-and-greed-index.p.rapidapi.com/v1/fgi"
-        
-        headers = {
-	        "X-RapidAPI-Host": "fear-and-greed-index.p.rapidapi.com",
-	        "X-RapidAPI-Key": f"{key}"
-        }
-        self.logging.info("Using fear and greed index (FGI) for changing 3cqsbot DCA settings to defensive, moderate or aggressive")
+        url = "https://api.alternative.me/fng/"
+        self.logging.info("Using crypto fear and greed index (FGI) from alternative.me for changing 3cqsbot DCA settings to defensive, moderate or aggressive")
 
         while True:
             
-            response, exception = self.requests_call("GET", url, headers=headers)
+            response, exception = self.requests_call("GET", url)
             if exception:
-                fearandgreed = []
+                asyncState.fgi = -1
                 self.logging.info(exception)
                 self.logging.info("Fear and greed index API actually down, retrying....")
             else:
                 response = json.loads(response.text)
-                fgi = response["fgi"]["now"]["value"]
-                self.logging.info("Current FGI: " + str(fgi) + " - next check in 60m")
+                fgi = int(response["data"][0]["value"])
+                time_until_update = int(response["data"][0]["time_until_update"])
+                fmt = '{0.hours}h:{0.minutes}m:{0.seconds}s'
+                self.logging.info("Current FGI: " + str(fgi) + " - time until next FGI update: " 
+                + fmt.format(rd(seconds=time_until_update)))
                 asyncState.fgi = fgi
 
-            await asyncio.sleep(3600)
+            # avoid requesting FGI which is calculated once per day 
+            await asyncio.sleep(time_until_update)
 
     # Credits goes to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts
