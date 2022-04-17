@@ -93,6 +93,7 @@ asyncState.chatid = ""
 asyncState.fh = 0
 asyncState.accountData = {}
 asyncState.pairData = []
+asyncState.loop = False
 
 ######################################################
 #                     Methods                        #
@@ -116,6 +117,7 @@ def parse_tg(raw_text):
 
 
 def tg_data(text_lines):
+    
     # Make sure the message is a signal
     if len(text_lines) == 7:
         data = {}
@@ -178,6 +180,7 @@ def tg_data(text_lines):
 
 
 def bot_data():
+    
     # Gets information about existing bot in 3Commas
     botlimit = attributes.get("system_bot_value", 300)
     pages = math.ceil(botlimit / 100)
@@ -208,6 +211,7 @@ def bot_data():
 
 
 def account_data():
+    
     # Gets information about the used 3commas account (paper or real)
     account = {}
 
@@ -237,6 +241,7 @@ def account_data():
 
 
 def pair_data(account):
+    
     pairs = []
 
     error, data = p3cw.request(
@@ -270,6 +275,7 @@ def pair_data(account):
 
 
 async def symrank():
+    
     logging.info(
         "Sending /symrank command to 3C Quick Stats on Telegram to get new pairs"
     )
@@ -277,6 +283,7 @@ async def symrank():
 
 
 async def botswitch():
+    
     while True:
         if not asyncState.btcbool and not asyncState.botswitch:
             asyncState.botswitch = True
@@ -306,7 +313,6 @@ async def botswitch():
 async def dcaconfswitch():
     
     while True:
-
         if asyncState.fgi >= attributes.get("fgi_min","","fgi_defensive") and asyncState.fgi <= attributes.get("fgi_max","","fgi_defensive"):
             if asyncState.dca_conf != "defensive":
                 logging.info("Using DCA settings [fgi_defensive]")
@@ -325,6 +331,7 @@ async def dcaconfswitch():
         await asyncio.sleep(3600)
 
 def _handle_task_result(task: asyncio.Task) -> None:
+    
     try:
         task.result()
     except asyncio.CancelledError:
@@ -338,7 +345,7 @@ def _handle_task_result(task: asyncio.Task) -> None:
 
 @client.on(events.NewMessage(chats=attributes.get("chatroom", "3C Quick Stats")))
 async def my_event_handler(event):
-
+    
     if (
         asyncState.btcbool
         and attributes.get("btc_pulse", False)
@@ -450,6 +457,7 @@ async def my_event_handler(event):
 
 
 async def main():
+    
     signals = Signals(logging)
     asyncState.accountData = account_data()
     asyncState.pairData = pair_data(asyncState.accountData)
@@ -474,20 +482,21 @@ async def main():
         btcbooltask.add_done_callback(_handle_task_result)
         switchtask = client.loop.create_task(botswitch())
         switchtask.add_done_callback(_handle_task_result)
+        asyncState.loop = True
         
     if attributes.get("fearandgreed", False):
         fgitask = client.loop.create_task(signals.getfearandgreed(asyncState))
         fgitask.add_done_callback(_handle_task_result)
         dcaconfswitchtask = client.loop.create_task(dcaconfswitch())
         dcaconfswitchtask.add_done_callback(_handle_task_result)
+        asyncState.loop = True
         
-    if attributes.get("btc_pulse", False) or attributes.get("fearandgreed", False):   
-        while True:
-            if attributes.get("btc_pulse", False):
-                await btcbooltask
-                await switchtask
-            if attributes.get("fearandgreed", False): 
-                await fgitask
+    while asyncState.loop:
+        if attributes.get("btc_pulse", False):
+            await btcbooltask
+            await switchtask
+        if attributes.get("fearandgreed", False): 
+            await fgitask
 
 with client:
     client.loop.run_until_complete(main())
