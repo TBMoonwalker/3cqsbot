@@ -3,3 +3,5 @@
 *.session
 *.session-journal
 config.ini
+config.ini.old
+launch.json
