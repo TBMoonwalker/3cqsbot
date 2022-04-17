@@ -307,17 +307,17 @@ async def dcaconfswitch():
     
     while True:
 
-        if asyncState.fgi >= attributes.get("fgi_min","","defensive") and asyncState.fgi <= attributes.get("fgi_max","","defensive"):
+        if asyncState.fgi >= attributes.get("fgi_min","","fgi_defensive") and asyncState.fgi <= attributes.get("fgi_max","","fgi_defensive"):
             if asyncState.dca_conf != "defensive":
                 logging.info("Using DCA settings: 'defensive'")
             asyncState.dca_conf = "defensive"
 
-        if asyncState.fgi >= attributes.get("fgi_min","","moderate") and asyncState.fgi <= attributes.get("fgi_max","","moderate"):
+        if asyncState.fgi >= attributes.get("fgi_min","","fgi_moderate") and asyncState.fgi <= attributes.get("fgi_max","","fgi_moderate"):
             if asyncState.dca_conf != "moderate":
                 logging.info("Using DCA settings: 'moderate'")
             asyncState.dca_conf = "moderate"
 
-        if asyncState.fgi >= attributes.get("fgi_min","","aggressive") and asyncState.fgi <= attributes.get("fgi_max","","aggressive"):
+        if asyncState.fgi >= attributes.get("fgi_min","","fgi_aggressive") and asyncState.fgi <= attributes.get("fgi_max","","fgi_aggressive"):
             if asyncState.dca_conf != "aggressive":
                 logging.info("Using DCA settings: 'aggressive'")
             asyncState.dca_conf = "aggressive" 
@@ -465,27 +465,29 @@ async def main():
         await symrank()
 
     if (attributes.get("btc_pulse", False) or attributes.get("fearandgreed", False)
-    ) and not attributes.get("ext_botswitch", False):
+    ) and attributes.get("ext_botswitch", False):
+        sys.tracebacklimit = 0
+        sys.exit("Check config.ini, btc_pulse/fearandgreed AND ext_botswitch both set to true - not allowed")
+    
+    if attributes.get("btc_pulse", False):
         btcbooltask = client.loop.create_task(signals.getbtcbool(asyncState))
         btcbooltask.add_done_callback(_handle_task_result)
         switchtask = client.loop.create_task(botswitch())
         switchtask.add_done_callback(_handle_task_result)
         
-        if attributes.get("fearandgreed", False):
-            fgitask = client.loop.create_task(signals.getfearandgreed(attributes.get("X-RapidAPI-Key"), asyncState))
-            fgitask.add_done_callback(_handle_task_result)
-            dcaconfswitchtask = client.loop.create_task(dcaconfswitch())
-            dcaconfswitchtask.add_done_callback(_handle_task_result)
+    if attributes.get("fearandgreed", False):
+        fgitask = client.loop.create_task(signals.getfearandgreed(asyncState))
+        fgitask.add_done_callback(_handle_task_result)
+        dcaconfswitchtask = client.loop.create_task(dcaconfswitch())
+        dcaconfswitchtask.add_done_callback(_handle_task_result)
         
+    if attributes.get("btc_pulse", False) or attributes.get("fearandgreed", False):   
         while True:
-            await btcbooltask
-            await switchtask
+            if attributes.get("btc_pulse", False):
+                await btcbooltask
+                await switchtask
             if attributes.get("fearandgreed", False): 
                 await fgitask
-    elif (attributes.get("btc_pulse", False) or attributes.get("fearandgreed", False)
-    )and attributes.get("ext_botswitch", False):
-        sys.tracebacklimit = 0
-        sys.exit("Check config.ini, btc_pulse/fearandgreed AND ext_botswitch both set to true - not allowed")
 
 with client:
     client.loop.run_until_complete(main())

@@ -254,7 +254,7 @@ class Signals:
             exception = e
         return (response, exception)
 
-    async def getfearandgreed(self, key, asyncState):
+    async def getfearandgreed(self, asyncState):
         
         url = "https://api.alternative.me/fng/"
         self.logging.info("Using crypto fear and greed index (FGI) from alternative.me for changing 3cqsbot DCA settings to defensive, moderate or aggressive")
@@ -271,7 +271,7 @@ class Signals:
                 fgi = int(response["data"][0]["value"])
                 time_until_update = int(response["data"][0]["time_until_update"])
                 fmt = '{0.hours}h:{0.minutes}m:{0.seconds}s'
-                self.logging.info("Current FGI: " + str(fgi) + " - time until next FGI update: " 
+                self.logging.info("Current FGI: " + str(fgi) + " - time till next update: " 
                 + fmt.format(rd(seconds=time_until_update)))
                 asyncState.fgi = fgi
 
