@@ -309,18 +309,18 @@ async def dcaconfswitch():
 
         if asyncState.fgi >= attributes.get("fgi_min","","fgi_defensive") and asyncState.fgi <= attributes.get("fgi_max","","fgi_defensive"):
             if asyncState.dca_conf != "defensive":
-                logging.info("Using DCA settings: 'defensive'")
-            asyncState.dca_conf = "defensive"
+                logging.info("Using DCA settings [fgi_defensive]")
+            asyncState.dca_conf = "fgi_defensive"
 
         if asyncState.fgi >= attributes.get("fgi_min","","fgi_moderate") and asyncState.fgi <= attributes.get("fgi_max","","fgi_moderate"):
             if asyncState.dca_conf != "moderate":
-                logging.info("Using DCA settings: 'moderate'")
-            asyncState.dca_conf = "moderate"
+                logging.info("Using DCA settings [fgi_moderate]")
+            asyncState.dca_conf = "fgi_moderate"
 
         if asyncState.fgi >= attributes.get("fgi_min","","fgi_aggressive") and asyncState.fgi <= attributes.get("fgi_max","","fgi_aggressive"):
             if asyncState.dca_conf != "aggressive":
-                logging.info("Using DCA settings: 'aggressive'")
-            asyncState.dca_conf = "aggressive" 
+                logging.info("Using DCA settings [fgi_aggressive]")
+            asyncState.dca_conf = "fgi_aggressive" 
                 
         await asyncio.sleep(3600)
 

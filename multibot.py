@@ -266,10 +266,13 @@ class MultiBot:
                 self.new_deal(data, triggerpair="")
         else:
             if botname != bot["name"]:
-                self.logging.info("Changing bot name from '" + bot["name"] + "' (" + botid + ") to '" + botname + "' (" + botid + ")")
+                self.logging.info("Changing bot name from '" + bot["name"] 
+                + "' (" + botid + ") to '" + botname + "' (" + botid + ")")
                 bot["name"] = botname
 
-            self.logging.info("Updating multi bot '" + bot["name"] + "' (" + botid + ") with filtered symrank pairs and DCA setting: " + self.dca_conf)
+            self.logging.info("Updating multi bot '" + bot["name"]  
+            + "' (" + botid + ") with filtered symrank pairs and DCA setting [" + self.dca_conf + "]")
+
             error, data = self.p3cw.request(
                 entity="bots",
                 action="update",
