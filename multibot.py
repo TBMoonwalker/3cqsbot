@@ -7,7 +7,7 @@ from signals import Signals
 
 class MultiBot:
     def __init__(
-        self, tg_data, bot_data, account_data, pair_data, attributes, p3cw, logging
+        self, tg_data, bot_data, account_data, pair_data, attributes, p3cw, logging, dca_conf
     ):
         self.tg_data = tg_data
         self.bot_data = bot_data
@@ -17,9 +17,7 @@ class MultiBot:
         self.p3cw = p3cw
         self.logging = logging
         self.signal = Signals(logging)
-        self.prefix = self.attributes.get("prefix")
-        self.subprefix = self.attributes.get("subprefix")
-        self.suffix = self.attributes.get("suffix")
+        self.dca_conf = dca_conf
 
     def strategy(self):
         if self.attributes.get("deal_mode", "signal") == "signal":
@@ -51,37 +49,42 @@ class MultiBot:
     def payload(self, pairs, mad):
 
         payload = {
-            "name": self.prefix + "_" + self.subprefix + "_" + self.suffix,
+            "name": self.attributes.get("prefix", "3CQSBOT", self.dca_conf) \
+                    + "_" + self.attributes.get("subprefix", "MULTI", self.dca_conf) \
+                    + "_" + self.attributes.get("suffix", "standard", self.dca_conf),
             "account_id": self.account_data["id"],
             "pairs": pairs,
             "max_active_deals": mad,
-            "base_order_volume": self.attributes.get("bo"),
-            "take_profit": self.attributes.get("tp"),
-            "safety_order_volume": self.attributes.get("so"),
-            "martingale_volume_coefficient": self.attributes.get("os"),
-            "martingale_step_coefficient": self.attributes.get("ss"),
-            "max_safety_orders": self.attributes.get("mstc"),
-            "safety_order_step_percentage": self.attributes.get("sos"),
+            "base_order_volume": self.attributes.get("bo", "", self.dca_conf),
+            "take_profit": self.attributes.get("tp", "", self.dca_conf),
+            "safety_order_volume": self.attributes.get("so", "", self.dca_conf),
+            "martingale_volume_coefficient": self.attributes.get("os", "", self.dca_conf),
+            "martingale_step_coefficient": self.attributes.get("ss", "", self.dca_conf),
+            "max_safety_orders": self.attributes.get("mstc", "", self.dca_conf),
+            "safety_order_step_percentage": self.attributes.get("sos", "", self.dca_conf),
             "take_profit_type": "total",
-            "active_safety_orders_count": self.attributes.get("max"),
-            "cooldown": self.attributes.get("cooldown", 0),
+            "active_safety_orders_count": self.attributes.get("max", "", self.dca_conf),
+            "cooldown": self.attributes.get("cooldown", 0, self.dca_conf),
             "strategy_list": self.strategy(),
-            "trailing_enabled": self.attributes.get("trailing", False),
-            "trailing_deviation": self.attributes.get("trailing_deviation", 0.2),
-            "allowed_deals_on_same_pair": self.attributes.get("sdsp"),
-            "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0),
-            "disable_after_deals_count": self.attributes.get("deals_count", 0),
+            "trailing_enabled": self.attributes.get("trailing", False, self.dca_conf),
+            "trailing_deviation": self.attributes.get("trailing_deviation", 0.2, self.dca_conf),
+            "allowed_deals_on_same_pair": self.attributes.get("sdsp", "", self.dca_conf),
+            "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0, self.dca_conf)
         }
 
         if self.attributes.get("trade_future", False):
             payload.update(
                 {
-                    "leverage_type": self.attributes.get("leverage_type"),
-                    "leverage_custom_value": self.attributes.get("leverage_value"),
-                    "stop_loss_percentage": self.attributes.get("stop_loss_percent"),
-                    "stop_loss_type": self.attributes.get("stop_loss_type"),
-                    "stop_loss_timeout_enabled": self.attributes.get("stop_loss_timeout_enabled"),
-                    "stop_loss_timeout_in_seconds": self.attributes.get("stop_loss_timeout_seconds"),
+                    "leverage_type": self.attributes.get("leverage_type", "", self.dca_conf),
+                    "leverage_custom_value": self.attributes.get("leverage_value", "", self.dca_conf),
+                    "stop_loss_percentage": self.attributes.get("stop_loss_percent", "", self.dca_conf),
+                    "stop_loss_type": self.attributes.get("stop_loss_type", "", self.dca_conf),
+                    "stop_loss_timeout_enabled": self.attributes.get(
+                        "stop_loss_timeout_enabled", "", self.dca_conf
+                    ),
+                    "stop_loss_timeout_in_seconds": self.attributes.get(
+                        "stop_loss_timeout_seconds", "", self.dca_conf
+                    ),
                 }
             )
 
@@ -90,7 +93,7 @@ class MultiBot:
     def enable(self, bot):
         # Enables an existing bot
         if not bot["is_enabled"]:
-            self.logging.info("Enabling bot: " + bot["name"])
+            self.logging.info("Enabling bot: " + bot["name"] + " (" + str(bot["id"]) + ")")
 
             error, data = self.p3cw.request(
                 entity="bots",
@@ -103,15 +106,20 @@ class MultiBot:
                 self.logging.error(error["msg"])
 
         else:
-            self.logging.info(bot["name"] + " enabled")
+            self.logging.info("'" + bot["name"] + "' (" + str(bot["id"]) + ") enabled")
 
     def disable(self):
+        botid = str(self.attributes.get("botid", ""))
+        botname = self.attributes.get("prefix", "3CQSBOT", self.dca_conf) \
+        + "_" + self.attributes.get("subprefix", "MULTI", self.dca_conf) \
+        + "_" + self.attributes.get("suffix", "standard", self.dca_conf)
+
         # Disables an existing bot
         for bot in self.bot_data:
-            if (self.prefix + "_" + self.subprefix + "_" + self.suffix) == bot["name"]:
+            if botid == bot["id"] or botname == bot["name"]:
 
                 # Disables an existing bot
-                self.logging.info("Disabling bot: " + bot["name"])
+                self.logging.info("Disabling bot: " + bot["name"] + " (" + str(bot["id"]) + ")")
 
                 error, data = self.p3cw.request(
                     entity="bots",
@@ -156,22 +164,44 @@ class MultiBot:
 
     def create(self):
         # Creates a multi bot with start signal
-        new_bot = True
+        bot_by_id = False
+        bot_by_name = False
         pairs = []
-        botnames = []
         mad = self.attributes.get("mad")
+        botname = self.attributes.get("prefix", "3CQSBOT", self.dca_conf) \
+        + "_" + self.attributes.get("subprefix", "MULTI", self.dca_conf) \
+        + "_" + self.attributes.get("suffix", "standard", self.dca_conf)
+        botid = str(self.attributes.get("botid", "", self.dca_conf))
 
-        # Check for existing or new bot
-        for bot in self.bot_data:
+        # Check for existing bot id
+        if botid != "":
+            botnames = []
+            self.logging.info("Searching for 3cqsbot with botid " + botid)
+            for bot in self.bot_data:
+                botnames.append(bot["name"])
 
-            botnames.append(bot["name"])
+                if botid == str(bot["id"]):
+                    bot_by_id = True
+                    self.logging.info("Botid " + botid + " with name '" + bot["name"] + "' found")
+                    break
+                
+        # Check for existing name
+        if not bot_by_id:
+            botnames = []
+            self.logging.info("3cqsbot not found with botid: " + botid)
+            self.logging.info("Searching for 3cqsbot with name '" + botname + "'")
+            for bot in self.bot_data:
+                botnames.append(bot["name"])
 
-            if (self.prefix + "_" + self.subprefix + "_" + self.suffix) == bot["name"]:
-                botid = str(bot["id"])
-                new_bot = False
-                break
+                if botname == bot["name"]:
+                    botid = str(bot["id"])
+                    bot_by_name = True
+                    self.logging.info("3cqsbot '" + bot["name"] + "' with botid " + botid + " found")
+                    break
+            if not bot_by_name:
+                self.logging.info("3cqsbot not found with name '" + botname + "' - creating new one")
 
-        self.logging.debug("Existing bot names: " + str(botnames))
+        self.logging.debug("Checked bot ids/names till config id/name found: " + str(botnames))
 
         # Create pair list
         # Filter topcoins (if set)
@@ -214,9 +244,9 @@ class MultiBot:
         # Adapt mad if pairs are under value
         mad = self.adjustmad(pairs, mad)
 
-        if new_bot:
+        if not bot_by_id or bot_by_name:
 
-            self.logging.info("Creating multi bot " + self.prefix + "_" + self.subprefix + "_" + self.suffix + " with filtered symrank pairs")
+            self.logging.info("Creating multi bot '" + botname + "' with filtered symrank pairs")
             error, data = self.p3cw.request(
                 entity="bots",
                 action="create_bot",
@@ -235,7 +265,14 @@ class MultiBot:
                     )
                 self.new_deal(data, triggerpair="")
         else:
-            self.logging.info("Updating multi bot " + bot["name"] + " with filtered symrank pairs")
+            if botname != bot["name"]:
+                self.logging.info("Changing bot name from '" + bot["name"] 
+                + "' (" + botid + ") to '" + botname + "' (" + botid + ")")
+                bot["name"] = botname
+
+            self.logging.info("Updating multi bot '" + bot["name"]  
+            + "' (" + botid + ") with filtered symrank pairs and DCA setting [" + self.dca_conf + "]")
+
             error, data = self.p3cw.request(
                 entity="bots",
                 action="update",
@@ -259,9 +296,14 @@ class MultiBot:
         # Updates multi bot with new pairs
         triggerpair = ""
         mad = self.attributes.get("mad")
+        # Get botname and botid according to DCA setting
+        botname = self.attributes.get("prefix", "3CQSBOT", self.dca_conf) \
+        + "_" + self.attributes.get("subprefix", "MULTI", self.dca_conf) \
+        + "_" + self.attributes.get("suffix", "standard", self.dca_conf)
+        botid = str(self.attributes.get("botid", "", self.dca_conf))
 
         for bot in self.bot_data:
-            if (self.prefix + "_" + self.subprefix + "_" + self.suffix) == bot["name"]:
+            if botname == bot["name"] or botid == str(bot["id"]):
 
                 if not triggeronly:
                     pair = self.tg_data["pair"]
@@ -298,12 +340,12 @@ class MultiBot:
                         else:
                             self.logging.info(
                                 pair
-                                + " was not included in the pair list, not removed"
+                                + " was not included in the pair list - not removed"
                             )
 
                     # Adapt mad if pairs are under value
                     mad = self.adjustmad(bot["pairs"], mad)
-                    self.logging.info("Adjusting mad to amount of included symrank pairs: " + str(mad))
+                    self.logging.info("Adjusting mad to amount of included symrank pairs: " + str(mad) + " and DCA setting: " + self.dca_conf)
 
                     error, data = self.p3cw.request(
                         entity="bots",

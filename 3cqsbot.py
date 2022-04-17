@@ -87,10 +87,13 @@ logging.basicConfig(
 asyncState = type("", (), {})()
 asyncState.btcbool = True
 asyncState.botswitch = True
+asyncState.fgi = -1
+asyncState.dca_conf = "dcabot"
 asyncState.chatid = ""
 asyncState.fh = 0
 asyncState.accountData = {}
 asyncState.pairData = []
+asyncState.loop = False
 
 ######################################################
 #                     Methods                        #
@@ -114,6 +117,7 @@ def parse_tg(raw_text):
 
 
 def tg_data(text_lines):
+    
     # Make sure the message is a signal
     if len(text_lines) == 7:
         data = {}
@@ -176,6 +180,7 @@ def tg_data(text_lines):
 
 
 def bot_data():
+    
     # Gets information about existing bot in 3Commas
     botlimit = attributes.get("system_bot_value", 300)
     pages = math.ceil(botlimit / 100)
@@ -206,6 +211,7 @@ def bot_data():
 
 
 def account_data():
+    
     # Gets information about the used 3commas account (paper or real)
     account = {}
 
@@ -235,6 +241,7 @@ def account_data():
 
 
 def pair_data(account):
+    
     pairs = []
 
     error, data = p3cw.request(
@@ -258,7 +265,7 @@ def pair_data(account):
         logging.debug(error["msg"])
         sys.tracebacklimit = 0
         sys.exit("Problem fetching pairs blacklist data from 3commas api - stopping!")
-    
+
     for pair in data:
         if attributes.get("market") in pair:
             if pair not in attributes.get("token_denylist") and pair not in blacklist_data["pairs"]:
@@ -268,6 +275,7 @@ def pair_data(account):
 
 
 async def symrank():
+    
     logging.info(
         "Sending /symrank command to 3C Quick Stats on Telegram to get new pairs"
     )
@@ -275,12 +283,13 @@ async def symrank():
 
 
 async def botswitch():
+    
     while True:
         if not asyncState.btcbool and not asyncState.botswitch:
             asyncState.botswitch = True
             logging.debug("Botswitch: " + str(asyncState.botswitch))
             if attributes.get("single"):
-                logging.info("Not activating old single bots (waiting for new signals)")
+                logging.info("Not activating old single bots (waiting for new signals.")
             else:
                 # Send new top 30 for activating the multibot
                 await symrank()
@@ -289,10 +298,10 @@ async def botswitch():
             asyncState.botswitch = False
             logging.debug("Botswitch: " + str(asyncState.botswitch))
             if attributes.get("single"):
-                bot = SingleBot([], bot_data(), {}, attributes, p3cw, logging)
+                bot = SingleBot([], bot_data(), {}, attributes, p3cw, logging, asyncState.dca_conf)
                 bot.disable(bot_data(), True)
             else:
-                bot = MultiBot([], bot_data(), {}, 0, attributes, p3cw, logging)
+                bot = MultiBot([], bot_data(), {}, 0, attributes, p3cw, logging, asyncState.dca_conf)
                 bot.disable()
 
         else:
@@ -301,8 +310,28 @@ async def botswitch():
 
         await asyncio.sleep(60)
 
+async def dcaconfswitch():
+    
+    while True:
+        if asyncState.fgi >= attributes.get("fgi_min","","fgi_defensive") and asyncState.fgi <= attributes.get("fgi_max","","fgi_defensive"):
+            if asyncState.dca_conf != "defensive":
+                logging.info("Using DCA settings [fgi_defensive]")
+            asyncState.dca_conf = "fgi_defensive"
+
+        if asyncState.fgi >= attributes.get("fgi_min","","fgi_moderate") and asyncState.fgi <= attributes.get("fgi_max","","fgi_moderate"):
+            if asyncState.dca_conf != "moderate":
+                logging.info("Using DCA settings [fgi_moderate]")
+            asyncState.dca_conf = "fgi_moderate"
+
+        if asyncState.fgi >= attributes.get("fgi_min","","fgi_aggressive") and asyncState.fgi <= attributes.get("fgi_max","","fgi_aggressive"):
+            if asyncState.dca_conf != "aggressive":
+                logging.info("Using DCA settings [fgi_aggressive]")
+            asyncState.dca_conf = "fgi_aggressive" 
+                
+        await asyncio.sleep(3600)
 
 def _handle_task_result(task: asyncio.Task) -> None:
+    
     try:
         task.result()
     except asyncio.CancelledError:
@@ -316,14 +345,14 @@ def _handle_task_result(task: asyncio.Task) -> None:
 
 @client.on(events.NewMessage(chats=attributes.get("chatroom", "3C Quick Stats")))
 async def my_event_handler(event):
-
+    
     if (
         asyncState.btcbool
         and attributes.get("btc_pulse", False)
         and not attributes.get("ext_botswitch", False)
     ):
         logging.info(
-            "New 3CQS signal not processed - 3cqsbot stopped because of BTC downtrend"
+            "New 3CQS signal not processed - Bot stopped because of BTC downtrend"
         )
     else:
 
@@ -346,7 +375,7 @@ async def my_event_handler(event):
                 # Choose multibot or singlebot
                 if attributes.get("single"):
                     bot = SingleBot(
-                        tg_output, bot_output, account_output, attributes, p3cw, logging
+                        tg_output, bot_output, account_output, attributes, p3cw, logging, asyncState.dca_conf
                     )
                 else:
                     bot = MultiBot(
@@ -357,6 +386,7 @@ async def my_event_handler(event):
                         attributes,
                         p3cw,
                         logging,
+                        asyncState.dca_conf
                     )
                     # Every signal triggers a new multibot deal
                     bot.trigger(triggeronly=True)
@@ -417,6 +447,7 @@ async def my_event_handler(event):
                     attributes,
                     p3cw,
                     logging,
+                    asyncState.dca_conf
                 )
                 bot.create()
             else:
@@ -426,6 +457,7 @@ async def my_event_handler(event):
 
 
 async def main():
+    
     signals = Signals(logging)
     asyncState.accountData = account_data()
     asyncState.pairData = pair_data(asyncState.accountData)
@@ -440,21 +472,31 @@ async def main():
     if not attributes.get("single"):
         await symrank()
 
-    if attributes.get("btc_pulse", False) and not attributes.get(
-        "ext_botswitch", False
-    ):
+    if (attributes.get("btc_pulse", False) or attributes.get("fearandgreed", False)
+    ) and attributes.get("ext_botswitch", False):
+        sys.tracebacklimit = 0
+        sys.exit("Check config.ini, btc_pulse/fearandgreed AND ext_botswitch both set to true - not allowed")
+    
+    if attributes.get("btc_pulse", False):
         btcbooltask = client.loop.create_task(signals.getbtcbool(asyncState))
         btcbooltask.add_done_callback(_handle_task_result)
         switchtask = client.loop.create_task(botswitch())
         switchtask.add_done_callback(_handle_task_result)
-
-        while True:
+        asyncState.loop = True
+        
+    if attributes.get("fearandgreed", False):
+        fgitask = client.loop.create_task(signals.getfearandgreed(asyncState))
+        fgitask.add_done_callback(_handle_task_result)
+        dcaconfswitchtask = client.loop.create_task(dcaconfswitch())
+        dcaconfswitchtask.add_done_callback(_handle_task_result)
+        asyncState.loop = True
+        
+    while asyncState.loop:
+        if attributes.get("btc_pulse", False):
             await btcbooltask
             await switchtask
-    elif attributes.get("btc_pulse", False) and attributes.get("ext_botswitch", False):
-        sys.tracebacklimit = 0
-        sys.exit("Check config.ini, btc_pulse and ext_botswitch both set to true - not allowed")
-
+        if attributes.get("fearandgreed", False): 
+            await fgitask
 
 with client:
     client.loop.run_until_complete(main())
