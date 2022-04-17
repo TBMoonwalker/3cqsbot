@@ -184,12 +184,11 @@ class MultiBot:
                     bot_by_id = True
                     self.logging.info("Botid " + botid + " with name '" + bot["name"] + "' found")
                     break
-            if new_bot:
-                self.logging.info("3cqsbot not found with botid: " + botid)
-
+                
         # Check for existing name
         if not bot_by_id:
             botnames = []
+            self.logging.info("3cqsbot not found with botid: " + botid)
             self.logging.info("Searching for 3cqsbot with name '" + botname + "'")
             for bot in self.bot_data:
                 botnames.append(bot["name"])
@@ -245,7 +244,7 @@ class MultiBot:
         # Adapt mad if pairs are under value
         mad = self.adjustmad(pairs, mad)
 
-        if new_bot:
+        if not bot_by_id or bot_by_name:
 
             self.logging.info("Creating multi bot '" + botname + "' with filtered symrank pairs")
             error, data = self.p3cw.request(
