@@ -314,16 +314,13 @@ async def dcaconfswitch():
     
     while True:
         if asyncState.fgi >= attributes.get("fgi_min","","fgi_defensive") and asyncState.fgi <= attributes.get("fgi_max","","fgi_defensive"):
-            if asyncState.dca_conf != "fgi_defensive":
-                asyncState.dca_conf = "fgi_defensive"
+            asyncState.dca_conf = "fgi_defensive"
 
         if asyncState.fgi >= attributes.get("fgi_min","","fgi_moderate") and asyncState.fgi <= attributes.get("fgi_max","","fgi_moderate"):
-            if asyncState.dca_conf != "fgi_moderate":
-                asyncState.dca_conf = "fgi_moderate"
+            asyncState.dca_conf = "fgi_moderate"
 
         if asyncState.fgi >= attributes.get("fgi_min","","fgi_aggressive") and asyncState.fgi <= attributes.get("fgi_max","","fgi_aggressive"):
-            if asyncState.dca_conf != "fgi_aggressive":
-                asyncState.dca_conf = "fgi_aggressive" 
+            asyncState.dca_conf = "fgi_aggressive" 
 
         if attributes.get("single","",asyncState.dca_conf):
             botmode = "single bots"
