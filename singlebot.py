@@ -108,8 +108,11 @@ class SingleBot:
             "trailing_enabled": self.attributes.get("trailing", False, self.dca_conf),
             "trailing_deviation": self.attributes.get("trailing_deviation", 0.2, self.dca_conf),
             "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0, self.dca_conf),
-            "disable_after_deals_count": self.attributes.get("deals_count", 1, self.dca_conf),
+            "disable_after_deals_count": self.attributes.get("deals_count", 0, self.dca_conf)
         }
+
+        if payload["disable_after_deals_count"]==0:
+            payload.pop("disable_after_deals_count")        
 
         if self.attributes.get("trade_future", False):
             payload.update(
