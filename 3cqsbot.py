@@ -288,7 +288,7 @@ async def botswitch():
         if not asyncState.btcbool and not asyncState.botswitch:
             asyncState.botswitch = True
             logging.debug("Botswitch: " + str(asyncState.botswitch))
-            if attributes.get("single"):
+            if attributes.get("single","",asyncState.dca_conf):
                 logging.info("Not activating old single bots (waiting for new signals.")
             else:
                 # Send new top 30 for activating the multibot
@@ -297,7 +297,7 @@ async def botswitch():
         elif asyncState.btcbool and asyncState.botswitch:
             asyncState.botswitch = False
             logging.debug("Botswitch: " + str(asyncState.botswitch))
-            if attributes.get("single"):
+            if attributes.get("single","",asyncState.dca_conf):
                 bot = SingleBot([], bot_data(), {}, attributes, p3cw, logging, asyncState.dca_conf)
                 bot.disable(bot_data(), True)
             else:
@@ -314,20 +314,21 @@ async def dcaconfswitch():
     
     while True:
         if asyncState.fgi >= attributes.get("fgi_min","","fgi_defensive") and asyncState.fgi <= attributes.get("fgi_max","","fgi_defensive"):
-            if asyncState.dca_conf != "defensive":
-                logging.info("Using DCA settings [fgi_defensive]")
             asyncState.dca_conf = "fgi_defensive"
 
         if asyncState.fgi >= attributes.get("fgi_min","","fgi_moderate") and asyncState.fgi <= attributes.get("fgi_max","","fgi_moderate"):
-            if asyncState.dca_conf != "moderate":
-                logging.info("Using DCA settings [fgi_moderate]")
             asyncState.dca_conf = "fgi_moderate"
 
         if asyncState.fgi >= attributes.get("fgi_min","","fgi_aggressive") and asyncState.fgi <= attributes.get("fgi_max","","fgi_aggressive"):
-            if asyncState.dca_conf != "aggressive":
-                logging.info("Using DCA settings [fgi_aggressive]")
             asyncState.dca_conf = "fgi_aggressive" 
-                
+
+        if attributes.get("single","",asyncState.dca_conf):
+            botmode = "single bots"
+        else:
+            botmode = "multi bot"
+
+        logging.info("Using DCA settings [" + asyncState.dca_conf + "] for " + botmode)
+
         await asyncio.sleep(3600)
 
 def _handle_task_result(task: asyncio.Task) -> None:
@@ -373,7 +374,7 @@ async def my_event_handler(event):
             ):
 
                 # Choose multibot or singlebot
-                if attributes.get("single"):
+                if attributes.get("single","",asyncState.dca_conf):
                     bot = SingleBot(
                         tg_output, bot_output, account_output, attributes, p3cw, logging, asyncState.dca_conf
                     )
@@ -437,7 +438,7 @@ async def my_event_handler(event):
                 )
 
         elif tg_output and isinstance(tg_output, list):
-            if not attributes.get("single"):
+            if not attributes.get("single","",asyncState.dca_conf):
                 # Create or update multibot with pairs from "/symrank"
                 bot = MultiBot(
                     tg_output,
@@ -469,26 +470,28 @@ async def main():
 
     logging.info("*** 3CQS Bot started ***")
 
-    if not attributes.get("single"):
-        await symrank()
-
+    # Check part of the config before starting the client
     if (attributes.get("btc_pulse", False) or attributes.get("fearandgreed", False)
     ) and attributes.get("ext_botswitch", False):
         sys.tracebacklimit = 0
         sys.exit("Check config.ini, btc_pulse/fearandgreed AND ext_botswitch both set to true - not allowed")
     
-    if attributes.get("btc_pulse", False):
-        btcbooltask = client.loop.create_task(signals.getbtcbool(asyncState))
-        btcbooltask.add_done_callback(_handle_task_result)
-        switchtask = client.loop.create_task(botswitch())
-        switchtask.add_done_callback(_handle_task_result)
-        asyncState.loop = True
-        
+    # Call FGI to set dca settings
     if attributes.get("fearandgreed", False):
         fgitask = client.loop.create_task(signals.getfearandgreed(asyncState))
         fgitask.add_done_callback(_handle_task_result)
         dcaconfswitchtask = client.loop.create_task(dcaconfswitch())
         dcaconfswitchtask.add_done_callback(_handle_task_result)
+        asyncState.loop = True
+      
+    if not attributes.get("single","",asyncState.dca_conf):
+        await symrank()
+
+    if attributes.get("btc_pulse", False):
+        btcbooltask = client.loop.create_task(signals.getbtcbool(asyncState))
+        btcbooltask.add_done_callback(_handle_task_result)
+        switchtask = client.loop.create_task(botswitch())
+        switchtask.add_done_callback(_handle_task_result)
         asyncState.loop = True
         
     while asyncState.loop:

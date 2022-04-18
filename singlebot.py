@@ -1,6 +1,7 @@
 import re
 import json
 import time
+import babel
 
 from signals import Signals
 
@@ -85,6 +86,27 @@ class SingleBot:
 
         return len(bots)
 
+    def report_funds_needed(self, maxdeals):
+        
+        bo = self.attributes.get("bo", "", self.dca_conf)
+        so = self.attributes.get("so", "", self.dca_conf)
+        os = self.attributes.get("os", "", self.dca_conf)
+        mstc = self.attributes.get("mstc", "", self.dca_conf)
+
+        fundsneeded = bo + so
+        
+        for i in range(mstc-1):
+            so = so * os
+            fundsneeded += so
+
+        self.logging.info("Max possible deals: " + str(maxdeals) + " Funds per deal: "
+            + babel.numbers.format_currency(fundsneeded, "USD", locale="en_US")
+            + " Total funds needed: "
+            + babel.numbers.format_currency(maxdeals * fundsneeded, "USD", locale="en_US")
+        )
+
+        return
+
     def payload(self, pair):
         payload = {
             "name": self.attributes.get("prefix", "3CQSBOT", self.dca_conf) \
@@ -108,8 +130,11 @@ class SingleBot:
             "trailing_enabled": self.attributes.get("trailing", False, self.dca_conf),
             "trailing_deviation": self.attributes.get("trailing_deviation", 0.2, self.dca_conf),
             "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0, self.dca_conf),
-            "disable_after_deals_count": self.attributes.get("deals_count", 1, self.dca_conf),
+            "disable_after_deals_count": self.attributes.get("deals_count", 0, self.dca_conf),
         }
+
+        if payload["disable_after_deals_count"]==0:
+            payload.pop("disable_after_deals_count")        
 
         if self.attributes.get("trade_future", False):
             payload.update(
@@ -273,10 +298,11 @@ class SingleBot:
                     new_bot = False
                     break
 
+            maxdeals = self.attributes.get("single_count", "", self.dca_conf)
+
             if new_bot:
                 if self.tg_data["action"] == "START":
-                    if self.bot_count() < self.attributes.get("single_count", "", self.dca_conf):
-
+                    if self.bot_count() < maxdeals:
                         pair = self.signal.topcoin(
                             pair,
                             self.attributes.get("topcoin_limit", 3500),
@@ -290,17 +316,20 @@ class SingleBot:
                                 "No single bot for " + pair + " found - creating one"
                             )
                             # avoid deals over limit
-                            if running_deals < self.attributes.get("single_count", "", self.dca_conf) - 1:
+                            if running_deals < maxdeals - 1:
+                                self.report_funds_needed(maxdeals)
                                 self.create()
                                 deal_lock = False
                             elif (
-                                running_deals == self.attributes.get("single_count", "", self.dca_conf) - 1
+                                running_deals == maxdeals - 1
                             ) and not deal_lock:
+                                self.report_funds_needed(maxdeals)
                                 self.create()
                                 deal_lock = True
                             else:
                                 self.logging.info(
-                                    "Single bot not created. Blocking new deals, because last enabled bot can potentialy reach max deals!"
+                                    "Single bot not created. Blocking new deals, because last enabled bot can potentially reach max deals of "
+                                    + str(maxdeals)
                                 )
 
                         else:
@@ -311,7 +340,7 @@ class SingleBot:
                             )
                     else:
                         self.logging.info(
-                            "Maximum bots/deals reached. Bot with pair: "
+                            "Maximum bots/deals of " + str(maxdeals) + " reached. Single bot with "
                             + pair
                             + " not added."
                         )
@@ -325,24 +354,27 @@ class SingleBot:
                 self.logging.debug("Bot-Name: " + bot["name"])
 
                 if self.tg_data["action"] == "START":
-                    if self.bot_count() < self.attributes.get("single_count"):
+                    if self.bot_count() < maxdeals:
                         # avoid deals over limit
-                        if self.deal_count() < self.attributes.get("single_count") - 1:
+                        if self.deal_count() < maxdeals - 1:
+
                             self.enable(bot)
                             deal_lock = False
                         elif (
-                            self.deal_count() == self.attributes.get("single_count") - 1
+                            self.deal_count() == maxdeals - 1
                         ) and not deal_lock:
+                            self.report_funds_needed(maxdeals)
                             self.enable(bot)
                             deal_lock = True
                         else:
                             self.logging.info(
-                                "Blocking new deals, because last enabled bot can potentialy reach max deals!"
+                                "Blocking new deals, because last enabled bot can potentially reach max deals of "
+                                + str(maxdeals)
                             )
 
                     else:
                         self.logging.info(
-                            "Maximum enabled bots/deals reached. Single bot with pair: "
+                            "Maximum enabled bots/deals of " + str(maxdeals) + " reached. Single bot with "
                             + pair
                             + " not enabled."
                         )

@@ -1,5 +1,6 @@
 import random
 import json
+import babel.numbers
 from sys import prefix
 
 from signals import Signals
@@ -46,6 +47,27 @@ class MultiBot:
 
         return mad
 
+    def report_funds_needed(self, maxdeals):
+        
+        bo = self.attributes.get("bo", "", self.dca_conf)
+        so = self.attributes.get("so", "", self.dca_conf)
+        os = self.attributes.get("os", "", self.dca_conf)
+        mstc = self.attributes.get("mstc", "", self.dca_conf)
+
+        fundsneeded = bo + so
+        
+        for i in range(mstc-1):
+            so = so * os
+            fundsneeded += so
+
+        self.logging.info("Max possible deals: " + str(maxdeals) + " Funds per deal: "
+        + babel.numbers.format_currency(fundsneeded, "USD", locale="en_US")
+        + " Total funds needed: "
+        + babel.numbers.format_currency(maxdeals * fundsneeded, "USD", locale="en_US")
+        )
+
+        return
+
     def payload(self, pairs, mad):
 
         payload = {
@@ -69,8 +91,11 @@ class MultiBot:
             "trailing_enabled": self.attributes.get("trailing", False, self.dca_conf),
             "trailing_deviation": self.attributes.get("trailing_deviation", 0.2, self.dca_conf),
             "allowed_deals_on_same_pair": self.attributes.get("sdsp", "", self.dca_conf),
-            "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0, self.dca_conf)
+            "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0, self.dca_conf),
+            "disable_after_deals_count": self.attributes.get("deals_count", 0, self.dca_conf),
         }
+        if payload["disable_after_deals_count"]==0:
+            payload.pop("disable_after_deals_count")        
 
         if self.attributes.get("trade_future", False):
             payload.update(
@@ -243,10 +268,13 @@ class MultiBot:
 
         # Adapt mad if pairs are under value
         mad = self.adjustmad(pairs, mad)
+        maxdeals = self.attributes.get("mad")
 
         if not bot_by_id or bot_by_name:
-
+            # Create new multibot
             self.logging.info("Creating multi bot '" + botname + "' with filtered symrank pairs")
+            self.report_funds_needed(maxdeals)
+
             error, data = self.p3cw.request(
                 entity="bots",
                 action="create_bot",
@@ -265,6 +293,7 @@ class MultiBot:
                     )
                 self.new_deal(data, triggerpair="")
         else:
+            # Update existing multibot
             if botname != bot["name"]:
                 self.logging.info("Changing bot name from '" + bot["name"] 
                 + "' (" + botid + ") to '" + botname + "' (" + botid + ")")
@@ -272,7 +301,8 @@ class MultiBot:
 
             self.logging.info("Updating multi bot '" + bot["name"]  
             + "' (" + botid + ") with filtered symrank pairs and DCA setting [" + self.dca_conf + "]")
-
+            self.report_funds_needed(maxdeals)
+            
             error, data = self.p3cw.request(
                 entity="bots",
                 action="update",
