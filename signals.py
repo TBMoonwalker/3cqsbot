@@ -1,5 +1,3 @@
-from logging import exception
-from xml.sax.handler import feature_external_ges
 import yfinance as yf
 import numpy as np
 import asyncio
@@ -9,6 +7,7 @@ import babel.numbers
 import requests
 import traceback
 import json
+from logging import exception
 from dateutil.relativedelta import relativedelta as rd
 
 from pycoingecko import CoinGeckoAPI
