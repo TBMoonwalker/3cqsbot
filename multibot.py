@@ -48,21 +48,28 @@ class MultiBot:
         return mad
 
     def report_funds_needed(self, maxdeals):
-        
+        tp = self.attributes.get("tp", "", self.dca_conf)
         bo = self.attributes.get("bo", "", self.dca_conf)
         so = self.attributes.get("so", "", self.dca_conf)
         os = self.attributes.get("os", "", self.dca_conf)
+        ss = self.attributes.get("ss", "", self.dca_conf)
+        sos = self.attributes.get("sos", "", self.dca_conf)
         mstc = self.attributes.get("mstc", "", self.dca_conf)
 
         fundsneeded = bo + so
-        
+        socalc = so
+        pd = sos 
         for i in range(mstc-1):
-            so = so * os
-            fundsneeded += so
+            socalc = socalc * os
+            fundsneeded += socalc
+            pd = (pd * ss) + sos
 
-        self.logging.info("Max possible deals: " + str(maxdeals) + " Funds per deal: "
+        self.logging.info("[" + self.dca_conf + "] TP: " + str(tp) + "%  BO: $" + str(bo) + "  SO: $" 
+        + str(so) + "  OS: " + str(os) + "  SS: " + str(ss) + "  SOS: " + str(sos) + "%  MSTC: " 
+        + str(mstc) + " - covering max. price deviation: " + f"{pd:2.1f}" + "%")
+        self.logging.info("Max possible deals: " + str(maxdeals) + "   Funds per deal: "
         + babel.numbers.format_currency(fundsneeded, "USD", locale="en_US")
-        + " Total funds needed: "
+        + "   Total funds needed: "
         + babel.numbers.format_currency(maxdeals * fundsneeded, "USD", locale="en_US")
         )
 
