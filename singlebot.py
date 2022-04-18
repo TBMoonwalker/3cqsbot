@@ -258,7 +258,7 @@ class SingleBot:
             for bot in self.bot_data:
                 if (
                     self.prefix + "_" + self.subprefix + "_" + pair + "_" + self.suffix
-                ) in bot["name"]:
+                ) == bot["name"]:
                     new_bot = False
                     break
 
