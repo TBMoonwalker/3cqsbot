@@ -106,7 +106,7 @@ class SingleBot:
             "disable_after_deals_count": self.attributes.get("deals_count", 0),
         }
         if new_bot:
-            if payload["disable_after_deals_count"]==0:
+            if payload["disable_after_deals_count"] == 0:
                 self.logging.info("This is a new bot and deal_count set to 0, removing from payload")
                 payload.pop("disable_after_deals_count")
 
@@ -293,7 +293,7 @@ class SingleBot:
                                 deal_lock = True
                             else:
                                 self.logging.info(
-                                    "Blocking new deals, because last enabled bot can potentialy reach max deals!"
+                                    "Blocking new deals, because last enabled bot can potentially reach max deals!"
                                 )
 
                         else:
