@@ -83,7 +83,7 @@ class SingleBot:
 
         return len(bots)
 
-    def payload(self, pair):
+    def payload(self, pair, new_bot):
         payload = {
             "name": self.prefix + "_" + self.subprefix + "_" + pair + "_" + self.suffix,
             "account_id": self.account_data["id"],
@@ -105,6 +105,10 @@ class SingleBot:
             "min_volume_btc_24h": self.attributes.get("btc_min_vol"),
             "disable_after_deals_count": self.attributes.get("deals_count", 0),
         }
+        if new_bot:
+            if payload["disable_after_deals_count"]==0:
+                self.logging.info("This is a new bot and deal_count set to 0, removing from payload")
+                payload.pop("disable_after_deals_count")
 
         if self.attributes.get("trade_future", False):
             payload.update(
@@ -129,7 +133,7 @@ class SingleBot:
             action="update",
             action_id=str(bot["id"]),
             additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-            payload=self.payload(bot["pairs"][0]),
+            payload=self.payload(bot["pairs"][0], new_bot=False),
         )
 
         if error:
@@ -213,7 +217,7 @@ class SingleBot:
             entity="bots",
             action="create_bot",
             additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-            payload=self.payload(self.tg_data["pair"]),
+            payload=self.payload(self.tg_data["pair"], new_bot=True),
         )
 
         if error:
