@@ -331,7 +331,7 @@ class SingleBot:
                             deal_lock = True
                         else:
                             self.logging.info(
-                                "Blocking new deals, because last enabled bot can potentialy reach max deals!"
+                                "Blocking new deals, because last enabled bot can potentially reach max deals!"
                             )
 
                     else:
