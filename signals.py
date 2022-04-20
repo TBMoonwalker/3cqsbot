@@ -107,7 +107,6 @@ class Signals:
                     and target["converted_volume"]["btc"] >= volume
                 ):
                     volume_target = True
-                    self.logging.debug("price")
                     self.logging.info(
                         str(target["base"])
                         + " daily volume is "
@@ -126,7 +125,6 @@ class Signals:
                     and target["converted_volume"]["btc"] < volume
                 ):
                     volume_target = False
-                    self.logging.debug("price")
                     self.logging.info(
                         str(target["base"])
                         + " daily volume is "

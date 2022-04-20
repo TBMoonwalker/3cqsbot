@@ -72,8 +72,9 @@ class MultiBot:
             "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0),
             "disable_after_deals_count": self.attributes.get("deals_count", 0)
         }
+        
         if new_bot:
-            if payload["disable_after_deals_count"]==0:
+            if payload["disable_after_deals_count"] == 0:
                 self.logging.info("This is a new bot and deal_count set to 0, removing from payload")
                 payload.pop("disable_after_deals_count")
 
