@@ -4,8 +4,6 @@ import time
 
 from signals import Signals
 
-deal_lock = False
-
 
 class SingleBot:
     def __init__(self, tg_data, bot_data, account_data, attributes, p3cw, logging):
@@ -105,10 +103,12 @@ class SingleBot:
             "min_volume_btc_24h": self.attributes.get("btc_min_vol"),
             "disable_after_deals_count": self.attributes.get("deals_count", 0),
         }
-        
+
         if new_bot:
             if payload["disable_after_deals_count"] == 0:
-                self.logging.info("This is a new bot and deal_count set to 0, removing from payload")
+                self.logging.info(
+                    "This is a new bot and deal_count set to 0, removing from payload"
+                )
                 payload.pop("disable_after_deals_count")
 
         if self.attributes.get("trade_future", False):
@@ -262,6 +262,7 @@ class SingleBot:
         new_bot = True
         pair = self.tg_data["pair"]
         running_deals = self.deal_count()
+        running_bots = self.bot_count()
 
         if self.bot_data:
             for bot in self.bot_data:
@@ -273,7 +274,7 @@ class SingleBot:
 
             if new_bot:
                 if self.tg_data["action"] == "START":
-                    if self.bot_count() < self.attributes.get("single_count"):
+                    if running_bots < self.attributes.get("single_count"):
 
                         if self.attributes.get("topcoin_filter", False):
                             pair = self.signal.topcoin(
@@ -293,14 +294,11 @@ class SingleBot:
                                 "No single bot for " + pair + " found - creating one"
                             )
                             # avoid deals over limit
-                            if running_deals < self.attributes.get("single_count") - 1:
-                                self.create()
-                                deal_lock = False
-                            elif (
-                                running_deals == self.attributes.get("single_count") - 1
-                            ) and not deal_lock:
-                                self.create()
-                                deal_lock = True
+                            if running_deals < self.attributes.get("single_count"):
+                                if (running_bots + running_deals) < self.attributes.get(
+                                    "single_count"
+                                ):
+                                    self.create()
                             else:
                                 self.logging.info(
                                     "Blocking new deals, because last enabled bot can potentially reach max deals!"
@@ -328,20 +326,17 @@ class SingleBot:
                 self.logging.debug("Bot-Name: " + bot["name"])
 
                 if self.tg_data["action"] == "START":
-                    if self.bot_count() < self.attributes.get("single_count"):
+                    if running_bots < self.attributes.get("single_count"):
                         # avoid deals over limit
-                        if self.deal_count() < self.attributes.get("single_count") - 1:
-                            self.enable(bot)
-                            deal_lock = False
-                        elif (
-                            self.deal_count() == self.attributes.get("single_count") - 1
-                        ) and not deal_lock:
-                            self.enable(bot)
-                            deal_lock = True
-                        else:
-                            self.logging.info(
-                                "Blocking new deals, because last enabled bot can potentially reach max deals!"
-                            )
+                        if running_deals < self.attributes.get("single_count"):
+                            if (running_bots + running_deals) < self.attributes.get(
+                                "single_count"
+                            ):
+                                self.enable(bot)
+                            else:
+                                self.logging.info(
+                                    "Blocking new deals, because last enabled bot can potentially reach max deals!"
+                                )
 
                     else:
                         self.logging.info(
