@@ -249,19 +249,19 @@ def pair_data(account):
         sys.tracebacklimit = 0
         sys.exit("Problem fetching pair data from 3commas api - stopping!")
 
-    error, blacklist_data = p3cw.request(
-        entity="bots",
-        action="pairs_black_list"
-    )
+    error, blacklist_data = p3cw.request(entity="bots", action="pairs_black_list")
 
     if error:
         logging.debug(error["msg"])
         sys.tracebacklimit = 0
         sys.exit("Problem fetching pairs blacklist data from 3commas api - stopping!")
-    
+
     for pair in data:
         if attributes.get("market") in pair:
-            if pair not in attributes.get("token_denylist") and pair not in blacklist_data["pairs"]:
+            if (
+                pair not in attributes.get("token_denylist")
+                and pair not in blacklist_data["pairs"]
+            ):
                 pairs.append(pair)
 
     return pairs
@@ -329,19 +329,23 @@ async def my_event_handler(event):
 
         tg_output = tg_data(parse_tg(event.raw_text))
         logging.debug("TG msg: " + str(tg_output))
-        bot_output = bot_data()
+
         account_output = asyncState.accountData
         pair_output = asyncState.pairData
 
         if tg_output and not isinstance(tg_output, list):
 
-            logging.info("New 3CQS signal '" + str(tg_output["signal"]) + "' incoming...")
+            logging.info(
+                "New 3CQS signal '" + str(tg_output["signal"]) + "' incoming..."
+            )
 
             # Check if it is the right signal
             if (
                 tg_output["signal"] == attributes.get("symrank_signal")
                 or attributes.get("symrank_signal") == "all"
             ):
+
+                bot_output = bot_data()
 
                 # Choose multibot or singlebot
                 if attributes.get("single"):
@@ -387,7 +391,7 @@ async def my_event_handler(event):
                             + " with symrank: "
                             + str(tg_output["symrank"])
                             + ", volatility: "
-                            + str(tg_output["volatility"]) 
+                            + str(tg_output["volatility"])
                             + " and price action: "
                             + str(tg_output["price_action"])
                             + " not meeting config filter limits - signal ignored"
@@ -408,6 +412,9 @@ async def my_event_handler(event):
 
         elif tg_output and isinstance(tg_output, list):
             if not attributes.get("single"):
+
+                bot_output = bot_data()
+
                 # Create or update multibot with pairs from "/symrank"
                 bot = MultiBot(
                     tg_output,
@@ -453,7 +460,9 @@ async def main():
             await switchtask
     elif attributes.get("btc_pulse", False) and attributes.get("ext_botswitch", False):
         sys.tracebacklimit = 0
-        sys.exit("Check config.ini, btc_pulse and ext_botswitch both set to true - not allowed")
+        sys.exit(
+            "Check config.ini, btc_pulse and ext_botswitch both set to true - not allowed"
+        )
 
 
 with client:
