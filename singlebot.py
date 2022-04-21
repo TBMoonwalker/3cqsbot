@@ -258,7 +258,6 @@ class SingleBot:
 
         self.logging.info("Got new 3cqs signal")
 
-        global deal_lock
         new_bot = True
         pair = self.tg_data["pair"]
         running_deals = self.deal_count()
