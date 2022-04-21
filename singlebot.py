@@ -118,8 +118,12 @@ class SingleBot:
                     "leverage_custom_value": self.attributes.get("leverage_value"),
                     "stop_loss_percentage": self.attributes.get("stop_loss_percent"),
                     "stop_loss_type": self.attributes.get("stop_loss_type"),
-                    "stop_loss_timeout_enabled": self.attributes.get("stop_loss_timeout_enabled"),
-                    "stop_loss_timeout_in_seconds": self.attributes.get("stop_loss_timeout_seconds"),
+                    "stop_loss_timeout_enabled": self.attributes.get(
+                        "stop_loss_timeout_enabled"
+                    ),
+                    "stop_loss_timeout_in_seconds": self.attributes.get(
+                        "stop_loss_timeout_seconds"
+                    ),
                 }
             )
 
@@ -271,13 +275,18 @@ class SingleBot:
                 if self.tg_data["action"] == "START":
                     if self.bot_count() < self.attributes.get("single_count"):
 
-                        pair = self.signal.topcoin(
-                            pair,
-                            self.attributes.get("topcoin_limit", 3500),
-                            self.attributes.get("topcoin_volume", 0),
-                            self.attributes.get("topcoin_exchange", "binance"),
-                            self.attributes.get("market"),
-                        )
+                        if self.attributes.get("topcoin_filter", False):
+                            pair = self.signal.topcoin(
+                                pair,
+                                self.attributes.get("topcoin_limit", 0),
+                                self.attributes.get("topcoin_volume", 0),
+                                self.attributes.get("topcoin_exchange", "binance"),
+                                self.attributes.get("market"),
+                            )
+                        else:
+                            self.logging.info(
+                                "Topcoin filter disabled, not filtering pairs!"
+                            )
 
                         if pair:
                             self.logging.info(
