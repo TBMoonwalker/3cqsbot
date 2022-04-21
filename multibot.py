@@ -48,7 +48,7 @@ class MultiBot:
 
         return mad
 
-    def payload(self, pairs, mad):
+    def payload(self, pairs, mad, new_bot):
 
         payload = {
             "name": self.prefix + "_" + self.subprefix + "_" + self.suffix,
@@ -72,8 +72,12 @@ class MultiBot:
             "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0),
             "disable_after_deals_count": self.attributes.get("deals_count", 0),
         }
-        if payload["disable_after_deals_count"] == 0:
-            payload.pop("disable_after_deals_count")
+
+        if new_bot:
+            if payload["disable_after_deals_count"] == 0:
+                self.logging.info("This is a new bot and deal_count set to 0, removing from payload")
+                payload.pop("disable_after_deals_count")
+
         if self.attributes.get("trade_future", False):
             payload.update(
                 {
@@ -241,7 +245,7 @@ class MultiBot:
                 entity="bots",
                 action="create_bot",
                 additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-                payload=self.payload(pairs, mad),
+                payload=self.payload(pairs, mad, new_bot),
             )
 
             if error:
@@ -263,7 +267,7 @@ class MultiBot:
                 action="update",
                 action_id=botid,
                 additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-                payload=self.payload(pairs, mad),
+                payload=self.payload(pairs, mad, new_bot),
             )
 
             if error:
@@ -339,7 +343,7 @@ class MultiBot:
                         additional_headers={
                             "Forced-Mode": self.attributes.get("trade_mode")
                         },
-                        payload=self.payload(bot["pairs"], mad),
+                        payload=self.payload(bot["pairs"], mad, new_bot=False),
                     )
 
                     if error:
