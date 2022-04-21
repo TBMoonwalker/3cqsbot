@@ -70,9 +70,9 @@ class MultiBot:
             "trailing_deviation": self.attributes.get("trailing_deviation", 0.2),
             "allowed_deals_on_same_pair": self.attributes.get("sdsp"),
             "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0),
-            "disable_after_deals_count": self.attributes.get("deals_count", 0)
+            "disable_after_deals_count": self.attributes.get("deals_count", 0),
         }
-        if payload["disable_after_deals_count"]==0:
+        if payload["disable_after_deals_count"] == 0:
             payload.pop("disable_after_deals_count")
         if self.attributes.get("trade_future", False):
             payload.update(
@@ -81,8 +81,12 @@ class MultiBot:
                     "leverage_custom_value": self.attributes.get("leverage_value"),
                     "stop_loss_percentage": self.attributes.get("stop_loss_percent"),
                     "stop_loss_type": self.attributes.get("stop_loss_type"),
-                    "stop_loss_timeout_enabled": self.attributes.get("stop_loss_timeout_enabled"),
-                    "stop_loss_timeout_in_seconds": self.attributes.get("stop_loss_timeout_seconds"),
+                    "stop_loss_timeout_enabled": self.attributes.get(
+                        "stop_loss_timeout_enabled"
+                    ),
+                    "stop_loss_timeout_in_seconds": self.attributes.get(
+                        "stop_loss_timeout_seconds"
+                    ),
                 }
             )
 
@@ -148,12 +152,13 @@ class MultiBot:
 
             if error:
                 if bot["active_deals_count"] == bot["max_active_deals"]:
-                    self.logging.info("Max active deals of " 
-                    + str(bot["max_active_deals"]) 
-                    + " reached, not adding a new one.")
+                    self.logging.info(
+                        "Max active deals of "
+                        + str(bot["max_active_deals"])
+                        + " reached, not adding a new one."
+                    )
                 else:
                     self.logging.error(error["msg"])
-
 
     def create(self):
         # Creates a multi bot with start signal
@@ -174,15 +179,21 @@ class MultiBot:
 
         self.logging.debug("Existing bot names: " + str(botnames))
 
-        # Create pair list
+        # Initial pairlist
+        pairlist = self.tg_data
+
         # Filter topcoins (if set)
-        pairlist = self.signal.topcoin(
-            self.tg_data,
-            self.attributes.get("topcoin_limit", 3500),
-            self.attributes.get("topcoin_volume", 0),
-            self.attributes.get("topcoin_exchange", "binance"),
-            self.attributes.get("market"),
-        )
+        if self.attributes.get("topcoin_filter", False):
+            pairlist = self.signal.topcoin(
+                self.tg_data,
+                self.attributes.get("topcoin_limit", 3500),
+                self.attributes.get("topcoin_volume", 0),
+                self.attributes.get("topcoin_exchange", "binance"),
+                self.attributes.get("market"),
+            )
+        else:
+            self.logging.info("Topcoin filter disabled, not filtering pairs!")
+
         for pair in pairlist:
             pair = self.attributes.get("market") + "_" + pair
             # Traded on our exchange?
@@ -191,10 +202,10 @@ class MultiBot:
                 pairs.append(pair)
             else:
                 self.logging.info(
-                pair 
-                + " removed because pair is blacklisted on 3commas or in config.ini or not tradable on '" 
-                + self.attributes.get("account_name")
-                + "'"
+                    pair
+                    + " removed because pair is blacklisted on 3commas or in config.ini or not tradable on '"
+                    + self.attributes.get("account_name")
+                    + "'"
                 )
 
         self.logging.debug("Pairs after topcoin filter " + str(pairs))
@@ -217,7 +228,15 @@ class MultiBot:
 
         if new_bot:
 
-            self.logging.info("Creating multi bot " + self.prefix + "_" + self.subprefix + "_" + self.suffix + " with filtered symrank pairs")
+            self.logging.info(
+                "Creating multi bot "
+                + self.prefix
+                + "_"
+                + self.subprefix
+                + "_"
+                + self.suffix
+                + " with filtered symrank pairs"
+            )
             error, data = self.p3cw.request(
                 entity="bots",
                 action="create_bot",
@@ -236,7 +255,9 @@ class MultiBot:
                     )
                 self.new_deal(data, triggerpair="")
         else:
-            self.logging.info("Updating multi bot " + bot["name"] + " with filtered symrank pairs")
+            self.logging.info(
+                "Updating multi bot " + bot["name"] + " with filtered symrank pairs"
+            )
             error, data = self.p3cw.request(
                 entity="bots",
                 action="update",
@@ -268,10 +289,7 @@ class MultiBot:
                     pair = self.tg_data["pair"]
 
                     self.logging.info(
-                        "Got new 3cqs "
-                        + self.tg_data["action"]
-                        + " signal for "
-                        + pair
+                        "Got new 3cqs " + self.tg_data["action"] + " signal for " + pair
                     )
 
                     if self.tg_data["action"] == "START":
@@ -282,13 +300,20 @@ class MultiBot:
                                 pair + " is already included in the pair list"
                             )
                         else:
-                            pair = self.signal.topcoin(
-                                pair,
-                                self.attributes.get("topcoin_limit", 3500),
-                                self.attributes.get("topcoin_volume", 0),
-                                self.attributes.get("topcoin_exchange", "binance"),
-                                self.attributes.get("market"),
-                            )
+                            # Filter topcoins (if set)
+                            if self.attributes.get("topcoin_filter", False):
+                                pair = self.signal.topcoin(
+                                    pair,
+                                    self.attributes.get("topcoin_limit", 3500),
+                                    self.attributes.get("topcoin_volume", 0),
+                                    self.attributes.get("topcoin_exchange", "binance"),
+                                    self.attributes.get("market"),
+                                )
+                            else:
+                                self.logging.info(
+                                    "Topcoin filter disabled, not filtering pairs!"
+                                )
+
                             if pair:
                                 self.logging.info("Adding pair " + pair)
                                 bot["pairs"].append(pair)
@@ -298,13 +323,14 @@ class MultiBot:
                             bot["pairs"].remove(pair)
                         else:
                             self.logging.info(
-                                pair
-                                + " was not included in the pair list, not removed"
+                                pair + " was not included in the pair list, not removed"
                             )
 
                     # Adapt mad if pairs are under value
                     mad = self.adjustmad(bot["pairs"], mad)
-                    self.logging.info("Adjusting mad to amount of included symrank pairs: " + str(mad))
+                    self.logging.info(
+                        "Adjusting mad to amount of included symrank pairs: " + str(mad)
+                    )
 
                     error, data = self.p3cw.request(
                         entity="bots",
