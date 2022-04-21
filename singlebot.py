@@ -233,8 +233,10 @@ class SingleBot:
             self.enable(data)
 
     def delete(self, bot):
-        if bot["active_deals_count"] == 0 and self.attributes.get(
-            "delete_single_bots", False
+        if (
+            bot["active_deals_count"] == 0
+            and self.attributes.get("delete_single_bots", False)
+            and bot["is_enabled"]
         ):
             # Deletes a single bot with stop signal
             self.logging.info("Delete single bot with pair " + self.tg_data["pair"])
