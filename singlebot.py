@@ -179,7 +179,7 @@ class SingleBot:
                     + self.subprefix
                     + "_"
                     + self.attributes.get("market")
-                ) in bots["name"]:
+                ) in bots["name"] and bot["is_enabled"]: # Added "and bot["is_enabled"]"" to only disable IF bot is enabled
 
                     self.logging.info(
                         "Disabling single bot "
@@ -236,7 +236,6 @@ class SingleBot:
         if (
             bot["active_deals_count"] == 0
             and self.attributes.get("delete_single_bots", False)
-            and bot["is_enabled"]
         ):
             # Deletes a single bot with stop signal
             self.logging.info("Delete single bot with pair " + self.tg_data["pair"])
@@ -249,11 +248,17 @@ class SingleBot:
 
             if error:
                 self.logging.error(error["msg"])
-        else:
+        # Only perform the disable request if necessary
+        elif bot["is_enabled"]:
             self.logging.info(
-                "Cannot delete single bot, because of active deals or configuration. Disabling it!"
+                "Disabling single bot with pair " + self.tg_data["pair"] + " unable to delete because of active deals or configuration."
             )
             self.disable(bot, False)
+        # No bot to delete or disable
+        else:
+            self.logging.info(
+                "Bot not enabled, nothing to do!"
+            )
 
     def trigger(self):
         # Triggers a single bot deal
@@ -267,9 +272,7 @@ class SingleBot:
 
         if self.bot_data:
             for bot in self.bot_data:
-                if (
-                    self.prefix + "_" + self.subprefix + "_" + pair + "_" + self.suffix
-                ) == bot["name"]:
+                if (self.prefix + "_" + self.subprefix + "_" + pair + "_" + self.suffix) == bot["name"]:
                     new_bot = False
                     break
 
@@ -291,14 +294,9 @@ class SingleBot:
                             )
 
                         if pair:
-                            self.logging.info(
-                                "No single bot for " + pair + " found - creating one"
-                            )
                             # avoid deals over limit
                             if running_deals < self.attributes.get("single_count"):
-                                if (running_bots + running_deals) < self.attributes.get(
-                                    "single_count"
-                                ):
+                                if (running_bots + running_deals) < self.attributes.get("single_count"):
                                     self.create()
                             else:
                                 self.logging.info(
@@ -330,9 +328,7 @@ class SingleBot:
                     if running_bots < self.attributes.get("single_count"):
                         # avoid deals over limit
                         if running_deals < self.attributes.get("single_count"):
-                            if (running_bots + running_deals) < self.attributes.get(
-                                "single_count"
-                            ):
+                            if (running_bots + running_deals) < self.attributes.get("single_count"):
                                 self.enable(bot)
                             else:
                                 self.logging.info(
