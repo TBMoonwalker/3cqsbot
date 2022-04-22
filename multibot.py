@@ -281,14 +281,14 @@ class MultiBot:
         # Check for existing name
         if not bot_by_id:
             botnames = []
-            if botid != "":
+            if self.botid != "":
                 self.logging.info("3cqsbot not found with botid: " + self.botid)
             self.logging.info("Searching for 3cqsbot with name '" + self.botname + "'")
             for bot in self.bot_data:
                 botnames.append(bot["name"])
 
                 if self.botname == bot["name"]:
-                    botid = str(bot["id"])
+                    self.botid = str(bot["id"])
                     bot_by_name = True
                     self.logging.info(
                         "3cqsbot '"
@@ -411,7 +411,7 @@ class MultiBot:
             error, data = self.p3cw.request(
                 entity="bots",
                 action="update",
-                action_id=botid,
+                action_id=self.botid,
                 additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
                 payload=self.payload(pairs, mad, new_bot = False),
             )
