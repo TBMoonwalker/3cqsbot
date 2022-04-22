@@ -43,9 +43,11 @@ class Config:
         elif data == "" and defaultvalue == "" and not attribute == "botid":
             sys.tracebacklimit = 0
             sys.exit(
-                "Attribute '"
+                "Make sure that section ["
+                + section
+                + "] is defined and mandatory attribute '"
                 + attribute
-                + "' is not set, but mandatory! Please check the readme for configuration."
+                + "' is set. Please check the readme for configuration. Exiting script!"
             )
 
         return data

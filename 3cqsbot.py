@@ -268,7 +268,7 @@ def pair_data(account):
 
     for pair in data:
         if attributes.get("market") in pair:
-            if pair not in attributes.get("token_denylist") and pair not in blacklist_data["pairs"]:
+            if pair not in attributes.get("token_denylist", []) and pair not in blacklist_data["pairs"]:
                 pairs.append(pair)
 
     return pairs
@@ -313,16 +313,25 @@ async def botswitch():
 async def dcaconfswitch():
     
     while True:
-        if asyncState.fgi >= attributes.get("fgi_min","","fgi_defensive") and asyncState.fgi <= attributes.get("fgi_max","","fgi_defensive"):
+        if asyncState.fgi >= attributes.get("fgi_min", 0, "fgi_defensive") and asyncState.fgi <= attributes.get("fgi_max", 30, "fgi_defensive"):
             asyncState.dca_conf = "fgi_defensive"
 
-        if asyncState.fgi >= attributes.get("fgi_min","","fgi_moderate") and asyncState.fgi <= attributes.get("fgi_max","","fgi_moderate"):
+        if asyncState.fgi >= attributes.get("fgi_min", 31, "fgi_moderate") and asyncState.fgi <= attributes.get("fgi_max", 60, "fgi_moderate"):
             asyncState.dca_conf = "fgi_moderate"
 
-        if asyncState.fgi >= attributes.get("fgi_min","","fgi_aggressive") and asyncState.fgi <= attributes.get("fgi_max","","fgi_aggressive"):
+        if asyncState.fgi >= attributes.get("fgi_min", 61, "fgi_aggressive") and asyncState.fgi <= attributes.get("fgi_max", 100, "fgi_aggressive"):
             asyncState.dca_conf = "fgi_aggressive" 
 
-        if attributes.get("single","",asyncState.dca_conf):
+        # Check if section fgi_defensive, fgi_moderate and fgi_aggressive are defined in config.ini, if not use standard settings of [dcabot]
+        if attributes.get("fgi_min", -1, "fgi_defensive") == -1 \
+            or attributes.get("fgi_min", -1, "fgi_moderate") == -1 \
+            or attributes.get("fgi_min", -1, "fgi_aggressive") == -1:
+            logging.info(
+                "DCA settings for [fgi_defensive], [fgi_moderate] or [fgi_aggressive] are not configured. Using standard settings of [dcabot] for all FGI values 0-100 to avoid missing settings"
+            )
+            asyncState.dca_conf = "dcabot"
+
+        if attributes.get("single", "", asyncState.dca_conf):
             botmode = "single bots"
         else:
             botmode = "multi bot"
@@ -478,7 +487,7 @@ async def main():
     
     # Call FGI to set dca settings
     if attributes.get("fearandgreed", False):
-        fgitask = client.loop.create_task(signals.getfearandgreed(asyncState))
+        fgitask = client.loop.create_task(signals.get_fgi(asyncState))
         fgitask.add_done_callback(_handle_task_result)
         dcaconfswitchtask = client.loop.create_task(dcaconfswitch())
         dcaconfswitchtask.add_done_callback(_handle_task_result)

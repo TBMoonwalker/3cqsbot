@@ -112,7 +112,6 @@ class Signals:
                     and target["converted_volume"]["btc"] >= volume
                 ):
                     volume_target = True
-                    self.logging.debug("price")
                     self.logging.info(
                         str(target["base"])
                         + " daily volume is "
@@ -131,7 +130,6 @@ class Signals:
                     and target["converted_volume"]["btc"] < volume
                 ):
                     volume_target = False
-                    self.logging.debug("price")
                     self.logging.info(
                         str(target["base"])
                         + " daily volume is "
@@ -253,7 +251,7 @@ class Signals:
             exception = e
         return (response, exception)
 
-    async def getfearandgreed(self, asyncState):
+    async def get_fgi(self, asyncState):
         
         url = "https://api.alternative.me/fng/"
         self.logging.info("Using crypto fear and greed index (FGI) from alternative.me for changing 3cqsbot DCA settings to defensive, moderate or aggressive")
@@ -264,7 +262,8 @@ class Signals:
             if exception:
                 asyncState.fgi = -1
                 self.logging.info(exception)
-                self.logging.info("Fear and greed index API actually down, retrying....")
+                self.logging.info("Fear and greed index API actually down, retrying in 60s")
+                time_until_update = 60
             else:
                 response = json.loads(response.text)
                 fgi = int(response["data"][0]["value"])

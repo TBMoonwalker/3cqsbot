@@ -10,20 +10,21 @@ key = "Your api key from 3Commas here - without Quotes"
 secret = "Your secret from 3Commas here - without Quotes"
 
 [dcabot]
+single = false
 prefix = 3CQSBOT
 subprefix = MULTI
 suffix = TA_SAFE
+mad = 2
+deal_mode = [{"options": {"time": "3m", "points": "100", "time_period": "7", "trigger_condition": "less"}, "strategy": "rsi"}]
 tp = 1.5
 bo = 11
 so = 11
 os = 1.05
 ss = 1
 sos = 2.4
-mad = 2
-max = 1
 mstc = 25
+max = 1
 sdsp = 1
-single = false
 
 [trading]
 market = USDT
@@ -32,5 +33,3 @@ account_name = "Your paper account here - without quotes"
 
 [filter]
 symrank_signal = triple100
-deal_mode = [{"options": {"time": "3m", "points": "100", "time_period": "7", "trigger_condition": "less"}, "strategy": "rsi"}]
-token_denylist = [USDT_BTC, USDT_ETH, USDT_BUSD, USDT_USDC]

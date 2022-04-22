@@ -18,9 +18,9 @@ class SingleBot:
         self.logging = logging
         self.signal = Signals(logging)
         self.dca_conf = dca_conf
-        self.prefix = self.attributes.get("prefix", "3CQSBOT", dca_conf)
-        self.subprefix = self.attributes.get("subprefix", "SINGLE", dca_conf)
-        self.suffix = self.attributes.get("suffix", "standard", dca_conf)
+        self.prefix = self.attributes.get("prefix", "3CQSBOT", "dcabot")
+        self.subprefix = self.attributes.get("subprefix", "SINGLE", "dcabot")
+        self.suffix = self.attributes.get("suffix", "dcabot", "dcabot")
         self.bot_name = (
             self.prefix
             + "_"
@@ -33,14 +33,16 @@ class SingleBot:
         )
 
     def strategy(self):
-        if self.attributes.get("deal_mode", "signal") == "signal":
+        if self.attributes.get("deal_mode", "signal", self.dca_conf) == "signal":
             strategy = [{"strategy": "nonstop"}]
         else:
             try:
-                strategy = json.loads(self.attributes.get("deal_mode"))
+                strategy = json.loads(self.attributes.get("deal_mode", "", self.dca_conf))
             except ValueError:
                 self.logging.error(
-                    "Decoding JSON string of deal_mode failed. Please check https://jsonformatter.curiousconcept.com/ for correct format"
+                    "Either missing ["
+                    + self.dca_conf
+                    + "] section with DCA settings or decoding JSON string of deal_mode failed. Please check https://jsonformatter.curiousconcept.com/ for correct format"
                 )
 
         return strategy
@@ -115,12 +117,12 @@ class SingleBot:
 
         return
 
-    def payload(self, pair):
+    def payload(self, pair, new_bot):
         payload = {
-            "name": self.attributes.get("prefix", "3CQSBOT", self.dca_conf) \
-                    + "_" + self.attributes.get("subprefix", "SINGLE", self.dca_conf) \
+            "name": self.attributes.get("prefix", "3CQSBOT", "dcabot") \
+                    + "_" + self.attributes.get("subprefix", "SINGLE", "dcabot") \
                     + "_" + pair 
-                    + "_" + self.attributes.get("suffix", "standard", self.dca_conf),
+                    + "_" + self.attributes.get("suffix", "dcabot", "dcabot"),
             "account_id": self.account_data["id"],
             "pairs": self.tg_data["pair"],
             "max_active_deals": self.attributes.get("mad", "", self.dca_conf),
@@ -141,8 +143,10 @@ class SingleBot:
             "disable_after_deals_count": self.attributes.get("deals_count", 0, self.dca_conf),
         }
 
-        if payload["disable_after_deals_count"]==0:
-            payload.pop("disable_after_deals_count")        
+        if new_bot:
+            if payload["disable_after_deals_count"] == 0:
+                self.logging.info("This is a new bot and deal_count set to 0, removing from payload")
+                payload.pop("disable_after_deals_count")        
 
         if self.attributes.get("trade_future", False):
             payload.update(
@@ -171,7 +175,7 @@ class SingleBot:
             action="update",
             action_id=str(bot["id"]),
             additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-            payload=self.payload(bot["pairs"][0]),
+            payload=self.payload(bot["pairs"][0], new_bot = False),
         )
 
         if error:
@@ -198,8 +202,8 @@ class SingleBot:
             self.logging.error(error["msg"])
 
     def disable(self, bot, allbots=False):
-        botname = self.attributes.get("prefix", "3CQSBOT", self.dca_conf) \
-        + "_" + self.attributes.get("subprefix", "SINGLE", self.dca_conf) \
+        botname = self.attributes.get("prefix", "3CQSBOT", "dcabot") \
+        + "_" + self.attributes.get("subprefix", "SINGLE", "dcabot") \
         + "_" + self.attributes.get("market") 
 
         # Disable all bots
@@ -207,7 +211,7 @@ class SingleBot:
 
         if allbots:
 
-            self.logging.info("Disabling all single bots, because of BTC Pulse")
+            self.logging.info("Disabling all single bots, because of btc pulse signal")
 
             for bots in bot:
                 if botname in bots["name"]:
@@ -253,7 +257,7 @@ class SingleBot:
             entity="bots",
             action="create_bot",
             additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-            payload=self.payload(self.tg_data["pair"]),
+            payload=self.payload(self.tg_data["pair"], newbot = True),
         )
 
         if error:
@@ -295,10 +299,10 @@ class SingleBot:
         running_deals = self.deal_count()
         self.logging.info("running_deals: " + str(running_deals))
 
-        botname = self.attributes.get("prefix", "3CQSBOT", self.dca_conf) \
-        + "_" + self.attributes.get("subprefix", "SINGLE", self.dca_conf) \
+        botname = self.attributes.get("prefix", "3CQSBOT", "dcabot") \
+        + "_" + self.attributes.get("subprefix", "SINGLE", "dcabot") \
         + "_" + pair + "_" \
-        + self.attributes.get("suffix", "standard", self.dca_conf)
+        + self.attributes.get("suffix", "dcabot", "dcabot")
 
         if self.bot_data:
             for bot in self.bot_data:
@@ -311,13 +315,19 @@ class SingleBot:
             if new_bot:
                 if self.tg_data["action"] == "START":
                     if self.bot_count() < maxdeals:
-                        pair = self.signal.topcoin(
-                            pair,
-                            self.attributes.get("topcoin_limit", 3500),
-                            self.attributes.get("topcoin_volume", 0),
-                            self.attributes.get("topcoin_exchange", "binance"),
-                            self.attributes.get("market"),
-                        )
+
+                        if self.attributes.get("topcoin_filter", False):
+                            pair = self.signal.topcoin(
+                                pair,
+                                self.attributes.get("topcoin_limit", 3500),
+                                self.attributes.get("topcoin_volume", 0),
+                                self.attributes.get("topcoin_exchange", "binance"),
+                                self.attributes.get("market"),
+                            )
+                        else:
+                            self.logging.info(
+                                "Topcoin filter disabled, not filtering pairs!"
+                            )
 
                         if pair:
                             self.logging.info(

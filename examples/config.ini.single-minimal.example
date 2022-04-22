@@ -10,6 +10,9 @@ key = "Your api key from 3Commas here - without Quotes"
 secret = "Your secret from 3Commas here - without Quotes"
 
 [dcabot]
+single = true
+single_count = 1
+mad = 1
 prefix = 3CQSBOT
 subprefix = SINGLE
 suffix = TA_SAFE
@@ -19,12 +22,9 @@ so = 11
 os = 1.05
 ss = 1
 sos = 2.4
-mad = 1
-max = 1
 mstc = 25
+max = 1
 sdsp = 1
-single = true
-single_count = 1
 
 [trading]
 market = USDT
@@ -33,4 +33,3 @@ account_name = "Your paper account here - without quotes"
 
 [filter]
 symrank_signal = triple100
-token_denylist = [USDT_BTC, USDT_ETH, USDT_BUSD, USDT_USDC]
