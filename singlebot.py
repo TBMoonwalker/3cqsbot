@@ -298,11 +298,10 @@ class SingleBot:
                             if running_deals < self.attributes.get("single_count"):
                                 if (running_bots + running_deals) < self.attributes.get("single_count"):
                                     self.create()
-                            else:
-                                self.logging.info(
-                                    "Blocking new deals, because last enabled bot can potentially reach max deals!"
-                                )
-
+                                else:
+                                    self.logging.info(
+                                        "Blocking new deals, because last enabled bot can potentially reach max deals!"
+                                    )
                         else:
                             self.logging.info(
                                 "Pair "
