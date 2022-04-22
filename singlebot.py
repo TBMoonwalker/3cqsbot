@@ -9,7 +9,9 @@ deal_lock = False
 
 
 class SingleBot:
-    def __init__(self, tg_data, bot_data, account_data, attributes, p3cw, logging, dca_conf):
+    def __init__(
+        self, tg_data, bot_data, account_data, attributes, p3cw, logging, dca_conf
+    ):
         self.tg_data = tg_data
         self.bot_data = bot_data
         self.account_data = account_data
@@ -49,32 +51,15 @@ class SingleBot:
 
     def deal_count(self):
         account = self.account_data
-        deals = []
+        deals = 0
 
-        error, data = self.p3cw.request(
-            entity="deals",
-            action="",
-            action_id=account["id"],
-            additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-            payload={"limit": 1000, "scope": "active", "account_id": account["id"]},
-        )
+        for bot in self.bot_data:
+            if re.search(self.bot_name, bot["name"]):
+                deals += int(bot["active_deals_count"])
 
-        if error:
-            self.logging.info(
-                "Setting deal count temporary to maximum - because of API errors!"
-            )
-            self.logging.error(error["msg"])
-            return self.attributes.get("single_count")
-        else:
-            for deal in data:
-                if re.search(self.bot_name, deal["bot_name"]):
-                    deals.append(deal["bot_name"])
-                    self.logging.info(str(deals))
+        self.logging.info("Deal count: " + str(deals))
 
-        self.logging.debug(str(deals))
-        self.logging.info("Deal count: " + str(len(deals)))
-
-        return len(deals)
+        return deals
 
     def bot_count(self):
 
@@ -100,19 +85,42 @@ class SingleBot:
 
         fundsneeded = bo + so
         socalc = so
-        pd = sos 
-        for i in range(mstc-1):
+        pd = sos
+        for i in range(mstc - 1):
             socalc = socalc * os
             fundsneeded += socalc
             pd = (pd * ss) + sos
 
-        self.logging.info("[" + self.dca_conf + "] TP: " + str(tp) + "%  BO: $" + str(bo) + "  SO: $" 
-        + str(so) + "  OS: " + str(os) + "  SS: " + str(ss) + "  SOS: " + str(sos) + "%  MSTC: " 
-        + str(mstc) + " - covering max. price deviation: " + f"{pd:2.1f}" + "%")
-        self.logging.info("Max possible deals: " + str(maxdeals) + "   Funds per deal: "
-        + babel.numbers.format_currency(fundsneeded, "USD", locale="en_US")
-        + "   Total funds needed: "
-        + babel.numbers.format_currency(maxdeals * fundsneeded, "USD", locale="en_US")
+        self.logging.info(
+            "["
+            + self.dca_conf
+            + "] TP: "
+            + str(tp)
+            + "%  BO: $"
+            + str(bo)
+            + "  SO: $"
+            + str(so)
+            + "  OS: "
+            + str(os)
+            + "  SS: "
+            + str(ss)
+            + "  SOS: "
+            + str(sos)
+            + "%  MSTC: "
+            + str(mstc)
+            + " - covering max. price deviation: "
+            + f"{pd:2.1f}"
+            + "%"
+        )
+        self.logging.info(
+            "Max possible deals: "
+            + str(maxdeals)
+            + "   Funds per deal: "
+            + babel.numbers.format_currency(fundsneeded, "USD", locale="en_US")
+            + "   Total funds needed: "
+            + babel.numbers.format_currency(
+                maxdeals * fundsneeded, "USD", locale="en_US"
+            )
         )
 
         return
@@ -129,18 +137,26 @@ class SingleBot:
             "base_order_volume": self.attributes.get("bo", "", self.dca_conf),
             "take_profit": self.attributes.get("tp", "", self.dca_conf),
             "safety_order_volume": self.attributes.get("so", "", self.dca_conf),
-            "martingale_volume_coefficient": self.attributes.get("os", "", self.dca_conf),
+            "martingale_volume_coefficient": self.attributes.get(
+                "os", "", self.dca_conf
+            ),
             "martingale_step_coefficient": self.attributes.get("ss", "", self.dca_conf),
             "max_safety_orders": self.attributes.get("mstc", "", self.dca_conf),
-            "safety_order_step_percentage": self.attributes.get("sos", "", self.dca_conf),
+            "safety_order_step_percentage": self.attributes.get(
+                "sos", "", self.dca_conf
+            ),
             "take_profit_type": "total",
             "active_safety_orders_count": self.attributes.get("max", "", self.dca_conf),
             "cooldown": self.attributes.get("cooldown", 0),
             "strategy_list": self.strategy(),
             "trailing_enabled": self.attributes.get("trailing", False, self.dca_conf),
-            "trailing_deviation": self.attributes.get("trailing_deviation", 0.2, self.dca_conf),
+            "trailing_deviation": self.attributes.get(
+                "trailing_deviation", 0.2, self.dca_conf
+            ),
             "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0, self.dca_conf),
-            "disable_after_deals_count": self.attributes.get("deals_count", 0, self.dca_conf),
+            "disable_after_deals_count": self.attributes.get(
+                "deals_count", 0, self.dca_conf
+            ),
         }
 
         if new_bot:
@@ -151,10 +167,18 @@ class SingleBot:
         if self.attributes.get("trade_future", False):
             payload.update(
                 {
-                    "leverage_type": self.attributes.get("leverage_type", "", self.dca_conf),
-                    "leverage_custom_value": self.attributes.get("leverage_value", "", self.dca_conf),
-                    "stop_loss_percentage": self.attributes.get("stop_loss_percent", "", self.dca_conf),
-                    "stop_loss_type": self.attributes.get("stop_loss_type", "", self.dca_conf),
+                    "leverage_type": self.attributes.get(
+                        "leverage_type", "", self.dca_conf
+                    ),
+                    "leverage_custom_value": self.attributes.get(
+                        "leverage_value", "", self.dca_conf
+                    ),
+                    "stop_loss_percentage": self.attributes.get(
+                        "stop_loss_percent", "", self.dca_conf
+                    ),
+                    "stop_loss_type": self.attributes.get(
+                        "stop_loss_type", "", self.dca_conf
+                    ),
                     "stop_loss_timeout_enabled": self.attributes.get(
                         "stop_loss_timeout_enabled", "", self.dca_conf
                     ),
@@ -296,6 +320,7 @@ class SingleBot:
         global deal_lock
         new_bot = True
         pair = self.tg_data["pair"]
+        running_bots = self.bot_count()
         running_deals = self.deal_count()
         self.logging.info("running_deals: " + str(running_deals))
 
@@ -338,9 +363,7 @@ class SingleBot:
                                 self.report_funds_needed(maxdeals)
                                 self.create()
                                 deal_lock = False
-                            elif (
-                                running_deals == maxdeals - 1
-                            ) and not deal_lock:
+                            elif (running_deals == maxdeals - 1) and not deal_lock:
                                 self.report_funds_needed(maxdeals)
                                 self.create()
                                 deal_lock = True
@@ -358,7 +381,9 @@ class SingleBot:
                             )
                     else:
                         self.logging.info(
-                            "Maximum bots/deals of " + str(maxdeals) + " reached. Single bot with "
+                            "Maximum bots/deals of "
+                            + str(maxdeals)
+                            + " reached. Single bot with "
                             + pair
                             + " not added."
                         )
@@ -372,15 +397,13 @@ class SingleBot:
                 self.logging.debug("Bot-Name: " + bot["name"])
 
                 if self.tg_data["action"] == "START":
-                    if self.bot_count() < maxdeals:
+                    if running_bots < maxdeals:
                         # avoid deals over limit
-                        if self.deal_count() < maxdeals - 1:
+                        if running_deals < maxdeals - 1:
 
                             self.enable(bot)
                             deal_lock = False
-                        elif (
-                            self.deal_count() == maxdeals - 1
-                        ) and not deal_lock:
+                        elif (running_deals == maxdeals - 1) and not deal_lock:
                             self.report_funds_needed(maxdeals)
                             self.enable(bot)
                             deal_lock = True
@@ -392,7 +415,9 @@ class SingleBot:
 
                     else:
                         self.logging.info(
-                            "Maximum enabled bots/deals of " + str(maxdeals) + " reached. Single bot with "
+                            "Maximum enabled bots/deals of "
+                            + str(maxdeals)
+                            + " reached. Single bot with "
                             + pair
                             + " not enabled."
                         )

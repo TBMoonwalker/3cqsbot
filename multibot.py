@@ -8,7 +8,15 @@ from signals import Signals
 
 class MultiBot:
     def __init__(
-        self, tg_data, bot_data, account_data, pair_data, attributes, p3cw, logging, dca_conf
+        self,
+        tg_data,
+        bot_data,
+        account_data,
+        pair_data,
+        attributes,
+        p3cw,
+        logging,
+        dca_conf,
     ):
         self.tg_data = tg_data
         self.bot_data = bot_data
@@ -19,6 +27,14 @@ class MultiBot:
         self.logging = logging
         self.signal = Signals(logging)
         self.dca_conf = dca_conf
+        self.botid = str(self.attributes.get("botid", ""))
+        self.botname = (
+            self.attributes.get("prefix", self.attributes.get("prefix", "3CQSBOT", "dcabot"), self.dca_conf)
+            + "_"
+            + self.attributes.get("subprefix", self.attributes.get("subprefix", "MULTI", "dcabot"), self.dca_conf)
+            + "_"
+            + self.attributes.get("suffix", self.attributes.get("suffix", "dcabot", "dcabot"), self.dca_conf)
+        )
 
     def strategy(self):
         if self.attributes.get("deal_mode", "signal", self.dca_conf) == "signal":
@@ -60,19 +76,42 @@ class MultiBot:
 
         fundsneeded = bo + so
         socalc = so
-        pd = sos 
-        for i in range(mstc-1):
+        pd = sos
+        for i in range(mstc - 1):
             socalc = socalc * os
             fundsneeded += socalc
             pd = (pd * ss) + sos
 
-        self.logging.info("[" + self.dca_conf + "] TP: " + str(tp) + "%  BO: $" + str(bo) + "  SO: $" 
-        + str(so) + "  OS: " + str(os) + "  SS: " + str(ss) + "  SOS: " + str(sos) + "%  MSTC: " 
-        + str(mstc) + " - covering max. price deviation: " + f"{pd:2.1f}" + "%")
-        self.logging.info("Max possible deals: " + str(maxdeals) + "   Funds per deal: "
-        + babel.numbers.format_currency(fundsneeded, "USD", locale="en_US")
-        + "   Total funds needed: "
-        + babel.numbers.format_currency(maxdeals * fundsneeded, "USD", locale="en_US")
+        self.logging.info(
+            "["
+            + self.dca_conf
+            + "] TP: "
+            + str(tp)
+            + "%  BO: $"
+            + str(bo)
+            + "  SO: $"
+            + str(so)
+            + "  OS: "
+            + str(os)
+            + "  SS: "
+            + str(ss)
+            + "  SOS: "
+            + str(sos)
+            + "%  MSTC: "
+            + str(mstc)
+            + " - covering max. price deviation: "
+            + f"{pd:2.1f}"
+            + "%"
+        )
+        self.logging.info(
+            "Max possible deals: "
+            + str(maxdeals)
+            + "   Funds per deal: "
+            + babel.numbers.format_currency(fundsneeded, "USD", locale="en_US")
+            + "   Total funds needed: "
+            + babel.numbers.format_currency(
+                maxdeals * fundsneeded, "USD", locale="en_US"
+            )
         )
 
         return
@@ -80,28 +119,36 @@ class MultiBot:
     def payload(self, pairs, mad, new_bot):
 
         payload = {
-            "name": self.attributes.get("prefix", self.attributes.get("prefix", "3CQSBOT", "dcabot"), self.dca_conf) \
-                        + "_" + self.attributes.get("subprefix", self.attributes.get("subprefix", "MULTI", "dcabot"), self.dca_conf) \
-                        + "_" + self.attributes.get("suffix", self.attributes.get("suffix", "dcabot", "dcabot"), self.dca_conf),
+            "name": self.botname,
             "account_id": self.account_data["id"],
             "pairs": pairs,
             "max_active_deals": mad,
             "base_order_volume": self.attributes.get("bo", "", self.dca_conf),
             "take_profit": self.attributes.get("tp", "", self.dca_conf),
             "safety_order_volume": self.attributes.get("so", "", self.dca_conf),
-            "martingale_volume_coefficient": self.attributes.get("os", "", self.dca_conf),
+            "martingale_volume_coefficient": self.attributes.get(
+                "os", "", self.dca_conf
+            ),
             "martingale_step_coefficient": self.attributes.get("ss", "", self.dca_conf),
             "max_safety_orders": self.attributes.get("mstc", "", self.dca_conf),
-            "safety_order_step_percentage": self.attributes.get("sos", "", self.dca_conf),
+            "safety_order_step_percentage": self.attributes.get(
+                "sos", "", self.dca_conf
+            ),
             "take_profit_type": "total",
             "active_safety_orders_count": self.attributes.get("max", "", self.dca_conf),
             "cooldown": self.attributes.get("cooldown", 0, self.dca_conf),
             "strategy_list": self.strategy(),
             "trailing_enabled": self.attributes.get("trailing", False, self.dca_conf),
-            "trailing_deviation": self.attributes.get("trailing_deviation", 0.2, self.dca_conf),
-            "allowed_deals_on_same_pair": self.attributes.get("sdsp", "", self.dca_conf),
+            "trailing_deviation": self.attributes.get(
+                "trailing_deviation", 0.2, self.dca_conf
+            ),
+            "allowed_deals_on_same_pair": self.attributes.get(
+                "sdsp", "", self.dca_conf
+            ),
             "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0, self.dca_conf),
-            "disable_after_deals_count": self.attributes.get("deals_count", 0, self.dca_conf),
+            "disable_after_deals_count": self.attributes.get(
+                "deals_count", 0, self.dca_conf
+            ),
         }
 
         if new_bot:
@@ -112,10 +159,18 @@ class MultiBot:
         if self.attributes.get("trade_future", False):
             payload.update(
                 {
-                    "leverage_type": self.attributes.get("leverage_type", "", self.dca_conf),
-                    "leverage_custom_value": self.attributes.get("leverage_value", "", self.dca_conf),
-                    "stop_loss_percentage": self.attributes.get("stop_loss_percent", "", self.dca_conf),
-                    "stop_loss_type": self.attributes.get("stop_loss_type", "", self.dca_conf),
+                    "leverage_type": self.attributes.get(
+                        "leverage_type", "", self.dca_conf
+                    ),
+                    "leverage_custom_value": self.attributes.get(
+                        "leverage_value", "", self.dca_conf
+                    ),
+                    "stop_loss_percentage": self.attributes.get(
+                        "stop_loss_percent", "", self.dca_conf
+                    ),
+                    "stop_loss_type": self.attributes.get(
+                        "stop_loss_type", "", self.dca_conf
+                    ),
                     "stop_loss_timeout_enabled": self.attributes.get(
                         "stop_loss_timeout_enabled", "", self.dca_conf
                     ),
@@ -130,7 +185,9 @@ class MultiBot:
     def enable(self, bot):
         # Enables an existing bot
         if not bot["is_enabled"]:
-            self.logging.info("Enabling bot: " + bot["name"] + " (" + str(bot["id"]) + ")")
+            self.logging.info(
+                "Enabling bot: " + bot["name"] + " (" + str(bot["id"]) + ")"
+            )
 
             error, data = self.p3cw.request(
                 entity="bots",
@@ -146,17 +203,14 @@ class MultiBot:
             self.logging.info("'" + bot["name"] + "' (" + str(bot["id"]) + ") enabled")
 
     def disable(self):
-        botid = str(self.attributes.get("botid", ""))
-        botname = self.attributes.get("prefix", self.attributes.get("prefix", "3CQSBOT", "dcabot"), self.dca_conf) \
-            + "_" + self.attributes.get("subprefix", self.attributes.get("subprefix", "MULTI", "dcabot"), self.dca_conf) \
-            + "_" + self.attributes.get("suffix", self.attributes.get("suffix", "dcabot", "dcabot"), self.dca_conf)
-
         # Disables an existing bot
         for bot in self.bot_data:
-            if botid == bot["id"] or botname == bot["name"]:
+            if self.botid == bot["id"] or self.botname == bot["name"]:
 
                 # Disables an existing bot
-                self.logging.info("Disabling bot: " + bot["name"] + " (" + str(bot["id"]) + ")")
+                self.logging.info(
+                    "Disabling bot: " + bot["name"] + " (" + str(bot["id"]) + ")"
+                )
 
                 error, data = self.p3cw.request(
                     entity="bots",
@@ -205,46 +259,55 @@ class MultiBot:
         bot_by_name = False
         pairs = []
         mad = self.attributes.get("mad")
-        # if bot name in fgi section not defined use standard botname defined in [dcabot] section
-        botname = self.attributes.get("prefix", self.attributes.get("prefix", "3CQSBOT", "dcabot"), self.dca_conf) \
-            + "_" + self.attributes.get("subprefix", self.attributes.get("subprefix", "MULTI", "dcabot"), self.dca_conf) \
-            + "_" + self.attributes.get("suffix", self.attributes.get("suffix", "dcabot", "dcabot"), self.dca_conf)
-        botid = str(self.attributes.get("botid", "", self.dca_conf))
 
         # If no botid is given in corresponding fgi section, use botid of standard [dcabot] section if given
-        if botid == "":
-            botid = str(self.attributes.get("botid", "", "dcabot"))
+        if self.botid == "":
+            self.botid = str(self.attributes.get("botid", "", "dcabot"))
 
         # Check for existing bot id
-        if botid != "":
+        if self.botid != "":
             botnames = []
-            self.logging.info("Searching for 3cqsbot with botid " + botid)
+            self.logging.info("Searching for 3cqsbot with botid " + self.botid)
             for bot in self.bot_data:
                 botnames.append(bot["name"])
 
-                if botid == str(bot["id"]):
+                if self.botid == str(bot["id"]):
                     bot_by_id = True
-                    self.logging.info("Botid " + botid + " with name '" + bot["name"] + "' found")
+                    self.logging.info(
+                        "Botid " + self.botid + " with name '" + bot["name"] + "' found"
+                    )
                     break
-                
+
         # Check for existing name
         if not bot_by_id:
             botnames = []
             if botid != "":
-                self.logging.info("3cqsbot not found with botid: " + botid)
-            self.logging.info("Searching for 3cqsbot with name '" + botname + "'")
+                self.logging.info("3cqsbot not found with botid: " + self.botid)
+            self.logging.info("Searching for 3cqsbot with name '" + self.botname + "'")
             for bot in self.bot_data:
                 botnames.append(bot["name"])
 
-                if botname == bot["name"]:
+                if self.botname == bot["name"]:
                     botid = str(bot["id"])
                     bot_by_name = True
-                    self.logging.info("3cqsbot '" + bot["name"] + "' with botid " + botid + " found")
+                    self.logging.info(
+                        "3cqsbot '"
+                        + bot["name"]
+                        + "' with botid "
+                        + self.botid
+                        + " found"
+                    )
                     break
             if not bot_by_name:
-                self.logging.info("3cqsbot not found with name '" + botname + "' - creating new one")
+                self.logging.info(
+                    "3cqsbot not found with name '"
+                    + self.botname
+                    + "' - creating new one"
+                )
 
-        self.logging.debug("Checked bot ids/names till config id/name found: " + str(botnames))
+        self.logging.debug(
+            "Checked bot ids/names till config id/name found: " + str(botnames)
+        )
 
         # Initial pair list
         pairlist = self.tg_data
@@ -296,7 +359,9 @@ class MultiBot:
 
         if not bot_by_id and not bot_by_name:
             # Create new multibot
-            self.logging.info("Creating multi bot '" + botname + "' with filtered symrank pairs")
+            self.logging.info(
+                "Creating multi bot '" + self.botname + "' with filtered symrank pairs"
+            )
             self.report_funds_needed(maxdeals)
 
             error, data = self.p3cw.request(
@@ -318,21 +383,31 @@ class MultiBot:
                 self.new_deal(data, triggerpair="")
         else:
             # Update existing multibot
-            if botname != bot["name"]:
-                self.logging.info("Renaming bot from '" + bot["name"] 
-                + "' (" + botid + ") to '" + botname + "' (" + botid + ")")
-                bot["name"] = botname
+            if self.botname != bot["name"]:
+                self.logging.info(
+                    "Renaming bot name from '"
+                    + bot["name"]
+                    + "' ("
+                    + self.botid
+                    + ") to '"
+                    + self.botname
+                    + "' ("
+                    + self.botid
+                    + ")"
+                )
+                bot["name"] = self.botname
 
             self.logging.info(
-                "Updating multi bot '" 
-                + bot["name"]  
-                + "' (" 
-                + botid 
-                + ") with filtered symrank pairs and DCA setting [" 
-                + self.dca_conf 
-                + "]")
+                "Updating multi bot '"
+                + bot["name"]
+                + "' ("
+                + self.botid
+                + ") with filtered symrank pairs and DCA setting ["
+                + self.dca_conf
+                + "]"
+            )
             self.report_funds_needed(maxdeals)
-            
+
             error, data = self.p3cw.request(
                 entity="bots",
                 action="update",
@@ -356,14 +431,9 @@ class MultiBot:
         # Updates multi bot with new pairs
         triggerpair = ""
         mad = self.attributes.get("mad")
-        # Get botname and botid according to DCA setting
-        botname = self.attributes.get("prefix", self.attributes.get("prefix", "3CQSBOT", "dcabot"), self.dca_conf) \
-        + "_" + self.attributes.get("subprefix", self.attributes.get("subprefix", "MULTI", "dcabot"), self.dca_conf) \
-        + "_" + self.attributes.get("suffix", self.attributes.get("suffix", "dcabot", "dcabot"), self.dca_conf)
-        botid = str(self.attributes.get("botid", "", self.dca_conf))
 
         for bot in self.bot_data:
-            if botname == bot["name"] or botid == str(bot["id"]):
+            if self.botname == bot["name"] or self.botid == str(bot["id"]):
 
                 if not triggeronly:
                     pair = self.tg_data["pair"]
@@ -409,9 +479,9 @@ class MultiBot:
                     # Adapt mad if pairs are under value
                     mad = self.adjustmad(bot["pairs"], mad)
                     self.logging.info(
-                        "Adjusting mad to amount of included symrank pairs: " 
-                        + str(mad) 
-                        + " and DCA setting: " 
+                        "Adjusting mad to amount of included symrank pairs: "
+                        + str(mad)
+                        + " and DCA setting: "
                         + self.dca_conf
                     )
 
