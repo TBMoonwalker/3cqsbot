@@ -312,6 +312,12 @@ async def botswitch():
 
 async def dcaconfswitch():
     
+    # for logging output
+    if attributes.get("single", "", asyncState.dca_conf):
+        botmode = "single bots"
+    else:
+        botmode = "multi bot"
+
     while True:
         if asyncState.fgi >= attributes.get("fgi_min", 0, "fgi_defensive") and asyncState.fgi <= attributes.get("fgi_max", 30, "fgi_defensive"):
             asyncState.dca_conf = "fgi_defensive"
@@ -330,11 +336,6 @@ async def dcaconfswitch():
                 "DCA settings for [fgi_defensive], [fgi_moderate] or [fgi_aggressive] are not configured. Using standard settings of [dcabot] for all FGI values 0-100 to avoid missing settings"
             )
             asyncState.dca_conf = "dcabot"
-
-        if attributes.get("single", "", asyncState.dca_conf):
-            botmode = "single bots"
-        else:
-            botmode = "multi bot"
 
         logging.info("Using DCA settings [" + asyncState.dca_conf + "] for " + botmode)
 

@@ -153,7 +153,7 @@ class MultiBot:
 
         if new_bot:
             if payload["disable_after_deals_count"] == 0:
-                self.logging.info("This is a new bot and deal_count set to 0, removing from payload")
+                self.logging.debug("This is a new bot and deal_count set to 0, removing from payload")
                 payload.pop("disable_after_deals_count")        
 
         if self.attributes.get("trade_future", False):
