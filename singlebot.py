@@ -300,7 +300,7 @@ class SingleBot:
                                     self.create()
                                 else:
                                     self.logging.info(
-                                        "Blocking new deals, because last enabled bot can potentially reach max deals!"
+                                        "Blocked new bot creation, because last enabled bot can potentially reach max deals!"
                                     )
                         else:
                             self.logging.info(
@@ -331,7 +331,7 @@ class SingleBot:
                                 self.enable(bot)
                             else:
                                 self.logging.info(
-                                    "Blocking new deals, because last enabled bot can potentially reach max deals!"
+                                    "Blocked enabling bot, because last enabled bot can potentially reach max deals!"
                                 )
 
                     else:
