@@ -326,6 +326,10 @@ class SingleBot:
                                     self.logging.info(
                                         "Blocked new bot creation, because last enabled bot can potentially reach max deals!"
                                     )
+                            else:
+                                self.logging.info(
+                                    "Blocked new bot creation, because last enabled bot can potentially reach max deals!"
+                                )
                         else:
                             self.logging.info(
                                 "Pair "
@@ -361,6 +365,10 @@ class SingleBot:
                                 self.logging.info(
                                     "Blocked enabling bot, because last enabled bot can potentially reach max deals!"
                                 )
+                        else:
+                            self.logging.info(
+                                "Blocked enabling bot, because last enabled bot can potentially reach max deals!"
+                            )
 
                     else:
                         self.logging.info(
