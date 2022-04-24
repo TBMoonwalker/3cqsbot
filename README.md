@@ -158,9 +158,9 @@ Everything is the same as with the other multi mode, but the deals are started d
 This section is all about the deal start signal/strategy. Tested are the following modes:
 
 - for single pair bot: `signal` - deal is started ASAP after a 3CQS #START signal is given (deal start condition is automatically set to "open new trade ASAP") 
-- for multi pair bot:  pair is added after the 3CQS #START signal is given. Because "open new trade asap" is not available for multi bot, the deal  starts only in combination with a deal start condition such as `[{"options": {"length": 7, "time": "3m", "trigger_condition":"less", "points": "100"}, "strategy": "rsi"}]` which is equivalent to ASAP (as soon as possible).
+- for multi pair bot:  pair is added after the 3CQS #START signal is given. Because "open new trade asap" is not available for multi bot, the deal  starts only in combination with a deal start condition such as `[{"options":{"time_period":"7","time":"3m","trigger_condition":"less","points":"100"},"strategy":"rsi"}]` which is equivalent to ASAP (as soon as possible).
 
-Additional start signals with filtering indicators may be applied to prevent from buying high, but not tested. You can minimize the value of the RSI-7 entry point for example with `[{"options":{"length":14, "time":"15m", "trigger_condition":"less", "points":70}, "strategy":"rsi"}]`. A whole list of deal start signals can be found on https://discord.com/channels/720875074806349874/835100061583015947/965743501570609172 in json coded format, alternatively get deal start with the API call `GET /ver1/bots/strategy_list`. More details can be found under: https://github.com/3commas-io/3commas-official-api-docs/blob/master/bots_api.md
+Additional start signals with filtering indicators may be applied to prevent from buying high, but not tested. You can minimize the value of the RSI-7 entry point for example with `[{"options":{"time_period":"7","time":"15m","trigger_condition":"less","points":"70"},"strategy":"rsi"}]`. A whole list of deal start signals can be found on https://discord.com/channels/720875074806349874/835100061583015947/965743501570609172 in json coded format, alternatively get deal start with the API call `GET /ver1/bots/strategy_list`. More details can be found under: https://github.com/3commas-io/3commas-official-api-docs/blob/master/bots_api.md
 
 
 ## Trading mode
