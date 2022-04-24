@@ -288,7 +288,7 @@ async def botswitch():
         if not asyncState.btcbool and not asyncState.botswitch:
             asyncState.botswitch = True
             logging.debug("Botswitch: " + str(asyncState.botswitch))
-            if attributes.get("single","",asyncState.dca_conf):
+            if attributes.get("single"):
                 logging.info("Not activating old single bots (waiting for new signals.")
             else:
                 # Send new top 30 for activating the multibot
@@ -297,7 +297,7 @@ async def botswitch():
         elif asyncState.btcbool and asyncState.botswitch:
             asyncState.botswitch = False
             logging.debug("Botswitch: " + str(asyncState.botswitch))
-            if attributes.get("single","",asyncState.dca_conf):
+            if attributes.get("single"):
                 bot = SingleBot([], bot_data(), {}, attributes, p3cw, logging, asyncState.dca_conf)
                 bot.disable(bot_data(), True)
             else:
@@ -310,10 +310,10 @@ async def botswitch():
 
         await asyncio.sleep(60)
 
-async def dcaconfswitch():
-    
+async def dca_conf_switch():
+
     # for logging output
-    if attributes.get("single", "", asyncState.dca_conf):
+    if attributes.get("single"):
         botmode = "single bots"
     else:
         botmode = "multi bot"
@@ -384,7 +384,7 @@ async def my_event_handler(event):
             ):
 
                 # Choose multibot or singlebot
-                if attributes.get("single","",asyncState.dca_conf):
+                if attributes.get("single"):
                     bot = SingleBot(
                         tg_output, bot_output, account_output, attributes, p3cw, logging, asyncState.dca_conf
                     )
@@ -448,7 +448,7 @@ async def my_event_handler(event):
                 )
 
         elif tg_output and isinstance(tg_output, list):
-            if not attributes.get("single","",asyncState.dca_conf):
+            if not attributes.get("single"):
                 # Create or update multibot with pairs from "/symrank"
                 bot = MultiBot(
                     tg_output,
@@ -490,11 +490,11 @@ async def main():
     if attributes.get("fearandgreed", False):
         fgitask = client.loop.create_task(signals.get_fgi(asyncState))
         fgitask.add_done_callback(_handle_task_result)
-        dcaconfswitchtask = client.loop.create_task(dcaconfswitch())
+        dcaconfswitchtask = client.loop.create_task(dca_conf_switch())
         dcaconfswitchtask.add_done_callback(_handle_task_result)
         asyncState.loop = True
       
-    if not attributes.get("single","",asyncState.dca_conf):
+    if not attributes.get("single"):
         await symrank()
 
     if attributes.get("btc_pulse", False):

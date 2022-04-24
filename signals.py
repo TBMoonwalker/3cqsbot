@@ -251,6 +251,8 @@ class Signals:
             exception = e
         return (response, exception)
 
+    # Credits goes to @M1ch43l from
+    # https://discord.gg/tradealts
     async def get_fgi(self, asyncState):
         
         url = "https://api.alternative.me/fng/"
@@ -273,7 +275,7 @@ class Signals:
                 + fmt.format(rd(seconds=time_until_update)))
                 asyncState.fgi = fgi
 
-            # avoid requesting FGI which is calculated once per day 
+            # request FGI once per day, because is is calculated only once per day 
             await asyncio.sleep(time_until_update)
 
     # Credits goes to @IamtheOnewhoKnocks from

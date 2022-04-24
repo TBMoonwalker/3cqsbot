@@ -1,7 +1,7 @@
 import random
 import json
 import babel.numbers
-from sys import prefix
+import sys
 
 from signals import Signals
 
@@ -27,7 +27,7 @@ class MultiBot:
         self.logging = logging
         self.signal = Signals(logging)
         self.dca_conf = dca_conf
-        self.botid = str(self.attributes.get("botid", ""))
+        self.botid = str(self.attributes.get("botid", "", "dcabot"))
         self.botname = (
             self.attributes.get("prefix", self.attributes.get("prefix", "3CQSBOT", "dcabot"), self.dca_conf)
             + "_"
@@ -159,24 +159,12 @@ class MultiBot:
         if self.attributes.get("trade_future", False):
             payload.update(
                 {
-                    "leverage_type": self.attributes.get(
-                        "leverage_type", "", self.dca_conf
-                    ),
-                    "leverage_custom_value": self.attributes.get(
-                        "leverage_value", "", self.dca_conf
-                    ),
-                    "stop_loss_percentage": self.attributes.get(
-                        "stop_loss_percent", "", self.dca_conf
-                    ),
-                    "stop_loss_type": self.attributes.get(
-                        "stop_loss_type", "", self.dca_conf
-                    ),
-                    "stop_loss_timeout_enabled": self.attributes.get(
-                        "stop_loss_timeout_enabled", "", self.dca_conf
-                    ),
-                    "stop_loss_timeout_in_seconds": self.attributes.get(
-                        "stop_loss_timeout_seconds", "", self.dca_conf
-                    ),
+                    "leverage_type": self.attributes.get("leverage_type"),
+                    "leverage_custom_value": self.attributes.get("leverage_value"),
+                    "stop_loss_percentage": self.attributes.get("stop_loss_percent"),
+                    "stop_loss_type": self.attributes.get("stop_loss_type"),
+                    "stop_loss_timeout_enabled": self.attributes.get("stop_loss_timeout_enabled"),
+                    "stop_loss_timeout_in_seconds": self.attributes.get("stop_loss_timeout_seconds"),
                 }
             )
 
@@ -260,10 +248,6 @@ class MultiBot:
         pairs = []
         mad = self.attributes.get("mad")
 
-        # If no botid is given in corresponding fgi section, use botid of standard [dcabot] section if given
-        if self.botid == "":
-            self.botid = str(self.attributes.get("botid", "", "dcabot"))
-
         # Check for existing bot id
         if self.botid != "":
             botnames = []
@@ -280,10 +264,14 @@ class MultiBot:
 
         # Check for existing name
         if not bot_by_id:
+            if self.botid == "":
+                self.logging.error("Please add 'botid = xxxxxxx' to [dcabot] for using FGI. FGI guided DCA settings will only applied to existent 3cqsbot.")
+                self.logging.error("Script will be aborted if no botid is found by botname")
+
             botnames = []
             if self.botid != "":
                 self.logging.info("3cqsbot not found with botid: " + self.botid)
-            self.logging.info("Searching for 3cqsbot with name '" + self.botname + "'")
+            self.logging.info("Searching for 3cqsbot with name '" + self.botname + "' to get botid")
             for bot in self.bot_data:
                 botnames.append(bot["name"])
 
@@ -299,15 +287,20 @@ class MultiBot:
                     )
                     break
             if not bot_by_name:
-                self.logging.info(
-                    "3cqsbot not found with name '"
-                    + self.botname
-                    + "' - creating new one"
-                )
+                self.logging.info("3cqsbot not found with this name")
 
         self.logging.debug(
             "Checked bot ids/names till config id/name found: " + str(botnames)
         )
+
+        # If FGI is used and botid is not set in [dcabot], which is mandatory to prevent creating new bots with different botids,
+        # abort program for security reasons 
+        if self.attributes.get("fearandgreed", False) and self.botid == "":
+            self.logging.error("No botid set in [dcabot] and no 3cqsbot '" + self.botname + "' found on 3commas")
+            self.logging.error("Please get botid on 3commas for an existent 3cqsbot and add 'botid = <botid of 3cqsbot>' under [dcabot] in config.ini")
+            self.logging.error("If first time run of this script with enabled FGI and no 3cqsbot has been created so far,") 
+            self.logging.error("create manually one on 3commas, get botid and leave the bot disabled") 
+            sys.exit("Aborting script!")
 
         # Initial pair list
         pairlist = self.tg_data
@@ -357,7 +350,7 @@ class MultiBot:
         mad = self.adjustmad(pairs, mad)
         maxdeals = self.attributes.get("mad")
 
-        if not bot_by_id and not bot_by_name:
+        if not bot_by_id and not bot_by_name and mad > 0:
             # Create new multibot
             self.logging.info(
                 "Creating multi bot '" + self.botname + "' with filtered symrank pairs"
@@ -381,7 +374,7 @@ class MultiBot:
                         "ext_botswitch set to true, bot has to be enabled by external TV signal"
                     )
                 self.new_deal(data, triggerpair="")
-        else:
+        elif mad > 0:
             # Update existing multibot
             if self.botname != bot["name"]:
                 self.logging.info(
@@ -426,6 +419,9 @@ class MultiBot:
                     self.logging.info(
                         "ext_botswitch set to true, bot enabling/disabling has to be managed by external TV signal"
                     )
+        else:
+            self.logging.info("No (filtered) pairs left for multi bot. Either weak market phase or symrank/topcoin filter too strict. Bot disabled and waiting for better times")
+            self.disable()
 
     def trigger(self, triggeronly=False):
         # Updates multi bot with new pairs

@@ -167,24 +167,12 @@ class SingleBot:
         if self.attributes.get("trade_future", False):
             payload.update(
                 {
-                    "leverage_type": self.attributes.get(
-                        "leverage_type", "", self.dca_conf
-                    ),
-                    "leverage_custom_value": self.attributes.get(
-                        "leverage_value", "", self.dca_conf
-                    ),
-                    "stop_loss_percentage": self.attributes.get(
-                        "stop_loss_percent", "", self.dca_conf
-                    ),
-                    "stop_loss_type": self.attributes.get(
-                        "stop_loss_type", "", self.dca_conf
-                    ),
-                    "stop_loss_timeout_enabled": self.attributes.get(
-                        "stop_loss_timeout_enabled", "", self.dca_conf
-                    ),
-                    "stop_loss_timeout_in_seconds": self.attributes.get(
-                        "stop_loss_timeout_seconds", "", self.dca_conf
-                    ),
+                    "leverage_type": self.attributes.get("leverage_type"),
+                    "leverage_custom_value": self.attributes.get("leverage_value"),
+                    "stop_loss_percentage": self.attributes.get("stop_loss_percent"),
+                    "stop_loss_type": self.attributes.get("stop_loss_type"),
+                    "stop_loss_timeout_enabled": self.attributes.get("stop_loss_timeout_enabled"),
+                    "stop_loss_timeout_in_seconds": self.attributes.get("stop_loss_timeout_seconds"),
                 }
             )
 

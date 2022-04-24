@@ -10,12 +10,10 @@ key = "Your api key from 3Commas here - without Quotes"
 secret = "Your secret from 3Commas here - without Quotes"
 
 [dcabot]
-single = true
-single_count = 1
-mad = 1
 prefix = 3CQSBOT
 subprefix = SINGLE
 suffix = TA_SAFE
+mad = 1
 tp = 1.5
 bo = 11
 so = 11
@@ -30,6 +28,8 @@ sdsp = 1
 market = USDT
 trade_mode = paper
 account_name = "Your paper account here - without quotes"
+single = true
+single_count = 10
 
 [filter]
 symrank_signal = triple100

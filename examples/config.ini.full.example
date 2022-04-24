@@ -20,12 +20,12 @@ secret = "Your secret from 3Commas here - without Quotes"
 #system_bot_value = 300
 
 [dcabot]
-single = false
-single_count = 1
+# For using FGI make sure to enter the correct botid of 3cqsbot
+#botid = 1234567
 prefix = 3CQSBOT
 subprefix = MULTI
 suffix = TA_SAFE
-mad = 1
+mad = 10
 # RSI-7 < 100 (means asap)
 # single strategy
 deal_mode = [{"options": {"time": "3m", "points": "100", "time_period": "7", "trigger_condition": "less"}, "strategy": "rsi"}]
@@ -46,6 +46,30 @@ sdsp = 1
 #btc_min_vol = 100
 #cooldown = 30
 #deals_count = 1
+
+#[fgi_aggressive]
+#fgi_min = 61
+#fgi_max = 100
+# aggressive DCA settings - copy DCA parameters below section [dcabot] and modify
+
+#[fgi_moderate]
+#fgi_min = 31
+#fgi_max = 60
+# moderate DCA settings - copy DCA parameters below section [dcabot] and modify
+
+#[fgi_defensive]
+#fgi_min = 0
+#fgi_max = 30
+# defenisive DCA settings - copy DCA parameters below section [dcabot] and modify
+
+[trading]
+market = USDT
+trade_mode = paper
+account_name = "Your paper account here - without quotes"
+single = false
+single_count = 1
+#delete_single_bots = false
+#singlebot_update = true
 # Futures trading only
 trade_future = false
 leverage_type = cross
@@ -54,28 +78,6 @@ stop_loss_percent = 1
 stop_loss_type = stop_loss_and_disable_bot
 stop_loss_timeout_enabled = false
 stop_loss_timeout_seconds = 5
-
-#[fgi_aggressive]
-#fgi_min = 61
-#fgi_max = 100
-# mandatory settings like [dcabot]
-
-#[fgi_moderate]
-#fgi_min = 31
-#fgi_max = 60
-# mandatory settings like [dcabot]
-
-#[fgi_defensive]
-#fgi_min = 0
-#fgi_max = 30
-# mandatory settings like [dcabot]
-
-[trading]
-market = USDT
-trade_mode = paper
-account_name = "Your paper account here - without quotes"
-#delete_single_bots = false
-#singlebot_update = true
 
 [filter]
 symrank_signal = triple100
