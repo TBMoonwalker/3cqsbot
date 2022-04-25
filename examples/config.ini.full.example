@@ -50,17 +50,17 @@ sdsp = 1
 #[fgi_aggressive]
 #fgi_min = 61
 #fgi_max = 100
-# aggressive DCA settings - copy all DCA parameters of [dcabot] and modify accordingly
+# aggressive DCA settings - copy all DCA parameters of [dcabot] without botid and modify accordingly
 
 #[fgi_moderate]
 #fgi_min = 31
 #fgi_max = 60
-# moderate DCA settings - copy all DCA parameters of [dcabot] and modify accordingly
+# moderate DCA settings - copy all DCA parameters of [dcabot] without botid and modify accordingly
 
 #[fgi_defensive]
 #fgi_min = 0
 #fgi_max = 30
-# defensive DCA settings - copy all DCA parameters of [dcabot] and modify accordingly
+# defensive DCA settings - copy all DCA parameters of [dcabot] without botid and modify accordingly
 
 [trading]
 market = USDT

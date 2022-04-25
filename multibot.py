@@ -83,9 +83,9 @@ class MultiBot:
             pd = (pd * ss) + sos
 
         self.logging.info(
-            "["
+            "Settings of ["
             + self.dca_conf
-            + "] TP: "
+            + "]:  TP: "
             + str(tp)
             + "%  BO: $"
             + str(bo)
@@ -104,9 +104,9 @@ class MultiBot:
             + "%"
         )
         self.logging.info(
-            "Max possible deals: "
+            "Max active deals (mad) allowed: "
             + str(maxdeals)
-            + "   Funds per deal: "
+            + "   Max funds per active deal (all SO filled): "
             + babel.numbers.format_currency(fundsneeded, "USD", locale="en_US")
             + "   Total funds needed: "
             + babel.numbers.format_currency(
@@ -188,7 +188,7 @@ class MultiBot:
                 self.logging.error(error["msg"])
 
         else:
-            self.logging.info("'" + bot["name"] + "' (" + str(bot["id"]) + ") enabled")
+            self.logging.info("'" + bot["name"] + "' (botid: " + str(bot["id"]) + ") enabled")
 
     def disable(self):
         # Disables an existing bot
@@ -251,7 +251,7 @@ class MultiBot:
         # Check for existing bot id
         if self.botid != "":
             botnames = []
-            self.logging.info("Searching for 3cqsbot with botid " + self.botid)
+            self.logging.info("Searching for 3cqsbot with botid: " + self.botid)
             for bot in self.bot_data:
                 botnames.append(bot["name"])
 
@@ -264,7 +264,7 @@ class MultiBot:
 
         # Check for existing name
         if not bot_by_id:
-            if self.botid == "":
+            if self.attributes.get("fearandgreed", False) and self.botid == "":
                 self.logging.error("Please add 'botid = xxxxxxx' to [dcabot] for using FGI. FGI guided DCA settings will only applied to existent 3cqsbot.")
                 self.logging.error("Script will be aborted if no botid is found by botname")
 
@@ -325,7 +325,7 @@ class MultiBot:
                 pairs.append(pair)
             else:
                 self.logging.info(
-                    pair 
+                    pair
                     + " removed because pair is blacklisted on 3commas or in token_denylist or not tradable on '" 
                     + self.attributes.get("account_name")
                     + "'"
@@ -349,11 +349,21 @@ class MultiBot:
         # Adapt mad if pairs are under value
         mad = self.adjustmad(pairs, mad)
         maxdeals = self.attributes.get("mad")
+        self.logging.info(
+            str(len(pairs)) 
+            + " out of 30 symrank pairs selected. Maximum active deals (mad) set to " 
+            + str(mad) 
+            + " out of " 
+            + str(maxdeals))
 
-        if not bot_by_id and not bot_by_name and mad > 0:
+        if not bot_by_id and not bot_by_name and mad > 1:
             # Create new multibot
             self.logging.info(
-                "Creating multi bot '" + self.botname + "' with filtered symrank pairs"
+                "Creating multi bot '" 
+                + self.botname 
+                + "' with filtered symrank pairs using DCA settings ["
+                + self.dca_conf
+                + "]"
             )
             self.report_funds_needed(maxdeals)
 
@@ -374,17 +384,15 @@ class MultiBot:
                         "ext_botswitch set to true, bot has to be enabled by external TV signal"
                     )
                 self.new_deal(data, triggerpair="")
-        elif mad > 0:
+        elif mad > 1:
             # Update existing multibot
             if self.botname != bot["name"]:
                 self.logging.info(
                     "Renaming bot name from '"
                     + bot["name"]
-                    + "' ("
-                    + self.botid
-                    + ") to '"
+                    + "' to '"
                     + self.botname
-                    + "' ("
+                    + "' (botid: "
                     + self.botid
                     + ")"
                 )
@@ -393,9 +401,9 @@ class MultiBot:
             self.logging.info(
                 "Updating multi bot '"
                 + bot["name"]
-                + "' ("
+                + "' (botid: "
                 + self.botid
-                + ") with filtered symrank pairs and DCA setting ["
+                + ") with filtered symrank pairs using DCA settings ["
                 + self.dca_conf
                 + "]"
             )
@@ -477,8 +485,9 @@ class MultiBot:
                     self.logging.info(
                         "Adjusting mad to amount of included symrank pairs: "
                         + str(mad)
-                        + " and DCA setting: "
+                        + " using DCA settings ["
                         + self.dca_conf
+                        + "]"
                     )
 
                     error, data = self.p3cw.request(
