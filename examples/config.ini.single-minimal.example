@@ -13,24 +13,23 @@ secret = "Your secret from 3Commas here - without Quotes"
 prefix = 3CQSBOT
 subprefix = SINGLE
 suffix = TA_SAFE
+mad = 1
 tp = 1.5
 bo = 11
 so = 11
 os = 1.05
 ss = 1
 sos = 2.4
-mad = 1
-max = 1
 mstc = 25
+max = 1
 sdsp = 1
-single = true
-single_count = 1
 
 [trading]
 market = USDT
 trade_mode = paper
 account_name = "Your paper account here - without quotes"
+single = true
+single_count = 10
 
 [filter]
 symrank_signal = triple100
-token_denylist = [USDT_BTC, USDT_ETH, USDT_BUSD, USDT_USDC]

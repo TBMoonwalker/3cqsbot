@@ -66,21 +66,21 @@ else:
     loglevel = getattr(logging, args.loglevel.upper(), None)
 
 # Set logging output
-# Thanks to @M1cha3l for improving logging output
-handler = logging.StreamHandler()
+# Thanks to @M1cha3l for improving logging output messages
+handler = [logging.StreamHandler()]
 
 if attributes.get("log_to_file", False):
-    handler = logging.handlers.RotatingFileHandler(
+    handler = [logging.StreamHandler(sys.stdout), logging.handlers.RotatingFileHandler(
         attributes.get("log_file_path", "3cqsbot.log"),
         maxBytes=attributes.get("log_file_size", 200000),
         backupCount=attributes.get("log_file_count", 5),
-    )
+    )]
 
 logging.basicConfig(
     format="%(asctime)s %(levelname)-8s %(message)s",
     level=loglevel,
     datefmt="%Y-%m-%d %H:%M:%S",
-    handlers=[handler],
+    handlers=handler,
 )
 
 # Initialize global variables
@@ -268,7 +268,7 @@ def pair_data(account):
 
     for pair in data:
         if attributes.get("market") in pair:
-            if pair not in attributes.get("token_denylist") and pair not in blacklist_data["pairs"]:
+            if pair not in attributes.get("token_denylist", []) and pair not in blacklist_data["pairs"]:
                 pairs.append(pair)
 
     return pairs
@@ -288,7 +288,7 @@ async def botswitch():
         if not asyncState.btcbool and not asyncState.botswitch:
             asyncState.botswitch = True
             logging.debug("Botswitch: " + str(asyncState.botswitch))
-            if attributes.get("single","",asyncState.dca_conf):
+            if attributes.get("single"):
                 logging.info("Not activating old single bots (waiting for new signals.")
             else:
                 # Send new top 30 for activating the multibot
@@ -297,7 +297,7 @@ async def botswitch():
         elif asyncState.btcbool and asyncState.botswitch:
             asyncState.botswitch = False
             logging.debug("Botswitch: " + str(asyncState.botswitch))
-            if attributes.get("single","",asyncState.dca_conf):
+            if attributes.get("single"):
                 bot = SingleBot([], bot_data(), {}, attributes, p3cw, logging, asyncState.dca_conf)
                 bot.disable(bot_data(), True)
             else:
@@ -310,22 +310,32 @@ async def botswitch():
 
         await asyncio.sleep(60)
 
-async def dcaconfswitch():
-    
+async def dca_conf_switch():
+
+    # for logging output
+    if attributes.get("single"):
+        botmode = "single bots"
+    else:
+        botmode = "multi bot"
+
     while True:
-        if asyncState.fgi >= attributes.get("fgi_min","","fgi_defensive") and asyncState.fgi <= attributes.get("fgi_max","","fgi_defensive"):
+        if asyncState.fgi >= attributes.get("fgi_min", 0, "fgi_defensive") and asyncState.fgi <= attributes.get("fgi_max", 30, "fgi_defensive"):
             asyncState.dca_conf = "fgi_defensive"
 
-        if asyncState.fgi >= attributes.get("fgi_min","","fgi_moderate") and asyncState.fgi <= attributes.get("fgi_max","","fgi_moderate"):
+        if asyncState.fgi >= attributes.get("fgi_min", 31, "fgi_moderate") and asyncState.fgi <= attributes.get("fgi_max", 60, "fgi_moderate"):
             asyncState.dca_conf = "fgi_moderate"
 
-        if asyncState.fgi >= attributes.get("fgi_min","","fgi_aggressive") and asyncState.fgi <= attributes.get("fgi_max","","fgi_aggressive"):
+        if asyncState.fgi >= attributes.get("fgi_min", 61, "fgi_aggressive") and asyncState.fgi <= attributes.get("fgi_max", 100, "fgi_aggressive"):
             asyncState.dca_conf = "fgi_aggressive" 
 
-        if attributes.get("single","",asyncState.dca_conf):
-            botmode = "single bots"
-        else:
-            botmode = "multi bot"
+        # Check if section fgi_defensive, fgi_moderate and fgi_aggressive are defined in config.ini, if not use standard settings of [dcabot]
+        if attributes.get("fgi_min", -1, "fgi_defensive") == -1 \
+            or attributes.get("fgi_min", -1, "fgi_moderate") == -1 \
+            or attributes.get("fgi_min", -1, "fgi_aggressive") == -1:
+            logging.info(
+                "DCA settings for [fgi_defensive], [fgi_moderate] or [fgi_aggressive] are not configured. Using standard settings of [dcabot] for all FGI values 0-100 to avoid missing settings"
+            )
+            asyncState.dca_conf = "dcabot"
 
         logging.info("Using DCA settings [" + asyncState.dca_conf + "] for " + botmode)
 
@@ -374,7 +384,7 @@ async def my_event_handler(event):
             ):
 
                 # Choose multibot or singlebot
-                if attributes.get("single","",asyncState.dca_conf):
+                if attributes.get("single"):
                     bot = SingleBot(
                         tg_output, bot_output, account_output, attributes, p3cw, logging, asyncState.dca_conf
                     )
@@ -438,7 +448,7 @@ async def my_event_handler(event):
                 )
 
         elif tg_output and isinstance(tg_output, list):
-            if not attributes.get("single","",asyncState.dca_conf):
+            if not attributes.get("single"):
                 # Create or update multibot with pairs from "/symrank"
                 bot = MultiBot(
                     tg_output,
@@ -478,13 +488,13 @@ async def main():
     
     # Call FGI to set dca settings
     if attributes.get("fearandgreed", False):
-        fgitask = client.loop.create_task(signals.getfearandgreed(asyncState))
+        fgitask = client.loop.create_task(signals.get_fgi(asyncState))
         fgitask.add_done_callback(_handle_task_result)
-        dcaconfswitchtask = client.loop.create_task(dcaconfswitch())
+        dcaconfswitchtask = client.loop.create_task(dca_conf_switch())
         dcaconfswitchtask.add_done_callback(_handle_task_result)
         asyncState.loop = True
       
-    if not attributes.get("single","",asyncState.dca_conf):
+    if not attributes.get("single"):
         await symrank()
 
     if attributes.get("btc_pulse", False):
