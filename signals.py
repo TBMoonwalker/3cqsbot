@@ -226,30 +226,14 @@ class Signals:
 
     # Credits go to @M1cha3l
     # Adjust DCA settings dynamically according to social sentiment: greed = aggressive DCA, neutral = moderate DCA, fear = conservative DCA
-    # if you set no timeout the call never times out! A tuple means "max connect time" and "max read time"
-
-    def log_exception(self, e, verb, url, kwargs):
-        # the reason for making this a separate function will become apparent
-        raw_tb = traceback.extract_stack()
-        if 'data' in kwargs and len(kwargs['data']) > 500: # anticipate giant data string
-            kwargs['data'] = f'{kwargs["data"][:500]}...'  
-            msg = f'BaseException raised: {e.__class__.__module__}.{e.__class__.__qualname__}: {e}\n' \
-            + f'verb {verb}, url {url}, kwargs {kwargs}\n\n' \
-            + 'Stack trace:\n' + ''.join(traceback.format_list(raw_tb[:-2]))
-            self.logging.error(msg)
-        return 
-
-    def requests_call(self, verb, url, **kwargs):
+    @retry(wait=wait_fixed(60))
+    def requests_call(self, method, url, timeout):
         response = []
-        exception = None
         try:
-            if 'timeout' not in kwargs:
-                kwargs['timeout'] = (5, 15)
             response = requests.request(verb, url, **kwargs)
-        except BaseException as e:
-            self.log_exception(e, verb, url, kwargs)
-            exception = e
-        return (response, exception)
+        except Exception as e:
+            raise IOError("Fear and greed index API actually down, retrying in 60s, Error is:" + e)
+        return response
 
     # Credits goes to @M1ch43l from
     # https://discord.gg/tradealts
@@ -260,20 +244,14 @@ class Signals:
 
         while True:
             
-            response, exception = self.requests_call("GET", url)
-            if exception:
-                asyncState.fgi = -1
-                self.logging.info(exception)
-                self.logging.info("Fear and greed index API actually down, retrying in 60s")
-                time_until_update = 60
-            else:
-                response = json.loads(response.text)
-                fgi = int(response["data"][0]["value"])
-                time_until_update = int(response["data"][0]["time_until_update"])
-                fmt = '{0.hours}h:{0.minutes}m:{0.seconds}s'
-                self.logging.info("Current FGI: " + str(fgi) + " - time till next update: " 
-                + fmt.format(rd(seconds=time_until_update)))
-                asyncState.fgi = fgi
+            response = self.requests_call("GET", url, 5)        
+            raw_data = json.loads(response.text)
+            fgi = int(raw_data["data"][0]["value"])
+            time_until_update = int(raw_data["data"][0]["time_until_update"])
+            fmt = '{0.hours}h:{0.minutes}m:{0.seconds}s'
+            self.logging.info("Current FGI: " + str(fgi) + " - time till next update: " 
+            + fmt.format(rd(seconds=time_until_update)))
+            asyncState.fgi = fgi
 
             # request FGI once per day, because is is calculated only once per day 
             await asyncio.sleep(time_until_update)
