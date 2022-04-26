@@ -317,10 +317,8 @@ class SingleBot:
                             # avoid deals over limit
                             if running_deals < self.attributes.get("single_count"):
                                 if (
-                                    running_bots + running_deals
-                                ) - disabled_bot_deals < self.attributes.get(
-                                    "single_count"
-                                ):
+                                    running_bots + disabled_bot_deals
+                                ) < self.attributes.get("single_count"):
                                     self.create()
                                 else:
                                     self.logging.info(
@@ -356,10 +354,8 @@ class SingleBot:
                         # avoid deals over limit
                         if running_deals < self.attributes.get("single_count"):
                             if (
-                                running_bots + running_deals
-                            ) - disabled_bot_deals < self.attributes.get(
-                                "single_count"
-                            ):
+                                running_bots + disabled_bot_deals
+                            ) < self.attributes.get("single_count"):
                                 self.enable(bot)
                             else:
                                 self.logging.info(
