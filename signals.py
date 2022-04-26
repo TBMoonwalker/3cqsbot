@@ -230,7 +230,7 @@ class Signals:
     def requests_call(self, method, url, timeout):
         response = []
         try:
-            response = requests.request(verb, url, **kwargs)
+            response = requests.request(method, url, timeout=timeout)
         except Exception as e:
             raise IOError("Fear and greed index API actually down, retrying in 60s, Error is:" + e)
         return response
