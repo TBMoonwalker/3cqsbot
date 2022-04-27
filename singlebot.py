@@ -5,8 +5,6 @@ import babel
 
 from signals import Signals
 
-deal_lock = False
-
 
 class SingleBot:
     def __init__(
@@ -70,6 +68,22 @@ class SingleBot:
                 bots.append(bot["name"])
 
         self.logging.info("Enabled single bot count: " + str(len(bots)))
+
+        return len(bots)
+
+    def disabled_bot_active_deals_count(self):
+
+        bots = []
+
+        for bot in self.bot_data:
+            if (
+                re.search(self.bot_name, bot["name"])
+                and not bot["is_enabled"]
+                and bot["active_deals_count"] > 0
+            ):
+                bots.append(bot["name"])
+
+        self.logging.info("Disabled single bot count with deals: " + str(len(bots)))
 
         return len(bots)
 
@@ -171,8 +185,12 @@ class SingleBot:
                     "leverage_custom_value": self.attributes.get("leverage_value"),
                     "stop_loss_percentage": self.attributes.get("stop_loss_percent"),
                     "stop_loss_type": self.attributes.get("stop_loss_type"),
-                    "stop_loss_timeout_enabled": self.attributes.get("stop_loss_timeout_enabled"),
-                    "stop_loss_timeout_in_seconds": self.attributes.get("stop_loss_timeout_seconds"),
+                    "stop_loss_timeout_enabled": self.attributes.get(
+                        "stop_loss_timeout_enabled"
+                    ),
+                    "stop_loss_timeout_in_seconds": self.attributes.get(
+                        "stop_loss_timeout_seconds"
+                    ),
                 }
             )
 
@@ -226,7 +244,7 @@ class SingleBot:
             self.logging.info("Disabling all single bots, because of btc pulse signal")
 
             for bots in bot:
-                if botname in bots["name"]:
+                if botname in bots["name"] and bot["is_enabled"]:
 
                     self.logging.info(
                         "Disabling single bot "
@@ -294,22 +312,30 @@ class SingleBot:
 
             if error:
                 self.logging.error(error["msg"])
-        else:
+        # Only perform the disable request if necessary
+        elif bot["is_enabled"]:
             self.logging.info(
-                "Cannot delete single bot, because of active deals or configuration. Disabling it!"
+                "Disabling single bot with pair "
+                + self.tg_data["pair"]
+                + " unable to delete because of active deals or configuration."
             )
             self.disable(bot, False)
+        # No bot to delete or disable
+        else:
+            self.logging.info("Bot not enabled, nothing to do!")
 
     def trigger(self):
         # Triggers a single bot deal
 
         self.logging.info("Got new 3cqs signal")
 
-        global deal_lock
         new_bot = True
         pair = self.tg_data["pair"]
         running_bots = self.bot_count()
         running_deals = self.deal_count()
+        running_bots = self.bot_count()
+        disabled_bot_deals = self.disabled_bot_active_deals_count()
+
         self.logging.info("running_deals: " + str(running_deals))
 
         botname = self.attributes.get("prefix", "3CQSBOT", "dcabot") \
@@ -322,12 +348,12 @@ class SingleBot:
                 if botname == bot["name"]:
                     new_bot = False
                     break
-
+                    
             maxdeals = self.attributes.get("single_count", "", self.dca_conf)
 
             if new_bot:
                 if self.tg_data["action"] == "START":
-                    if self.bot_count() < maxdeals:
+                    if running_bots < self.attributes.get("single_count"):
 
                         if self.attributes.get("topcoin_filter", False):
                             pair = self.signal.topcoin(
@@ -343,24 +369,23 @@ class SingleBot:
                             )
 
                         if pair:
-                            self.logging.info(
-                                "No single bot for " + pair + " found - creating one"
-                            )
                             # avoid deals over limit
-                            if running_deals < maxdeals - 1:
-                                self.report_funds_needed(maxdeals)
-                                self.create()
-                                deal_lock = False
-                            elif (running_deals == maxdeals - 1) and not deal_lock:
-                                self.report_funds_needed(maxdeals)
-                                self.create()
-                                deal_lock = True
+                            if running_deals < self.attributes.get("single_count"):
+                                if (
+                                    running_bots + disabled_bot_deals
+                                ) < self.attributes.get("single_count"):
+                                    self.report_funds_needed(maxdeals)
+                                    self.create()
+                                else:
+                                    self.logging.info(
+                                        "Single bot not created. Blocking new deals, because last enabled bot can potentially reach max deals of "
+                                        + str(maxdeals)
+                                    )
                             else:
                                 self.logging.info(
                                     "Single bot not created. Blocking new deals, because last enabled bot can potentially reach max deals of "
                                     + str(maxdeals)
                                 )
-
                         else:
                             self.logging.info(
                                 "Pair "
@@ -385,16 +410,19 @@ class SingleBot:
                 self.logging.debug("Bot-Name: " + bot["name"])
 
                 if self.tg_data["action"] == "START":
-                    if running_bots < maxdeals:
+                    if running_bots < self.attributes.get("single_count"):
                         # avoid deals over limit
-                        if running_deals < maxdeals - 1:
-
-                            self.enable(bot)
-                            deal_lock = False
-                        elif (running_deals == maxdeals - 1) and not deal_lock:
-                            self.report_funds_needed(maxdeals)
-                            self.enable(bot)
-                            deal_lock = True
+                        if running_deals < self.attributes.get("single_count"):
+                            if (
+                                running_bots + disabled_bot_deals
+                            ) < self.attributes.get("single_count"):
+                                self.report_funds_needed(maxdeals)
+                                self.enable(bot)
+                            else:
+                                self.logging.info(
+                                    "Blocking new deals, because last enabled bot can potentially reach max deals of "
+                                    + str(maxdeals)
+                                )
                         else:
                             self.logging.info(
                                 "Blocking new deals, because last enabled bot can potentially reach max deals of "

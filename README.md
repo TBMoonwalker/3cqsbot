@@ -196,7 +196,7 @@ volatility_limit_min | number | NO | (0.1) | Bots will be created when the volat
 volatility_limit_max | number | NO | (100) | Bots will be created when the volatility value is under this limit
 price_action_limit_min | number | NO | (0.1) | Bots will be created when the price_action value is over this limit
 price_action_limit_max | number | NO | (100) | Bots will be created when the price_action value is under this limit
-topcoin_filter | boolean | NO | (false), true | Disables the topcoin filter (default)
+topcoin_filter | boolean | NO | (false), true | Disables the topcoin filter (default)
 topcoin_limit | integer | NO | (3500) | Token pair has to be in the configured topcoin limit to be traded by the bot
 topcoin_volume | integer | NO | (0) | Volume check against Coingecko (btc_min_vol means volume check directly in 3commas - not before like this setting). Only pairs with the given volume are traded. Default is 0 and means volume check is disabled
 topcoin_exchange | string | NO | (binance), gdax | Name of the exchange to check the volume. Because every exchange has another id, please contact me for your exchange and I will update this list here for configuration

@@ -163,8 +163,12 @@ class MultiBot:
                     "leverage_custom_value": self.attributes.get("leverage_value"),
                     "stop_loss_percentage": self.attributes.get("stop_loss_percent"),
                     "stop_loss_type": self.attributes.get("stop_loss_type"),
-                    "stop_loss_timeout_enabled": self.attributes.get("stop_loss_timeout_enabled"),
-                    "stop_loss_timeout_in_seconds": self.attributes.get("stop_loss_timeout_seconds"),
+                    "stop_loss_timeout_enabled": self.attributes.get(
+                        "stop_loss_timeout_enabled"
+                    ),
+                    "stop_loss_timeout_in_seconds": self.attributes.get(
+                        "stop_loss_timeout_seconds"
+                    ),
                 }
             )
 
@@ -235,9 +239,10 @@ class MultiBot:
             if error:
                 if bot["active_deals_count"] == bot["max_active_deals"]:
                     self.logging.info(
-                        "Max active deals of " 
-                        + str(bot["max_active_deals"]) 
-                        + " reached, not adding a new one.")
+                        "Max active deals of "
+                        + str(bot["max_active_deals"])
+                        + " reached, not adding a new one."
+                    )
                 else:
                     self.logging.error(error["msg"])
 
@@ -454,7 +459,7 @@ class MultiBot:
                                 pair + " is already included in the pair list"
                             )
                         else:
-                            # Filter topcions (if set)
+                            # Filter topcoins (if set)
                             if self.attributes.get("topcoin_filter", False):
                                 pair = self.signal.topcoin(
                                     pair,

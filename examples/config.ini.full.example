@@ -87,10 +87,10 @@ symrank_signal = triple100
 #volatility_limit_max = 100
 #price_action_limit_min = 0.1
 #price_action_limit_max = 100
-#topcoin_filter = true
+#topcoin_filter = False
 # warning to not use this attribute for large bots!
 # set it to 0 if you want to disable it
-#topcoin_volume = 300
+# topcoin_volume = 300
 # not more then 3500 coins
 #topcoin_limit = 3500
 #topcoin_exchange = binance
