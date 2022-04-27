@@ -4,6 +4,11 @@ import asyncio
 import math
 import re
 import babel.numbers
+import requests
+import traceback
+import json
+from logging import exception
+from dateutil.relativedelta import relativedelta as rd
 
 from pycoingecko import CoinGeckoAPI
 from tenacity import retry, wait_fixed
@@ -219,6 +224,38 @@ class Signals:
 
         return pairlist
 
+    # Credits go to @M1cha3l
+    # Adjust DCA settings dynamically according to social sentiment: greed = aggressive DCA, neutral = moderate DCA, fear = conservative DCA
+    @retry(wait=wait_fixed(60))
+    def requests_call(self, method, url, timeout):
+        response = []
+        try:
+            response = requests.request(method, url, timeout=timeout)
+        except Exception as e:
+            raise IOError("Fear and greed index API actually down, retrying in 60s, Error is:" + e)
+        return response
+
+    # Credits goes to @M1ch43l from
+    # https://discord.gg/tradealts
+    async def get_fgi(self, asyncState):
+        
+        url = "https://api.alternative.me/fng/"
+        self.logging.info("Using crypto fear and greed index (FGI) from alternative.me for changing 3cqsbot DCA settings to defensive, moderate or aggressive")
+
+        while True:
+            
+            response = self.requests_call("GET", url, 5)        
+            raw_data = json.loads(response.text)
+            fgi = int(raw_data["data"][0]["value"])
+            time_until_update = int(raw_data["data"][0]["time_until_update"])
+            fmt = '{0.hours}h:{0.minutes}m:{0.seconds}s'
+            self.logging.info("Current FGI: " + str(fgi) + " - time till next update: " 
+            + fmt.format(rd(seconds=time_until_update)))
+            asyncState.fgi = fgi
+
+            # request FGI once per day, because is is calculated only once per day 
+            await asyncio.sleep(time_until_update)
+
     # Credits goes to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts
     def ema(self, data, period, smoothing=2):
@@ -284,10 +321,10 @@ class Signals:
                     btcusdt.EMA9[-1] > btcusdt.EMA50[-1]
                     and btcusdt.EMA50[-2] > btcusdt.EMA9[-2]
                 ):
-                    self.logging.info("btc-pulse signaling uptrend")
+                    self.logging.info("btc-pulse singaling uptrend (golden cross check)")
                     asyncState.btcbool = False
                 else:
-                    self.logging.info("btc-pulse signaling downtrend")
+                    self.logging.info("btc-pulse signaling downtrend (golden cross check)")
                     asyncState.btcbool = True
 
             else:

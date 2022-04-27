@@ -8,7 +8,7 @@ class Config:
         self.dataset = self.config.read("config.ini")
         self.fixstrings = ["account_name", "prefix", "subprefix", "suffix"]
 
-    def get(self, attribute, defaultvalue=""):
+    def get(self, attribute, defaultvalue="", section: str = None):
         data = ""
 
         if len(self.dataset) != 1:
@@ -18,26 +18,36 @@ class Config:
             )
 
         sections = self.config.sections()
+        
+        if section == None:
+            for section in sections:
+                if self.config.has_option(section, attribute):
+                    raw_value = self.config[section].get(attribute)
 
-        for section in sections:
-            if self.config.has_option(section, attribute):
+                    if raw_value:
+                        if attribute in self.fixstrings:
+                            data = raw_value
+                        else:
+                            data = self.check_type(raw_value)
+                        break
+        elif self.config.has_option(section, attribute):
                 raw_value = self.config[section].get(attribute)
-
                 if raw_value:
                     if attribute in self.fixstrings:
                         data = raw_value
                     else:
                         data = self.check_type(raw_value)
-                    break
-
+        
         if data == "" and str(defaultvalue):
             data = defaultvalue
-        elif data == "" and defaultvalue == "":
+        elif data == "" and defaultvalue == "" and not attribute == "botid":
             sys.tracebacklimit = 0
             sys.exit(
-                "Attribute "
+                "Make sure that section ["
+                + section
+                + "] is defined and mandatory attribute '"
                 + attribute
-                + " is not set, but mandatory! Please check the readme for configuration."
+                + "' is set. Please check the readme for configuration. Exiting script!"
             )
 
         return data
