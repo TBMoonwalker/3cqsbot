@@ -163,6 +163,8 @@ or <br />
 <br>You can also use a combination of different indicators/filters: <br/>
 `[{"options": {"time": "1m", "type": "buy_or_strong_buy"}, "strategy": "trading_view"},{"options": {"time": "5m", "type": "buy_or_strong_buy"}, "strategy": "trading_view"},{"options": {"time": "15m", "type": "buy_or_strong_buy"}, "strategy": "trading_view"},{"options":{"length":14,"time":"15m","points":55},"strategy":"rsi"},{"options":{"length":14,"time":"4h","points":70},"strategy":"rsi"}]`
 
+- **NOTE** Not all exchanges support all deal mode stratgiess. Example, as of April 2022 Kucoin does NOT support the RSI strategy and will result in no deals starting. Ensure you verify the desired strategy is supported on your exchange before setting it in the config.
+
 A whole list of deal start signals can be found on https://discord.com/channels/720875074806349874/835100061583015947/965743501570609172 in json coded format, alternatively get deal start with the API call `GET /ver1/bots/strategy_list`. More details can be found under: https://github.com/3commas-io/3commas-official-api-docs/blob/master/bots_api.md
 
 
