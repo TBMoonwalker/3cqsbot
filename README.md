@@ -46,8 +46,8 @@ Name | Type | Mandatory | Values(default) | Description
 debug | boolean | NO | (false), true   | Set logging to debug
 log_to_file | boolean | NO | (false) true  | Log to file instead of console
 log_file_path | string | NO | (3cqsbot.log) | Location of the log file
-log_file_size | integer | NO | (200000) | Log file size
-log_file_count | integer | NO | (5) | How many logfiles will be archived, before deleted
+log_file_size | integer | NO | (200000) | Log file size
+log_file_count | integer | NO | (5) | How many logfiles will be archived, before deleted
 
 ## Telegram
 Name | Type | Mandatory | Values(default) | Description
@@ -64,10 +64,10 @@ Name | Type | Mandatory | Values(default) | Description
 chatroom | string |NO | (3C Quick Stats) | Name of the chatroom - on Windows please use the ID 5011413076
 key | string | YES |    | 3Commas API Key
 secret | string | YES | | 3Commas API Secret
-timeout | integer | NO | (3) | Timeout waiting for a 3Commas api response
+timeout | integer | NO | (3) | Timeout waiting for a 3Commas api response
 retries | integer | NO | (5) | Number of retries after a 3Commas api call was not successful
-delay_between_retries | number | NO | (2.0) | Waiting time factor between unsuccessful retries
-system_bot_value | integer | NO | (300) | Number of actual bots running on your account. This is important, so that the script can see all running bots and does not start duplicates!
+delay_between_retries | number | NO | (2.0) | Waiting time factor between unsuccessful retries
+system_bot_value | integer | NO | (300) | Number of actual bots running on your account. This is important, so that the script can see all running bots and does not start duplicates!
 
 ## DCABot configuration
 
@@ -76,12 +76,12 @@ Name | Type | Mandatory | Values(default) | Description
 botid | integer | NO | (1234567) | Applies only to multi bot and in combination with FGI - Using botid of an already created bot ensures that the algo applies modification only to this bot and avoids creating a new one, e.g. if bot name is changed or DCA settings are changed according to FGI
 prefix | string | YES | (3CQSBOT)  | The name prefix of the created bot
 subprefix | string | YES | (MULTI) | Subprefix of the bot (Best would be SINGLE or MULTI)
-suffix | string | YES | (TA_SAFE) | Suffix in the bot name - could be the used DCA setting of the TA community
+suffix | string | YES | (TA_SAFE) | Suffix in the bot name - could be the used DCA setting of the TA community
 mad | integer | YES | (3) | Max active deals for a bot
 deal_mode | string | NO | ([{"options": {"time": "3m", "points": "100", "time_period": "7", "trigger_condition": "less"}, "strategy": "rsi"}]) signal | Method how the script is starting new deals in single / multi pair mode - for more see the "Deal START signal/strategy examples" section
 tp | number | YES | (1.5)  | Take profit in percent
 trailing | boolean | NO | (false), true | Trailing profit enabled
-trailing_deviation | number | NO | (0.2) | Deviation of trailing profit
+trailing_deviation | number | NO | (0.2) | Deviation of trailing profit
 bo | number | YES | (11)   | Base order volume
 so | number | YES | (11) | Safety order volume
 os | number | YES | (1.05) | Safety order volume scale
@@ -163,6 +163,8 @@ or <br />
 <br>You can also use a combination of different indicators/filters: <br/>
 `[{"options": {"time": "1m", "type": "buy_or_strong_buy"}, "strategy": "trading_view"},{"options": {"time": "5m", "type": "buy_or_strong_buy"}, "strategy": "trading_view"},{"options": {"time": "15m", "type": "buy_or_strong_buy"}, "strategy": "trading_view"},{"options":{"length":14,"time":"15m","points":55},"strategy":"rsi"},{"options":{"length":14,"time":"4h","points":70},"strategy":"rsi"}]`
 
+- **NOTE** Not all exchanges support all deal mode strategies. Example, as of April 2022 Kucoin does NOT support the RSI strategy and will result in no deals starting. Ensure you verify the desired strategy is supported on your exchange before setting it in the config.
+
 A whole list of deal start signals can be found on https://discord.com/channels/720875074806349874/835100061583015947/965743501570609172 in json coded format, alternatively get deal start with the API call `GET /ver1/bots/strategy_list`. More details can be found under: https://github.com/3commas-io/3commas-official-api-docs/blob/master/bots_api.md
 
 
@@ -174,16 +176,16 @@ market | string | YES | (USDT)  | Trading market (Example: BUSD, USDT, USDC)
 trade_mode | string | YES | (paper), real   | Real or Paper trading mode
 account_name | string | YES | (Paper trading 123456)  | Account name for trading. Can be found unter "My Exchanges". 
 single | boolean | YES | (false), true | Type of not creation (False for multi pair DCA Bots / True for single pair DCA Bots)
-single_count | integer | YES | (3) | Maximum single bots - only have to be configured for singlebots
-delete_single_bots | boolean | NO | (false), true | If set to true, bots without an active deal will be deleted in single bot configuration
-singlebot_update | boolean | NO | (true), false | If set to true, singlebots settings will be updated when enabled again (new settings only work after restart of the script)
-trade_future | boolean | NO | (false), true | Enable futures trading
+single_count | integer | YES | (3) | Maximum single bots - only have to be configured for singlebots
+delete_single_bots | boolean | NO | (false), true | If set to true, bots without an active deal will be deleted in single bot configuration
+singlebot_update | boolean | NO | (true), false | If set to true, singlebots settings will be updated when enabled again (new settings only work after restart of the script)
+trade_future | boolean | NO | (false), true | Enable futures trading
 leverage_type | string | NO | (cross), custom, not_specified, isolated | Different leverage types for futures trading from 3commas
 leverage_value | integer | NO | (2) | Leverage value for futures trading
 stop_loss_percent | integer | NO | (1) | Stop loss value in percent for futures trading
 stop_loss_type | string | NO | (stop_loss_and_disable_bot), stop_loss | Stop Loss type for futures trading
-stop_loss_timeout_enabled | boolean | NO | (false), true | Enable stop loss timeout for futures trading
-stop_loss_timeout_seconds | integer | NO | (5) | Time interval for stop loss in seconds for futures trading
+stop_loss_timeout_enabled | boolean | NO | (false), true | Enable stop loss timeout for futures trading
+stop_loss_timeout_seconds | integer | NO | (5) | Time interval for stop loss in seconds for futures trading
 
 ## Filter
 
@@ -197,15 +199,15 @@ volatility_limit_max | number | NO | (100) | Bots will be created when the volat
 price_action_limit_min | number | NO | (0.1) | Bots will be created when the price_action value is over this limit
 price_action_limit_max | number | NO | (100) | Bots will be created when the price_action value is under this limit
 topcoin_filter | boolean | NO | (false), true | Disables the topcoin filter (default)
-topcoin_limit | integer | NO | (3500) | Token pair has to be in the configured topcoin limit to be traded by the bot
+topcoin_limit | integer | NO | (3500) | Token pair has to be in the configured topcoin limit to be traded by the bot
 topcoin_volume | integer | NO | (0) | Volume check against Coingecko (btc_min_vol means volume check directly in 3commas - not before like this setting). Only pairs with the given volume are traded. Default is 0 and means volume check is disabled
-topcoin_exchange | string | NO | (binance), gdax | Name of the exchange to check the volume. Because every exchange has another id, please contact me for your exchange and I will update this list here for configuration
-limit_initial_pairs | boolean |NO | (false), true | Limit initial pairs to the max number of deals (MAD) for multi bot - top pairs are chosen
+topcoin_exchange | string | NO | (binance), gdax | Name of the exchange to check the volume. Because every exchange has another id, please contact me for your exchange and I will update this list here for configuration
+limit_initial_pairs | boolean |NO | (false), true | Limit initial pairs to the max number of deals (MAD) for multi bot - top pairs are chosen
 random_pair | boolean | NO | (false), true | If true then random pairs from the symrank list will be used for new deals in multibot
-btc_pulse | boolean | NO | (false), true | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
+btc_pulse | boolean | NO | (false), true | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
 fearandgreed | boolean | NO | (false), true | If true, three different dca settings can be used according to the market (use [fgi_aggressive] for bull market, [fgi_moderate] for sideways market, [fgi_defensive] for bear market, each with corresponding dca settings)  
 ext_botswitch | boolean | NO | (false), true | If true the automatic multibot enablement will be disabled and only triggered by external events - you must disable BTC Pulse if you enable this switch !!!
-token_denylist | array | NO | ([BUSD_USDT, USDC_USDT, USDT_USDT, USDT_USDP]) | additional denylist of assets in combination to 3commas blacklist to prevent the bot from including and buying unwanted assets
+token_denylist | array | NO | ([BUSD_USDT, USDC_USDT, USDT_USDT, USDT_USDP]) | Additional denylist of assets in combination to 3commas blacklist to prevent the bot from including and buying unwanted assets
 
 ### Signals
 The new version of 3cqs signals is now separated into three main versions. To decide which version fit your needs, please take a look at the indicators beneath. The description can be found on Discord too: https://discord.com/channels/720875074806349874/835100061583015947/958724423513419876
