@@ -335,6 +335,7 @@ class SingleBot:
         running_deals = self.deal_count()
         running_bots = self.bot_count()
         disabled_bot_deals = self.disabled_bot_active_deals_count()
+        maxdeals = self.attributes.get("single_count", "", self.dca_conf)
 
         self.logging.info("running_deals: " + str(running_deals))
 
@@ -348,8 +349,6 @@ class SingleBot:
                 if botname == bot["name"]:
                     new_bot = False
                     break
-                    
-            maxdeals = self.attributes.get("single_count", "", self.dca_conf)
 
             if new_bot:
                 if self.tg_data["action"] == "START":
