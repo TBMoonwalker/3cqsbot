@@ -226,7 +226,7 @@ BOT_START: SymRank <= 30
 SIGNAL NAME: Hyper Volatility
 BOT_START: Volatility Score >= 6
 
-### uvol
+#### uvol
 SIGNAL NAME: Ultra Volatility
 BOT_START: Volatility Score >= 8
 
