@@ -222,13 +222,17 @@ Price Action Score >= 2
 SIGNAL NAME: SymRank Top 30
 BOT_START: SymRank <= 30
 
-#### xvol
-SIGNAL NAME: X-treme Volatility
-BOT_START: Volatility Score >= 10
-
 #### hvol
 SIGNAL NAME: Hyper Volatility
 BOT_START: Volatility Score >= 6
+
+#### uvol
+SIGNAL NAME: Ultra Volatility
+BOT_START: Volatility Score >= 8
+
+#### xvol
+SIGNAL NAME: X-treme Volatility
+BOT_START: Volatility Score >= 10
 
 #### all
 Pass through all signals
