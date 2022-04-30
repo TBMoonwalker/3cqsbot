@@ -141,6 +141,8 @@ def tg_data(text_lines):
             signal = "triple100"
         elif signal == "Hyper Volatility":
             signal = "hvol"
+        elif signal == "Ultra Volatility":
+            signal = "uvol"
         else:
             signal = "xvol"
 
