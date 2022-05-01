@@ -20,7 +20,8 @@ secret = "Your secret from 3Commas here - without Quotes"
 #system_bot_value = 300
 
 [dcabot]
-# For using FGI make sure to enter the correct botid of 3cqsbot
+# When using FGI in combination with multibot and if you want to use other bot names with suffix _aggressive, _moderate or _defensive, 
+# then it is important to enter the botid of the existing 3cqsbot to prevent creation of a new one 
 #botid = 1234567
 prefix = 3CQSBOT
 subprefix = MULTI
