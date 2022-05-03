@@ -224,7 +224,7 @@ class Signals:
 
         return pairlist
 
-    # Credits go to @M1cha3l
+    # Credits go to @M1ch43l
     # Adjust DCA settings dynamically according to social sentiment: greed = aggressive DCA, neutral = moderate DCA, fear = conservative DCA
     @retry(wait=wait_fixed(60))
     def requests_call(self, method, url, timeout):
@@ -235,8 +235,6 @@ class Signals:
             raise IOError("Fear and greed index API actually down, retrying in 60s, Error is:" + e)
         return response
 
-    # Credits goes to @M1ch43l from
-    # https://discord.gg/tradealts
     async def get_fgi(self, asyncState):
         
         url = "https://api.alternative.me/fng/"

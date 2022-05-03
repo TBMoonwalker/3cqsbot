@@ -66,7 +66,7 @@ else:
     loglevel = getattr(logging, args.loglevel.upper(), None)
 
 # Set logging output
-# Thanks to @M1cha3l for improving logging output messages
+# Thanks to @M1ch43l for improving logging output messages
 handler = [logging.StreamHandler()]
 
 if attributes.get("log_to_file", False):
