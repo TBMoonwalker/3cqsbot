@@ -356,7 +356,9 @@ class MultiBot:
         maxdeals = self.attributes.get("mad")
         self.logging.info(
             str(len(pairs)) 
-            + " out of 30 symrank pairs selected. Maximum active deals (mad) set to " 
+            + " out of 30 symrank pairs selected: "
+            + str(pairs)
+            + ". Maximum active deals (mad) set to " 
             + str(mad) 
             + " out of " 
             + str(maxdeals))
