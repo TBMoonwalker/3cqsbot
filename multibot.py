@@ -279,6 +279,7 @@ class MultiBot:
             botnames = []
             if self.botid != "":
                 self.logging.info("3cqsbot not found with botid: " + self.botid)
+                
             self.logging.info("Searching for 3cqsbot with name '" + self.botname + "' to get botid")
             for bot in self.bot_data:
                 botnames.append(bot["name"])
@@ -375,7 +376,8 @@ class MultiBot:
                 + self.botname 
                 + "' with filtered symrank pairs using DCA settings ["
                 + self.dca_conf
-                + "]"
+                + "]",
+                True
             )
             self.report_funds_needed(maxdeals)
 
@@ -393,7 +395,8 @@ class MultiBot:
                     self.enable(data)
                 else:
                     self.logging.info(
-                        "ext_botswitch set to true, bot has to be enabled by external TV signal"
+                        "ext_botswitch set to true, bot has to be enabled by external TV signal",
+                        True
                     )
                 self.new_deal(data, triggerpair="")
         elif mad > 0:
@@ -438,10 +441,14 @@ class MultiBot:
                     self.enable(data)
                 else:
                     self.logging.info(
-                        "ext_botswitch set to true, bot enabling/disabling has to be managed by external TV signal"
+                        "ext_botswitch set to true, bot enabling/disabling has to be managed by external TV signal",
+                        True
                     )
         else:
-            self.logging.info("No (filtered) pairs left for multi bot. Either weak market phase or symrank/topcoin filter too strict. Bot disabled and waiting for better times")
+            self.logging.info(
+                "No (filtered) pairs left for multi bot. Either weak market phase or symrank/topcoin filter too strict. Bot disabled and waiting for better times",
+                True
+                )
             self.disable()
 
     def trigger(self, triggeronly=False):
@@ -456,7 +463,8 @@ class MultiBot:
                     pair = self.tg_data["pair"]
 
                     self.logging.info(
-                        "Got new 3cqs " + self.tg_data["action"] + " signal for " + pair, True
+                        "Got new 3cqs " + self.tg_data["action"] + " signal for " + pair, 
+                        True
                     )
 
                     if self.tg_data["action"] == "START":
@@ -482,11 +490,11 @@ class MultiBot:
                                 )
 
                             if pair:
-                                self.logging.info("Adding pair " + pair)
+                                self.logging.info("Adding pair " + pair, True)
                                 bot["pairs"].append(pair)
                     else:
                         if pair in bot["pairs"]:
-                            self.logging.info("Remove pair " + pair)
+                            self.logging.info("Remove pair " + pair, True)
                             bot["pairs"].remove(pair)
                         else:
                             self.logging.info(
@@ -500,7 +508,8 @@ class MultiBot:
                         + str(mad)
                         + " using DCA settings ["
                         + self.dca_conf
-                        + "]"
+                        + "]",
+                        True
                     )
 
                     error, data = self.p3cw.request(
