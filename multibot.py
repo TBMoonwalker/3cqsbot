@@ -178,7 +178,7 @@ class MultiBot:
         # Enables an existing bot
         if not bot["is_enabled"]:
             self.logging.info(
-                "Enabling bot: " + bot["name"] + " (" + str(bot["id"]) + ")"
+                "Enabling bot: " + bot["name"] + " (botid: " + str(bot["id"]) + ")"
             )
 
             error, data = self.p3cw.request(
@@ -201,7 +201,7 @@ class MultiBot:
 
                 # Disables an existing bot
                 self.logging.info(
-                    "Disabling bot: " + bot["name"] + " (" + str(bot["id"]) + ")"
+                    "Disabling bot: " + bot["name"] + " (botid: " + str(bot["id"]) + ")"
                 )
 
                 error, data = self.p3cw.request(
