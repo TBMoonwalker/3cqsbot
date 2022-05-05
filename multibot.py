@@ -101,7 +101,8 @@ class MultiBot:
             + str(mstc)
             + " - covering max. price deviation: "
             + f"{pd:2.1f}"
-            + "%"
+            + "%",
+            True
         )
         self.logging.info(
             "Max active deals (mad) allowed: "
@@ -111,7 +112,8 @@ class MultiBot:
             + "   Total funds needed: "
             + babel.numbers.format_currency(
                 maxdeals * fundsneeded, "USD", locale="en_US"
-            )
+            ),
+            True
         )
 
         return
@@ -178,7 +180,7 @@ class MultiBot:
         # Enables an existing bot
         if not bot["is_enabled"]:
             self.logging.info(
-                "Enabling bot: " + bot["name"] + " (" + str(bot["id"]) + ")"
+                "Enabling bot: " + bot["name"] + " (botid: " + str(bot["id"]) + ")", True
             )
 
             error, data = self.p3cw.request(
@@ -201,7 +203,7 @@ class MultiBot:
 
                 # Disables an existing bot
                 self.logging.info(
-                    "Disabling bot: " + bot["name"] + " (" + str(bot["id"]) + ")"
+                    "Disabling bot: " + bot["name"] + " (" + str(bot["id"]) + ")", True
                 )
 
                 error, data = self.p3cw.request(
@@ -227,7 +229,7 @@ class MultiBot:
                 pair = ""
 
         if pair:
-            self.logging.info("Trigger new deal with pair " + pair)
+            self.logging.info("Trigger new deal with pair " + pair, True)
             error, data = self.p3cw.request(
                 entity="bots",
                 action="start_new_deal",
@@ -241,7 +243,8 @@ class MultiBot:
                     self.logging.info(
                         "Max active deals of "
                         + str(bot["max_active_deals"])
-                        + " reached, not adding a new one."
+                        + " reached, not adding a new one.",
+                        True
                     )
                 else:
                     self.logging.error(error["msg"])
@@ -356,10 +359,14 @@ class MultiBot:
         maxdeals = self.attributes.get("mad")
         self.logging.info(
             str(len(pairs)) 
-            + " out of 30 symrank pairs selected. Maximum active deals (mad) set to " 
+            + " out of 30 symrank pairs selected "
+            + str(pairs) 
+            + ". Maximum active deals (mad) set to " 
             + str(mad) 
             + " out of " 
-            + str(maxdeals))
+            + str(maxdeals),
+            True)
+
         # Creation of multibot even with mad=1 possible
         if not bot_by_id and not bot_by_name and mad > 0:
             # Create new multibot
@@ -399,7 +406,8 @@ class MultiBot:
                     + self.botname
                     + "' (botid: "
                     + self.botid
-                    + ")"
+                    + ")",
+                    True
                 )
                 bot["name"] = self.botname
 
@@ -448,7 +456,7 @@ class MultiBot:
                     pair = self.tg_data["pair"]
 
                     self.logging.info(
-                        "Got new 3cqs " + self.tg_data["action"] + " signal for " + pair
+                        "Got new 3cqs " + self.tg_data["action"] + " signal for " + pair, True
                     )
 
                     if self.tg_data["action"] == "START":

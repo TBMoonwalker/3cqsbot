@@ -1,41 +1,76 @@
 import argparse
 import re
-import logging
 import asyncio
 import sys
 import os
 import portalocker
 import math
+import time
 
 from telethon import TelegramClient, events
 from py3cw.request import Py3CW
 from singlebot import SingleBot
 from multibot import MultiBot
 from signals import Signals
-from logging.handlers import RotatingFileHandler
+#from logging.handlers import RotatingFileHandler
 from config import Config
-
+from pathlib import Path
+from logger import Logger, NotificationHandler
 
 ######################################################
 #                       Config                       #
 ######################################################
+
+#load configuration file
 attributes = Config()
 
+program = Path(__file__).stem
 
+# Parse and interpret options
 parser = argparse.ArgumentParser(
     description="3CQSBot bringing 3CQS signals to 3Commas."
 )
-parser.add_argument(
-    "-l",
-    "--loglevel",
-    metavar="loglevel",
-    type=str,
-    nargs="?",
-    default="info",
-    help="loglevel during runtime - use info, debug, warning, ...",
-)
-
+# parser.add_argument(
+#    "-l",
+#    "--loglevel",
+#    metavar="loglevel",
+#    type=str,
+#    nargs="?",
+#    default="info",
+#    help="loglevel during runtime - use info, debug, warning, ...",
+#)
+parser.add_argument("-d", "--datadir", help="data directory to use", type=str)
 args = parser.parse_args()
+if args.datadir:
+    datadir = args.datadir
+else:
+    datadir = os.getcwd()
+
+# parser.add_argument("-d", "--datadir", help="data directory to use", type=str)
+
+# Handle timezone
+if hasattr(time, "tzset"):
+    os.environ["TZ"] = attributes.get("timezone", "Europe/Amsterdam")
+    time.tzset()
+
+# Init notification handler
+notification = NotificationHandler(
+    program,
+    attributes.get("notifications"),
+    attributes.get("notify-urls"),
+    )
+
+# Initialise logging
+logging = Logger(
+    datadir,
+    program,
+    notification,
+    attributes.get("logrotate", 7),
+    attributes.get("debug"),
+    attributes.get("notifications"),
+    )
+
+logging.info(f"Loaded configuration from '{datadir}/{program}.ini'")
 
 ######################################################
 #                        Init                        #
@@ -60,28 +95,28 @@ client = TelegramClient(
 )
 
 # Set logging facility
-if attributes.get("debug", False):
-    loglevel = "DEBUG"
-else:
-    loglevel = getattr(logging, args.loglevel.upper(), None)
+#if attributes.get("debug", False):
+#    loglevel = "DEBUG"
+#else:
+#    loglevel = getattr(logging, args.loglevel.upper(), None)
 
 # Set logging output
 # Thanks to @M1ch43l for improving logging output messages
-handler = [logging.StreamHandler()]
+#handler = [logging.StreamHandler()]
 
-if attributes.get("log_to_file", False):
-    handler = [logging.StreamHandler(sys.stdout), logging.handlers.RotatingFileHandler(
-        attributes.get("log_file_path", "3cqsbot.log"),
-        maxBytes=attributes.get("log_file_size", 200000),
-        backupCount=attributes.get("log_file_count", 5),
-    )]
+#if attributes.get("log_to_file", False):
+#    handler = [logging.StreamHandler(sys.stdout), logging.handlers.RotatingFileHandler(
+#        attributes.get("log_file_path", "3cqsbot.log"),
+#        maxBytes=attributes.get("log_file_size", 200000),
+#        backupCount=attributes.get("log_file_count", 5),
+#    )]
 
-logging.basicConfig(
-    format="%(asctime)s %(levelname)-8s %(message)s",
-    level=loglevel,
-    datefmt="%Y-%m-%d %H:%M:%S",
-    handlers=handler,
-)
+#logging.basicConfig(
+#    format="%(asctime)s %(levelname)-8s %(message)s",
+#    level=loglevel,
+#    datefmt="%Y-%m-%d %H:%M:%S",
+#    handlers=handler,
+#)
 
 # Initialize global variables
 asyncState = type("", (), {})()
@@ -437,7 +472,8 @@ async def my_event_handler(event):
                             + str(tg_output["volatility"])
                             + " and price action: "
                             + str(tg_output["price_action"])
-                            + " not meeting config filter limits - signal ignored"
+                            + " not meeting config filter limits - signal ignored", 
+                            True
                         )
                 else:
                     logging.info(
@@ -474,6 +510,7 @@ async def my_event_handler(event):
                 logging.debug(
                     "Ignoring /symrank call, because we're running in single mode!"
                 )
+    notification.send_notification()
 
 
 async def main():
