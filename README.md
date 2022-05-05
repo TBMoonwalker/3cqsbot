@@ -256,9 +256,11 @@ TBMoonWalker or IamtheOnewhoKnocks take no responsibility for losses occurred du
 
 ### Fear and Greed Index
 This settings allows you to use the Crypto Fear and Greed index (FGI) to identify the sentiment of the corresponding market phase. The FGI is determined once a day on https://alternative.me/crypto/fear-and-greed-index/
+![Screenshot](FGI%20borders%20screenshot.png)
 How to use: when FGI is signaling "greed/very greed" (FGI values usually between 60-100) you may use aggressive DCA settings [fgi_aggressive], e.g. Mars/Banshee/69er covering a price drop of 20-40%.
 
 In phases of fear (FGI values 0-30) over a longer time that may correspond to a beginning or consolidating bear market, the bot can switch to very defensive/conservative DCA settings [fgi_defensive], eg. TA safer, ZachTech BitMan covering a price drop of up to 60%. 
+
 Get the excel lists from @Snurg at https://discord.com/channels/720875074806349874/829512509798219788/965771867413696532 to get the optimal DCA settings in corresdonding market phases according to your trade funds. 
 
 For sideways market (FGI values 31-60) you can define DCA settings under [fgi_moderate]. 
