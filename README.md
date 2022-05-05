@@ -55,6 +55,9 @@ Name | Type | Mandatory | Values(default) | Description
 api_id | string | YES |   | Telegram API ID
 api_hash | string | YES |   | Telegram API Hash
 sessionfile | string | NO | (tgsession) | Telegram sessionfile location
+chatroom | string | NO | ("3C Quick Stats") | Telegram channel to receive the 3cqs signals
+notifications | string | NO | (false), true | set to true to enable notifications - code from Cyberjunky
+notify-urls | string | NO |   | one or a list of apprise notify urls, each in " " seperated with commas. See [Apprise website](https://github.com/caronc/apprise) for more information.
 
 **!!! ATTENTION - Do not share your sessionfile with other 3cqsbot instances - this will lead to problems and misfunctional bots. For each instance you have to create a new sessionfile !!!**
 

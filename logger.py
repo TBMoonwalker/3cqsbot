@@ -1,4 +1,5 @@
 """Cyberjunky's 3Commas bot helpers."""
+### many thanks to Cyberjunky for using his code ###
 import json
 import logging
 import os
