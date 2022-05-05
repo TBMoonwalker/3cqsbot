@@ -5,7 +5,7 @@
 config.ini
 config.ini.old
 launch.json
+trailingstoploss.py
 trailingstoploss_tp.ini
 .gitignore
 logs/*
-trailingstoploss.py
