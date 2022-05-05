@@ -178,7 +178,7 @@ class MultiBot:
         # Enables an existing bot
         if not bot["is_enabled"]:
             self.logging.info(
-                "Enabling bot: " + bot["name"] + " (" + str(bot["id"]) + ")"
+                "Enabling bot: " + bot["name"] + " (botid: " + str(bot["id"]) + ")"
             )
 
             error, data = self.p3cw.request(
@@ -201,7 +201,7 @@ class MultiBot:
 
                 # Disables an existing bot
                 self.logging.info(
-                    "Disabling bot: " + bot["name"] + " (" + str(bot["id"]) + ")"
+                    "Disabling bot: " + bot["name"] + " (botid: " + str(bot["id"]) + ")"
                 )
 
                 error, data = self.p3cw.request(
@@ -338,11 +338,11 @@ class MultiBot:
 
         self.logging.debug("Pairs after topcoin filter " + str(pairs))
 
-        # Run filters to adapt mad according to pair list
+        # Run filters to adapt mad according to pair list - multibot creation with mad=1 possible
         if self.attributes.get("limit_initial_pairs", False):
             # Limit pairs to the maximal deals (mad)
             if self.attributes.get("mad") == 1:
-                maxpairs = 2
+                maxpairs = 1
             elif self.attributes.get("mad") <= len(pairs):
                 maxpairs = self.attributes.get("mad")
             else:
@@ -356,12 +356,14 @@ class MultiBot:
         maxdeals = self.attributes.get("mad")
         self.logging.info(
             str(len(pairs)) 
-            + " out of 30 symrank pairs selected. Maximum active deals (mad) set to " 
+            + " out of 30 symrank pairs selected: "
+            + str(pairs)
+            + ". Maximum active deals (mad) set to " 
             + str(mad) 
             + " out of " 
             + str(maxdeals))
-
-        if not bot_by_id and not bot_by_name and mad > 1:
+        # Creation of multibot even with mad=1 possible
+        if not bot_by_id and not bot_by_name and mad > 0:
             # Create new multibot
             self.logging.info(
                 "Creating multi bot '" 
@@ -389,7 +391,7 @@ class MultiBot:
                         "ext_botswitch set to true, bot has to be enabled by external TV signal"
                     )
                 self.new_deal(data, triggerpair="")
-        elif mad > 1:
+        elif mad > 0:
             # Update existing multibot
             if self.botname != bot["name"]:
                 self.logging.info(
