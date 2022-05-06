@@ -83,7 +83,7 @@ class MultiBot:
             pd = (pd * ss) + sos
 
         self.logging.info(
-            "Settings of ["
+            "Using DCA settings ["
             + self.dca_conf
             + "]:  TP: "
             + str(tp)
@@ -374,9 +374,7 @@ class MultiBot:
             self.logging.info(
                 "Creating multi bot '" 
                 + self.botname 
-                + "' with filtered symrank pairs using DCA settings ["
-                + self.dca_conf
-                + "]",
+                + "' with filtered symrank pairs",
                 True
             )
             self.report_funds_needed(maxdeals)
@@ -419,9 +417,7 @@ class MultiBot:
                 + bot["name"]
                 + "' (botid: "
                 + self.botid
-                + ") with filtered symrank pairs using DCA settings ["
-                + self.dca_conf
-                + "]"
+                + ") with filtered symrank pairs"
             )
             self.report_funds_needed(maxdeals)
 
@@ -446,7 +442,7 @@ class MultiBot:
                     )
         else:
             self.logging.info(
-                "No (filtered) pairs left for multi bot. Either weak market phase or symrank/topcoin filter too strict. Bot disabled and waiting for better times",
+                "No (filtered) pairs left for multi bot. Either weak market phase or symrank/topcoin filter too strict. Bot will be disabled to wait for better times",
                 True
                 )
             self.disable()
@@ -504,11 +500,10 @@ class MultiBot:
                     # Adapt mad if pairs are under value
                     mad = self.adjustmad(bot["pairs"], mad)
                     self.logging.info(
-                        "Adjusting mad to amount of included symrank pairs: "
-                        + str(mad)
-                        + " using DCA settings ["
-                        + self.dca_conf
-                        + "]",
+                        "Included pairs: "
+                        + str(bot["pairs"])
+                        + ". Adjusting mad to: "
+                        + str(mad),
                         True
                     )
 

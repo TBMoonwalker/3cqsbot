@@ -247,8 +247,11 @@ class Signals:
             fgi = int(raw_data["data"][0]["value"])
             time_until_update = int(raw_data["data"][0]["time_until_update"])
             fmt = '{0.hours}h:{0.minutes}m:{0.seconds}s'
-            self.logging.info("Current FGI: " + str(fgi) + " - time till next update: " 
-            + fmt.format(rd(seconds=time_until_update)))
+            self.logging.info(
+                "Current FGI: " + str(fgi) 
+                + " - time till next update: " + fmt.format(rd(seconds=time_until_update)), 
+                True
+            )
             asyncState.fgi = fgi
 
             # request FGI once per day, because is is calculated only once per day 
