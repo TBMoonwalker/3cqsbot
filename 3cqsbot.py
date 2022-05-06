@@ -45,8 +45,8 @@ if hasattr(time, "tzset"):
 # Init notification handler
 notification = NotificationHandler(
     program,
-    attributes.get("notifications"),
-    attributes.get("notify-urls"),
+    attributes.get("notifications", False),
+    attributes.get("notify-urls", []),
     )
 
 # Initialise logging
@@ -55,8 +55,8 @@ logging = Logger(
     program,
     notification,
     attributes.get("logrotate", 7),
-    attributes.get("debug"),
-    attributes.get("notifications"),
+    attributes.get("debug", False),
+    attributes.get("notifications", False),
     )
 
 logging.info(f"Loaded configuration from '{datadir}/config.ini'")
