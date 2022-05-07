@@ -292,7 +292,7 @@ async def botswitch():
             asyncState.botswitch = True
             logging.debug("Botswitch: " + str(asyncState.botswitch))
             if attributes.get("single"):
-                logging.info("Not activating old single bots (waiting for new signals.")
+                logging.info("Not activating old single bots - waiting for new signals")
             else:
                 # Send new top 30 for activating the multibot
                 await symrank()
@@ -353,12 +353,7 @@ def _handle_task_result(task: asyncio.Task) -> None:
 async def my_event_handler(event):
     
     tg_output = tg_data(parse_tg(event.raw_text))
-    logging.info("TG msg: " + str(tg_output))
-    # When having multiple 3cqsbots started at the same time avoid "Too many requests" when calling symrank 
-    # by adding random time to the 45sec standard timeout
-    if not tg_output:
-        time.sleep(45+randrange(15))
-        await symrank()
+    logging.debug("TG msg: " + str(tg_output))
 
     if (
         asyncState.btcbool
@@ -366,9 +361,15 @@ async def my_event_handler(event):
         and not attributes.get("ext_botswitch", False)
     ):
         logging.info(
-            "New 3CQS signal not processed - Bot stopped because of BTC downtrend"
+            "3CQS signals not processed - Bot stopped because of BTC downtrend"
         )
     else:
+        # When having multiple 3cqsbots started at the same time, it may be the error "Too many requests" (tg_output=false) when calling symrank simultanously 
+        # By adding random time to the 45sec standard timeout of the symrank call, try to avoid this problem
+        if not tg_output:
+            time.sleep(45+randrange(15))
+            await symrank()
+
         account_output = asyncState.accountData
         pair_output = asyncState.pairData
         # if signal with #START or #STOP
