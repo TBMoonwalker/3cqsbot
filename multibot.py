@@ -48,6 +48,7 @@ class MultiBot:
                     + self.dca_conf
                     + "] section with DCA settings or decoding JSON string of deal_mode failed. Please check https://jsonformatter.curiousconcept.com/ for correct format"
                 )
+                sys.exit("Aborting script!")
 
         return strategy
 
@@ -180,7 +181,8 @@ class MultiBot:
         # Enables an existing bot
         if not bot["is_enabled"]:
             self.logging.info(
-                "Enabling bot: " + bot["name"] + " (botid: " + str(bot["id"]) + ")", True
+                "Enabling bot: " + bot["name"] + " (botid: " + str(bot["id"]) + ")", 
+                True
             )
 
             error, data = self.p3cw.request(
@@ -203,7 +205,8 @@ class MultiBot:
 
                 # Disables an existing bot
                 self.logging.info(
-                    "Disabling bot: " + bot["name"] + " (" + str(bot["id"]) + ")", True
+                    "Disabling bot: " + bot["name"] + " (" + str(bot["id"]) + ")", 
+                    True
                 )
 
                 error, data = self.p3cw.request(
@@ -229,7 +232,10 @@ class MultiBot:
                 pair = ""
 
         if pair:
-            self.logging.info("Trigger new deal with pair " + pair, True)
+            self.logging.info(
+                "Trigger new deal with pair " + pair, 
+                True
+            )
             error, data = self.p3cw.request(
                 entity="bots",
                 action="start_new_deal",
@@ -366,7 +372,8 @@ class MultiBot:
             + str(mad) 
             + " out of " 
             + str(maxdeals),
-            True)
+            True
+        )
 
         # Creation of multibot even with mad=1 possible
         if not bot_by_id and not bot_by_name and mad > 0:
@@ -417,7 +424,8 @@ class MultiBot:
                 + bot["name"]
                 + "' (botid: "
                 + self.botid
-                + ") with filtered symrank pairs"
+                + ") with filtered symrank pairs",
+                True
             )
             self.report_funds_needed(maxdeals)
 
@@ -459,8 +467,7 @@ class MultiBot:
                     pair = self.tg_data["pair"]
 
                     self.logging.info(
-                        "Got new 3cqs " + self.tg_data["action"] + " signal for " + pair, 
-                        True
+                        "Got new 3cqs " + self.tg_data["action"] + " signal for " + pair
                     )
 
                     if self.tg_data["action"] == "START":
@@ -486,18 +493,24 @@ class MultiBot:
                                 )
 
                             if pair:
-                                self.logging.info("Adding pair " + pair, True)
+                                self.logging.info(
+                                    "Adding pair " + pair, 
+                                    True
+                                )
                                 bot["pairs"].append(pair)
                     else:
                         if pair in bot["pairs"]:
-                            self.logging.info("Remove pair " + pair, True)
+                            self.logging.info(
+                                "Removing pair " + pair, 
+                                True
+                            )
                             bot["pairs"].remove(pair)
                         else:
                             self.logging.info(
                                 pair + " was not included in the pair list - not removed"
                             )
 
-                    # Adapt mad if pairs are under value
+                    # Adapt mad if included pairs and simul. deals for the same pair are lower than mad value
                     mad = self.adjustmad(bot["pairs"], mad)
                     self.logging.info(
                         "Included pairs: "

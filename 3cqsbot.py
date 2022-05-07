@@ -15,6 +15,7 @@ from signals import Signals
 from config import Config
 from pathlib import Path
 from logger import Logger, NotificationHandler
+from random import randrange
 
 ######################################################
 #                       Config                       #
@@ -351,6 +352,14 @@ def _handle_task_result(task: asyncio.Task) -> None:
 @client.on(events.NewMessage(chats=attributes.get("chatroom", "3C Quick Stats")))
 async def my_event_handler(event):
     
+    tg_output = tg_data(parse_tg(event.raw_text))
+    logging.info("TG msg: " + str(tg_output))
+    # When having multiple 3cqsbots started at the same time avoid "Too many requests" when calling symrank 
+    # by adding random time to the 45sec standard timeout
+    if not tg_output:
+        time.sleep(45+randrange(15))
+        await symrank()
+
     if (
         asyncState.btcbool
         and attributes.get("btc_pulse", False)
@@ -360,13 +369,9 @@ async def my_event_handler(event):
             "New 3CQS signal not processed - Bot stopped because of BTC downtrend"
         )
     else:
-
-        tg_output = tg_data(parse_tg(event.raw_text))
-        logging.debug("TG msg: " + str(tg_output))
-
         account_output = asyncState.accountData
         pair_output = asyncState.pairData
-
+        # if signal with #START or #STOP
         if tg_output and not isinstance(tg_output, list):
 
             logging.info(
@@ -445,7 +450,7 @@ async def my_event_handler(event):
                     + attributes.get("symrank_signal")
                     + "' is configured"
                 )
-
+        # if symrank list
         elif tg_output and isinstance(tg_output, list):
             if not attributes.get("single"):
 
@@ -467,7 +472,7 @@ async def my_event_handler(event):
                 logging.debug(
                     "Ignoring /symrank call, because we're running in single mode!"
                 )
-    notification.send_notification()
+        notification.send_notification()
 
 
 async def main():
