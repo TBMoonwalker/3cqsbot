@@ -325,8 +325,6 @@ class SingleBot:
         disabled_bot_deals = self.disabled_bot_active_deals_count()
         maxdeals = self.attributes.get("single_count")
 
-        self.logging.info("running_deals: " + str(running_deals))
-
         botname = self.attributes.get("prefix", "3CQSBOT", "dcabot") \
         + "_" + self.attributes.get("subprefix", "SINGLE", "dcabot") \
         + "_" + pair + "_" \
