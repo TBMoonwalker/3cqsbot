@@ -6,6 +6,7 @@ import os
 import queue
 import threading
 import time
+import datetime
 from logging.handlers import TimedRotatingFileHandler as _TimedRotatingFileHandler
 
 import apprise
@@ -47,7 +48,8 @@ class NotificationHandler:
         """Queue notification messages."""
         if self.enabled:
             message.encode(encoding = 'UTF-8', errors = 'strict')
-            self.message += f"{message}\n\n"
+            now = datetime.datetime.now()
+            self.message += now.strftime("%H:%M:%S") + f" - {message}\n\n"
 
     def send_notification(self):
         """Send the notification messages if there are any."""
