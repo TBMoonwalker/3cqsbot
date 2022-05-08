@@ -351,23 +351,13 @@ def _handle_task_result(task: asyncio.Task) -> None:
 
 @client.on(events.NewMessage(chats=attributes.get("chatroom", "3C Quick Stats")))
 async def my_event_handler(event):
-    
+
     tg_output = tg_data(parse_tg(event.raw_text))
     logging.debug("TG msg: " + str(tg_output))
 
-    if (
-        asyncState.btc_downtrend
-        and attributes.get("btc_pulse", False)
-        and not attributes.get("ext_botswitch", False)
-        ):
-            logging.info("3CQS signals not processed - bot stopped because of BTC downtrend")
-    else:
-        # When having multiple 3cqsbots started at the same time, it may be the error "Too many requests" (tg_output=false) when calling symrank simultanously 
-        # By adding random time to the 45sec standard timeout of the symrank call, try to avoid this problem
-        if not tg_output:
-            time.sleep(45+randrange(300))
-            await symrank()
-
+    if attributes.get("btc_pulse", False) and asyncState.btc_downtrend:
+        logging.info("3CQS signals not processed - bot stopped because of BTC downtrend")
+    elif tg_output:
         account_output = asyncState.accountData
         pair_output = asyncState.pairData
         # if signal with #START or #STOP
@@ -476,7 +466,7 @@ async def my_event_handler(event):
 
 
 async def main():
-    
+
     signals = Signals(logging)
     asyncState.accountData = account_data()
     asyncState.pairData = pair_data(asyncState.accountData)
@@ -493,7 +483,7 @@ async def main():
     ) and attributes.get("ext_botswitch", False):
         sys.tracebacklimit = 0
         sys.exit("Check config.ini, btc_pulse/fearandgreed AND ext_botswitch both set to true - not allowed")
-    
+
     # Call FGI to set dca settings
     if attributes.get("fearandgreed", False):
         fgitask = client.loop.create_task(signals.get_fgi(asyncState))
@@ -501,9 +491,6 @@ async def main():
         dcaconfswitchtask = client.loop.create_task(dca_conf_switch())
         dcaconfswitchtask.add_done_callback(_handle_task_result)
         asyncState.loop = True
-      
-    if not attributes.get("single"):
-        await symrank()
 
     if attributes.get("btc_pulse", False):
         btcpulsetask = client.loop.create_task(signals.getbtcpulse(asyncState))
@@ -511,7 +498,11 @@ async def main():
         switchtask = client.loop.create_task(bot_active())
         switchtask.add_done_callback(_handle_task_result)
         asyncState.loop = True
-        
+
+    if not attributes.get("single"):
+        if not attributes.get("btc_pulse", False) or (attributes.get("btc_pulse", False) and not asyncState.btc_downtrend):
+            await symrank()
+
     while asyncState.loop:
         if attributes.get("btc_pulse", False):
             await btcpulsetask
