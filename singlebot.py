@@ -275,7 +275,7 @@ class SingleBot:
             entity="bots",
             action="create_bot",
             additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-            payload=self.payload(self.tg_data["pair"], newbot = True),
+            payload=self.payload(self.tg_data["pair"], new_bot = True),
         )
 
         if error:
