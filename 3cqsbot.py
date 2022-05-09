@@ -15,7 +15,6 @@ from signals import Signals
 from config import Config
 from pathlib import Path
 from logger import Logger, NotificationHandler
-from random import randrange
 
 ######################################################
 #                       Config                       #
@@ -357,7 +356,7 @@ async def my_event_handler(event):
 
     if attributes.get("btc_pulse", False) and asyncState.btc_downtrend:
         logging.info("3CQS signals not processed - bot stopped because of BTC downtrend")
-    elif tg_output:
+    elif tg_output and asyncState.bot_active:
         account_output = asyncState.accountData
         pair_output = asyncState.pairData
         # if signal with #START or #STOP
@@ -462,7 +461,7 @@ async def my_event_handler(event):
                 logging.debug(
                     "Ignoring /symrank call, because we're running in single mode!"
                 )
-        notification.send_notification()
+    notification.send_notification()
 
 
 async def main():

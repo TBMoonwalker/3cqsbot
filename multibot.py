@@ -52,7 +52,7 @@ class MultiBot:
 
         return strategy
 
-    def adjustmad(self, pairs, mad):
+    def adjust_mad(self, pairs, mad):
         # Lower max active deals, when pairs are under mad
         if len(pairs) * self.attributes.get("sdsp") < mad:
             self.logging.debug(
@@ -362,7 +362,7 @@ class MultiBot:
             self.logging.debug("Pairs after limit initial pairs filter " + str(pairs))
 
         # Adapt mad if pairs are under value
-        mad = self.adjustmad(pairs, mad)
+        mad = self.adjust_mad(pairs, mad)
         maxdeals = self.attributes.get("mad")
         self.logging.info(
             str(len(pairs)) 
@@ -511,7 +511,7 @@ class MultiBot:
                             )
 
                     # Adapt mad if included pairs and simul. deals for the same pair are lower than mad value
-                    mad = self.adjustmad(bot["pairs"], mad)
+                    mad = self.adjust_mad(bot["pairs"], mad)
                     self.logging.info(
                         "Included pairs: "
                         + str(bot["pairs"])
