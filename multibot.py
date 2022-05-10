@@ -205,7 +205,7 @@ class MultiBot:
 
                 # Disables an existing bot
                 self.logging.info(
-                    "Disabling bot: " + bot["name"] + " (" + str(bot["id"]) + ")", 
+                    "Disabling bot: " + bot["name"] + " (botid: " + str(bot["id"]) + ")", 
                     True
                 )
 
@@ -285,7 +285,7 @@ class MultiBot:
             botnames = []
             if self.botid != "":
                 self.logging.info("3cqsbot not found with botid: " + self.botid)
-                
+
             self.logging.info("Searching for 3cqsbot with name '" + self.botname + "' to get botid")
             for bot in self.bot_data:
                 botnames.append(bot["name"])
