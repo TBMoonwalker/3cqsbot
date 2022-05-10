@@ -1,41 +1,65 @@
 import argparse
 import re
-import logging
 import asyncio
 import sys
 import os
 import portalocker
 import math
+import time
 
 from telethon import TelegramClient, events
 from py3cw.request import Py3CW
 from singlebot import SingleBot
 from multibot import MultiBot
 from signals import Signals
-from logging.handlers import RotatingFileHandler
 from config import Config
-
+from pathlib import Path
+from logger import Logger, NotificationHandler
 
 ######################################################
 #                       Config                       #
 ######################################################
+
+#load configuration file
 attributes = Config()
 
+program = Path(__file__).stem
 
+# Parse and interpret options
 parser = argparse.ArgumentParser(
     description="3CQSBot bringing 3CQS signals to 3Commas."
 )
-parser.add_argument(
-    "-l",
-    "--loglevel",
-    metavar="loglevel",
-    type=str,
-    nargs="?",
-    default="info",
-    help="loglevel during runtime - use info, debug, warning, ...",
-)
 
+parser.add_argument("-d", "--datadir", help="data directory to use", type=str)
 args = parser.parse_args()
+if args.datadir:
+    datadir = args.datadir
+else:
+    datadir = os.getcwd()
+
+# Handle timezone
+if hasattr(time, "tzset"):
+    os.environ["TZ"] = attributes.get("timezone", "Europe/Amsterdam")
+    time.tzset()
+
+# Init notification handler
+notification = NotificationHandler(
+    program,
+    attributes.get("notifications", False),
+    attributes.get("notify-urls", []),
+    )
+
+# Initialise logging
+logging = Logger(
+    datadir,
+    program,
+    notification,
+    attributes.get("logrotate", 7),
+    attributes.get("debug", False),
+    attributes.get("notifications", False),
+    )
+
+logging.info(f"Loaded configuration from '{datadir}/config.ini'")
 
 ######################################################
 #                        Init                        #
@@ -57,30 +81,6 @@ client = TelegramClient(
     attributes.get("sessionfile", "tgsesssion"),
     attributes.get("api_id"),
     attributes.get("api_hash"),
-)
-
-# Set logging facility
-if attributes.get("debug", False):
-    loglevel = "DEBUG"
-else:
-    loglevel = getattr(logging, args.loglevel.upper(), None)
-
-# Set logging output
-# Thanks to @M1ch43l for improving logging output messages
-handler = [logging.StreamHandler()]
-
-if attributes.get("log_to_file", False):
-    handler = [logging.StreamHandler(sys.stdout), logging.handlers.RotatingFileHandler(
-        attributes.get("log_file_path", "3cqsbot.log"),
-        maxBytes=attributes.get("log_file_size", 200000),
-        backupCount=attributes.get("log_file_count", 5),
-    )]
-
-logging.basicConfig(
-    format="%(asctime)s %(levelname)-8s %(message)s",
-    level=loglevel,
-    datefmt="%Y-%m-%d %H:%M:%S",
-    handlers=handler,
 )
 
 # Initialize global variables
@@ -295,9 +295,10 @@ async def bot_switch():
             if attributes.get("single"):
                 logging.info("Not activating old single bots - waiting for new signals")
             else:
-                while not asyncState.symrank_success:
                 # Send new top 30 for activating the multibot
+                while not asyncState.symrank_success:
                     await symrank()
+                    # prevent from calling the symrank command too much until success
                     await asyncio.sleep(60)
 
         elif asyncState.btc_downtrend and asyncState.bot_active:
@@ -354,15 +355,15 @@ def _handle_task_result(task: asyncio.Task) -> None:
 
 @client.on(events.NewMessage(chats=attributes.get("chatroom", "3C Quick Stats")))
 async def my_event_handler(event):
-    
+
     tg_output = tg_data(parse_tg(event.raw_text))
     logging.debug("TG msg: " + str(tg_output))
 
-    account_output = asyncState.accountData
-    pair_output = asyncState.pairData
     if attributes.get("btc_pulse", False) and not asyncState.bot_active:
         logging.info("3CQS signals not processed - bot stopped because of BTC downtrend")
     elif tg_output:
+        account_output = asyncState.accountData
+        pair_output = asyncState.pairData
         # if signal with #START or #STOP
         if tg_output and not isinstance(tg_output, list):
 
@@ -426,7 +427,8 @@ async def my_event_handler(event):
                             + str(tg_output["volatility"])
                             + " and price action: "
                             + str(tg_output["price_action"])
-                            + " not meeting config filter limits - signal ignored"
+                            + " not meeting config filter limits - signal ignored", 
+                            True
                         )
                 else:
                     logging.info(
@@ -444,7 +446,8 @@ async def my_event_handler(event):
         # if symrank list
         elif tg_output and isinstance(tg_output, list):
             if not attributes.get("single"):
-                logging.info("New symrank list incoming - updating bot")
+
+                logging.info("New symrank list incoming - updating bot", True)
                 bot_output = bot_data()
                 asyncState.symrank_success = True
                 # Create or update multibot with pairs from "/symrank"
@@ -463,10 +466,11 @@ async def my_event_handler(event):
                 logging.debug(
                     "Ignoring /symrank call, because we're running in single mode!"
                 )
+    notification.send_notification()
 
 
 async def main():
-    
+
     signals = Signals(logging)
     asyncState.accountData = account_data()
     asyncState.pairData = pair_data(asyncState.accountData)
@@ -476,13 +480,13 @@ async def main():
     user = await client.get_participants("The3CQSBot")
     asyncState.chatid = user[0].id
 
-    logging.info("*** 3CQS Bot started ***")
+    logging.info("*** 3CQS Bot started ***", True)
 
     # Check part of the config before starting the client
     if attributes.get("btc_pulse", False) and attributes.get("ext_botswitch", False):
         sys.tracebacklimit = 0
         sys.exit("Check config.ini, btc_pulse AND ext_botswitch both set to true - not allowed")
-    
+
     # Create independent tasks for FGI and BTC pulse up-/downtrend check
     if attributes.get("fearandgreed", False):
         fgi_task = client.loop.create_task(signals.get_fgi(asyncState))

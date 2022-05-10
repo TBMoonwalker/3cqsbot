@@ -370,8 +370,6 @@ class MultiBot:
                 "Creating multi bot '" 
                 + self.botname 
                 + "' with filtered symrank pairs"
-                + self.dca_conf
-                + "]"
             )
             self.report_funds_needed(maxdeals)
 
@@ -412,8 +410,6 @@ class MultiBot:
                 + "' (botid: "
                 + self.botid
                 + ") with filtered symrank pairs"
-                + self.dca_conf
-                + "]"
             )
             self.report_funds_needed(maxdeals)
 
@@ -449,7 +445,7 @@ class MultiBot:
 
                 if not triggeronly:
                     pair = self.tg_data["pair"]
-
+                    update_bot = False
                     self.logging.info(
                         "Got new 3cqs " + self.tg_data["action"] + " signal for " + pair
                     )
@@ -479,36 +475,39 @@ class MultiBot:
                             if pair:
                                 self.logging.info("Adding pair " + pair)
                                 bot["pairs"].append(pair)
+                                update_bot = True
                     else:
                         if pair in bot["pairs"]:
                             self.logging.info("Remove pair " + pair)
                             bot["pairs"].remove(pair)
+                            update_bot = True
                         else:
                             self.logging.info(
                                 pair + " was not included in the pair list - not removed"
                             )
 
                     # Adapt mad if included pairs and simul. deals for the same pair are lower than mad value
-                    mad = self.adjustmad(bot["pairs"], mad)
-                    self.logging.info(
-                        "Included pairs: "
-                        + str(bot["pairs"])
-                        + ". Adjusting mad to: "
-                        + str(mad)
-                    )
+                    if update_bot:
+                        mad = self.adjustmad(bot["pairs"], mad)
+                        self.logging.info(
+                            "Included pairs: "
+                            + str(bot["pairs"])
+                            + ". Adjusting mad to: "
+                            + str(mad)
+                        )
 
-                    error, data = self.p3cw.request(
-                        entity="bots",
-                        action="update",
-                        action_id=str(bot["id"]),
-                        additional_headers={
-                            "Forced-Mode": self.attributes.get("trade_mode")
-                        },
-                        payload=self.payload(bot["pairs"], mad, new_bot = False),
-                    )
+                        error, data = self.p3cw.request(
+                            entity="bots",
+                            action="update",
+                            action_id=str(bot["id"]),
+                            additional_headers={
+                                "Forced-Mode": self.attributes.get("trade_mode")
+                            },
+                            payload=self.payload(bot["pairs"], mad, new_bot = False),
+                        )
 
-                    if error:
-                        self.logging.error(error["msg"])
+                        if error:
+                            self.logging.error(error["msg"])
                 else:
                     data = bot
 
