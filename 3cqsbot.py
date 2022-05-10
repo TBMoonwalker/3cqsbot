@@ -285,7 +285,7 @@ async def symrank():
     await client.send_message(asyncState.chatid, "/symrank")
 
 
-async def bot_active():
+async def bot_switch():
     
     while True:
         if not asyncState.btc_downtrend and not asyncState.bot_active:
@@ -299,7 +299,7 @@ async def bot_active():
                 while not asyncState.symrank_success:
                     await symrank()
                     # prevent from calling the symrank command too much until success
-                    await asyncio.wait(60)
+                    await asyncio.sleep(60)
 
         elif asyncState.btc_downtrend and asyncState.bot_active:
             asyncState.bot_active = False
@@ -498,7 +498,7 @@ async def main():
     if attributes.get("btc_pulse", False):
         btcpulse_task = client.loop.create_task(signals.getbtcpulse(asyncState))
         btcpulse_task.add_done_callback(_handle_task_result)
-        bot_switch_task = client.loop.create_task(bot_active())
+        bot_switch_task = client.loop.create_task(bot_switch())
         bot_switch_task.add_done_callback(_handle_task_result)
         asyncState.loop = True
 
