@@ -495,31 +495,35 @@ async def main():
         sys.tracebacklimit = 0
         sys.exit("Check config.ini, btc_pulse/fearandgreed AND ext_botswitch both set to true - not allowed")
     
-    # Call FGI to set dca settings
+    # Create tasks to switch dca settings according to FGI
     if attributes.get("fearandgreed", False):
-        fgitask = client.loop.create_task(signals.get_fgi(asyncState))
-        fgitask.add_done_callback(_handle_task_result)
-        dcaconfswitchtask = client.loop.create_task(dca_conf_switch())
-        dcaconfswitchtask.add_done_callback(_handle_task_result)
+        fgi_task = client.loop.create_task(signals.get_fgi(asyncState))
+        fgi_task.add_done_callback(_handle_task_result)
+        dca_conf_switch_task = client.loop.create_task(dca_conf_switch())
+        dca_conf_switch_task.add_done_callback(_handle_task_result)
         asyncState.loop = True
-      
-    if not attributes.get("single"):
-        await symrank()
 
+    # Create tasks to check for BTC up-/downtrend
     if attributes.get("btc_pulse", False):
-        btcbooltask = client.loop.create_task(signals.getbtcbool(asyncState))
-        btcbooltask.add_done_callback(_handle_task_result)
-        switchtask = client.loop.create_task(botswitch())
-        switchtask.add_done_callback(_handle_task_result)
+        btcpulse_task = client.loop.create_task(signals.getbtcbool(asyncState))
+        btcpulse_task.add_done_callback(_handle_task_result)
+        botswitch_task = client.loop.create_task(botswitch())
+        botswitch_task.add_done_callback(_handle_task_result)
         asyncState.loop = True
-        
-    while asyncState.loop:
-        if attributes.get("btc_pulse", False):
-            await btcbooltask
-            await switchtask
 
+    if not attributes.get("single"):
+        if not attributes.get("btc_pulse", False):
+            await symrank()
+
+    while asyncState.loop:
         if attributes.get("fearandgreed", False): 
-            await fgitask
+            await fgi_task
+            await dca_conf_switch_task
+
+        if attributes.get("btc_pulse", False):
+            await btcpulse_task
+            await botswitch_task
+
 
 with client:
     client.loop.run_until_complete(main())
