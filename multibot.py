@@ -17,6 +17,7 @@ class MultiBot:
         p3cw,
         logging,
         dca_conf,
+        bot_active,
     ):
         self.tg_data = tg_data
         self.bot_data = bot_data
@@ -25,8 +26,9 @@ class MultiBot:
         self.attributes = attributes
         self.p3cw = p3cw
         self.logging = logging
-        self.signal = Signals(logging)
         self.dca_conf = dca_conf
+        self.bot_active = bot_active
+        self.signal = Signals(logging)
         self.botid = str(self.attributes.get("botid", "", "dcabot"))
         self.botname = (
             self.attributes.get("prefix", self.attributes.get("prefix", "3CQSBOT", "dcabot"), self.dca_conf)
@@ -194,9 +196,12 @@ class MultiBot:
 
             if error:
                 self.logging.error(error["msg"])
+            else:
+                self.logging.info("Enabling bot successful", True)
+                self.bot_active = True
 
         else:
-            self.logging.info("'" + bot["name"] + "' (botid: " + str(bot["id"]) + ") enabled")
+            self.logging.info("'" + bot["name"] + "' (botid: " + str(bot["id"]) + ") active")
 
     def disable(self):
         # Disables an existing bot
@@ -220,6 +225,9 @@ class MultiBot:
 
                 if error:
                     self.logging.error(error["msg"])
+                else:
+                    self.logging.info("Disabling bot successful", True)
+                    self.bot_active = False
 
     def new_deal(self, bot, triggerpair):
         # Triggers a new deal

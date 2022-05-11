@@ -289,27 +289,38 @@ async def bot_switch():
     
     while True:
         if not asyncState.btc_downtrend and not asyncState.bot_active:
-            asyncState.bot_active = True
-            asyncState.symrank_success = False
-            logging.debug("bot_active: " + str(asyncState.bot_active))
+
+            logging.debug("bot_active before enabling: " + str(asyncState.bot_active))
+            
             if attributes.get("single"):
-                logging.info("Not activating old single bots - waiting for new signals")
+                asyncState.bot_active = True
+                logging.info("Single bot mode activated - waiting for #Start signals", True)
             else:
                 # Send new top 30 for activating the multibot
+                asyncState.symrank_success = False
                 while not asyncState.symrank_success:
+                    # asyncState.bot_active will be set by my_event_handler after symrank call
                     await symrank()
                     # prevent from calling the symrank command too much until success
                     await asyncio.sleep(60)
+            
+            logging.debug("bot_active after disabling: " + str(asyncState.bot_active))
+            notification.send_notification()
 
         elif asyncState.btc_downtrend and asyncState.bot_active:
-            asyncState.bot_active = False
-            logging.debug("bot_active: " + str(asyncState.bot_active))
+
+            logging.debug("bot_active before disabling: " + str(asyncState.bot_active))
+            
             if attributes.get("single"):
-                bot = SingleBot([], bot_data(), {}, attributes, p3cw, logging, asyncState.dca_conf)
+                bot = SingleBot([], bot_data(), {}, attributes, p3cw, logging, asyncState.dca_conf, asyncState.bot_active)
                 bot.disable(bot_data(), True)
             else:
-                bot = MultiBot([], bot_data(), {}, 0, attributes, p3cw, logging, asyncState.dca_conf)
+                bot = MultiBot([], bot_data(), {}, 0, attributes, p3cw, logging, asyncState.dca_conf, asyncState.bot_active)
                 bot.disable()
+            
+            asyncState.bot_active = bot.bot_active
+            logging.debug("bot_active after disabling: " + str(asyncState.bot_active))
+            notification.send_notification()
 
         else:
             logging.debug("Nothing do to")
@@ -359,9 +370,7 @@ async def my_event_handler(event):
     tg_output = tg_data(parse_tg(event.raw_text))
     logging.debug("TG msg: " + str(tg_output))
 
-    if attributes.get("btc_pulse", False) and not asyncState.bot_active:
-        logging.info("3CQS signals not processed - bot stopped because of BTC downtrend")
-    elif tg_output:
+    if tg_output:
         account_output = asyncState.accountData
         pair_output = asyncState.pairData
         # if signal with #START or #STOP
@@ -370,9 +379,10 @@ async def my_event_handler(event):
             logging.info(
                 "New 3CQS signal '" + str(tg_output["signal"]) + "' incoming..."
             )
-
+            if not asyncState.bot_active:
+                logging.info("Signal not processed because of BTC downtrend")
             # Check if it is the right signal
-            if (
+            elif (
                 tg_output["signal"] == attributes.get("symrank_signal")
                 or attributes.get("symrank_signal") == "all"
             ):
@@ -382,7 +392,14 @@ async def my_event_handler(event):
                 # Choose multibot or singlebot
                 if attributes.get("single"):
                     bot = SingleBot(
-                        tg_output, bot_output, account_output, attributes, p3cw, logging, asyncState.dca_conf
+                        tg_output, 
+                        bot_output, 
+                        account_output, 
+                        attributes, 
+                        p3cw, 
+                        logging, 
+                        asyncState.dca_conf, 
+                        asyncState.bot_active,
                     )
                 else:
                     bot = MultiBot(
@@ -393,7 +410,8 @@ async def my_event_handler(event):
                         attributes,
                         p3cw,
                         logging,
-                        asyncState.dca_conf
+                        asyncState.dca_conf,
+                        asyncState.bot_active,
                     )
                     # Every signal triggers a new multibot deal
                     bot.trigger(triggeronly=True)
@@ -416,6 +434,7 @@ async def my_event_handler(event):
                     ) or tg_output["action"] == "STOP":
 
                         bot.trigger()
+                        notification.send_notification()
 
                     else:
                         logging.info(
@@ -427,8 +446,7 @@ async def my_event_handler(event):
                             + str(tg_output["volatility"])
                             + " and price action: "
                             + str(tg_output["price_action"])
-                            + " not meeting config filter limits - signal ignored", 
-                            True
+                            + " not meeting config filter limits - signal ignored"
                         )
                 else:
                     logging.info(
@@ -445,11 +463,11 @@ async def my_event_handler(event):
                 )
         # if symrank list
         elif tg_output and isinstance(tg_output, list):
-            if not attributes.get("single"):
+            if not attributes.get("single") and not asyncState.symrank_success:
 
                 logging.info("New symrank list incoming - updating bot", True)
                 bot_output = bot_data()
-                asyncState.symrank_success = True
+
                 # Create or update multibot with pairs from "/symrank"
                 bot = MultiBot(
                     tg_output,
@@ -459,14 +477,19 @@ async def my_event_handler(event):
                     attributes,
                     p3cw,
                     logging,
-                    asyncState.dca_conf
+                    asyncState.dca_conf,
+                    asyncState.bot_active,
                 )
                 bot.create()
+                # check if multibot enabled, if yes no need to process symrank calls anymore
+                if asyncState.bot_active:
+                    asyncState.symrank_success = True
+                    notification.send_notification()
+
             else:
                 logging.debug(
                     "Ignoring /symrank call, because we're running in single mode!"
                 )
-    notification.send_notification()
 
 
 async def main():
@@ -481,11 +504,15 @@ async def main():
     asyncState.chatid = user[0].id
 
     logging.info("*** 3CQS Bot started ***", True)
+    if attributes.get("single"):
+        logging.info("Single pair bot mode activated", True)
+    else:
+        logging.info("Multi pair bot mode activated", True)
 
     # Check part of the config before starting the client
     if attributes.get("btc_pulse", False) and attributes.get("ext_botswitch", False):
         sys.tracebacklimit = 0
-        sys.exit("Check config.ini, btc_pulse AND ext_botswitch both set to true - not allowed")
+        sys.exit("Check config.ini: btc_pulse AND ext_botswitch both set to true - not allowed")
 
     # Create independent tasks for FGI and BTC pulse up-/downtrend check
     if attributes.get("fearandgreed", False):

@@ -8,7 +8,7 @@ from signals import Signals
 
 class SingleBot:
     def __init__(
-        self, tg_data, bot_data, account_data, attributes, p3cw, logging, dca_conf
+        self, tg_data, bot_data, account_data, attributes, p3cw, logging, dca_conf, bot_active
     ):
         self.tg_data = tg_data
         self.bot_data = bot_data
@@ -16,8 +16,9 @@ class SingleBot:
         self.attributes = attributes
         self.p3cw = p3cw
         self.logging = logging
-        self.signal = Signals(logging)
         self.dca_conf = dca_conf
+        self.bot_active = bot_active
+        self.signal = Signals(logging)
         self.prefix = self.attributes.get("prefix", "3CQSBOT", "dcabot")
         self.subprefix = self.attributes.get("subprefix", "SINGLE", "dcabot")
         self.suffix = self.attributes.get("suffix", "dcabot", "dcabot")
@@ -233,6 +234,8 @@ class SingleBot:
 
         if error:
             self.logging.error(error["msg"])
+        else:
+            self.bot_active = True
 
     def disable(self, bot, allbots=False):
         botname = self.attributes.get("prefix", "3CQSBOT", "dcabot") \
@@ -243,9 +246,12 @@ class SingleBot:
         error = {}
 
         if allbots:
-
-            self.logging.info("Disabling all single bots, because of btc pulse signal")
-
+            self.bot_active = False
+            self.logging.info(
+                "Disabling all 3cqs single bots because btc-pulse is signaling downtrend", 
+                True
+            )
+            
             for bots in bot:
                 if botname in bots["name"] and bot["is_enabled"]:
 
