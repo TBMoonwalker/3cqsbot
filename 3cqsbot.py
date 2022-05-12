@@ -481,6 +481,7 @@ async def my_event_handler(event):
                     asyncState.bot_active,
                 )
                 bot.create()
+                asyncState.bot_active = bot.bot_active
                 # check if multibot enabled, if yes no need to process symrank calls anymore
                 if asyncState.bot_active:
                     asyncState.symrank_success = True
@@ -530,11 +531,10 @@ async def main():
         asyncState.loop = True
 
     if not attributes.get("single"):
-        if not attributes.get("btc_pulse", False):
-            while not asyncState.symrank_success:
-                await symrank()
-                # prevent from calling the symrank command too much until success
-                await asyncio.sleep(60)
+        while not asyncState.symrank_success:
+            await symrank()
+            # prevent from calling the symrank command too much until success
+            await asyncio.sleep(60)
 
     while asyncState.loop:
         if attributes.get("fearandgreed", False): 
