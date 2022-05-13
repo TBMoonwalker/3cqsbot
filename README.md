@@ -205,7 +205,8 @@ topcoin_filter | boolean | NO | (false), true | Disables the topcoin filter (de
 topcoin_limit | integer | NO | (3500) | Token pair has to be in the configured topcoin limit to be traded by the bot
 topcoin_volume | integer | NO | (0) | Volume check against Coingecko (btc_min_vol means volume check directly in 3commas - not before like this setting). Only pairs with the given volume are traded. Default is 0 and means volume check is disabled
 topcoin_exchange | string | NO | (binance), gdax | Name of the exchange to check the volume. Because every exchange has another id, please contact me for your exchange and I will update this list here for configuration
-limit_initial_pairs | boolean |NO | (false), true | Limit initial pairs to the max number of deals (MAD) for multi bot - top pairs are chosen
+continuous_update | boolean | NO | (true), false | If set to true the multi bot is continuously updated with pairs independent of being activated or deactivated, e.g. by btc_pulse. The top30 symrank list is called once when bot is started. 
+limit_initial_pairs | boolean | NO | (false), true | Limit initial pairs to the max number of deals (MAD) for multi bot - top pairs are chosen
 random_pair | boolean | NO | (false), true | If true then random pairs from the symrank list will be used for new deals in multibot
 btc_pulse | boolean | NO | (false), true | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
 fearandgreed | boolean | NO | (false), true | If true, three different dca settings can be used according to the market (use [fgi_aggressive] for bull market, [fgi_moderate] for sideways market, [fgi_defensive] for bear market, each with corresponding dca settings)  

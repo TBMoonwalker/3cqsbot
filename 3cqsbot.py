@@ -294,8 +294,9 @@ async def bot_switch():
             
             if attributes.get("single"):
                 asyncState.bot_active = True
-                logging.info("Single bot mode activated - waiting for #Start signals", True)
-            else:
+                logging.info("Single bot mode activated - waiting for pair #start signals", True)
+            elif not attributes.get("continuous_update", True):
+                logging.info("Multi bot activated - with pairs update by top30 symrank list", True)
                 # Send new top 30 for activating the multibot
                 asyncState.symrank_success = False
                 while not asyncState.symrank_success:
@@ -303,6 +304,9 @@ async def bot_switch():
                     await symrank()
                     # prevent from calling the symrank command too much until success
                     await asyncio.sleep(60)
+            else:
+                asyncState.bot_active = True
+                logging.info("Multi bot activated - waiting for pair #start signals", True)
             
             logging.debug("bot_active after disabling: " + str(asyncState.bot_active))
             notification.send_notification()
@@ -312,12 +316,11 @@ async def bot_switch():
             logging.debug("bot_active before disabling: " + str(asyncState.bot_active))
             
             if attributes.get("single"):
-                bot = SingleBot([], bot_data(), {}, attributes, p3cw, logging, asyncState.dca_conf, asyncState.bot_active)
+                bot = SingleBot([], bot_data(), {}, attributes, p3cw, logging, asyncState)
                 bot.disable(bot_data(), True)
             else:
-                bot = MultiBot([], bot_data(), {}, 0, attributes, p3cw, logging, asyncState.dca_conf, asyncState.bot_active)
+                bot = MultiBot([], bot_data(), {}, 0, attributes, p3cw, logging, asyncState)
                 bot.disable()
-            
             asyncState.bot_active = bot.bot_active
             logging.debug("bot_active after disabling: " + str(asyncState.bot_active))
             notification.send_notification()
@@ -379,7 +382,7 @@ async def my_event_handler(event):
             logging.info(
                 "New 3CQS signal '" + str(tg_output["signal"]) + "' incoming..."
             )
-            if not asyncState.bot_active:
+            if not asyncState.bot_active and not attributes.get("continuous_update", True):
                 logging.info("Signal not processed because of BTC downtrend")
             # Check if it is the right signal
             elif (
@@ -398,8 +401,7 @@ async def my_event_handler(event):
                         attributes, 
                         p3cw, 
                         logging, 
-                        asyncState.dca_conf, 
-                        asyncState.bot_active,
+                        asyncState,
                     )
                 else:
                     bot = MultiBot(
@@ -410,10 +412,9 @@ async def my_event_handler(event):
                         attributes,
                         p3cw,
                         logging,
-                        asyncState.dca_conf,
-                        asyncState.bot_active,
+                        asyncState,
                     )
-                    # Every signal triggers a new multibot deal
+                    # Every signal triggers a new multibot deal when deal_mode = signal configured
                     bot.trigger(triggeronly=True)
 
                 # Trigger bot if limits passed
@@ -477,15 +478,12 @@ async def my_event_handler(event):
                     attributes,
                     p3cw,
                     logging,
-                    asyncState.dca_conf,
-                    asyncState.bot_active,
+                    asyncState,
                 )
                 bot.create()
-                asyncState.bot_active = bot.bot_active
-                # check if multibot enabled, if yes no need to process symrank calls anymore
-                if asyncState.bot_active:
-                    asyncState.symrank_success = True
-                    notification.send_notification()
+                
+                asyncState.symrank_success = True
+                notification.send_notification()
 
             else:
                 logging.debug(

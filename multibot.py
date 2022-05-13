@@ -16,8 +16,7 @@ class MultiBot:
         attributes,
         p3cw,
         logging,
-        dca_conf,
-        bot_active,
+        asyncState,
     ):
         self.tg_data = tg_data
         self.bot_data = bot_data
@@ -26,8 +25,9 @@ class MultiBot:
         self.attributes = attributes
         self.p3cw = p3cw
         self.logging = logging
-        self.dca_conf = dca_conf
-        self.bot_active = bot_active
+        self.dca_conf = asyncState.dca_conf
+        self.bot_active = asyncState.bot_active
+        self.btc_downtrend = asyncState.btc_downtrend
         self.signal = Signals(logging)
         self.botid = str(self.attributes.get("botid", "", "dcabot"))
         self.botname = (
@@ -404,9 +404,9 @@ class MultiBot:
             if error:
                 self.logging.error(error["msg"])
             else:
-                if not self.attributes.get("ext_botswitch", False):
+                if not self.attributes.get("ext_botswitch", False) and not self.btc_downtrend:
                     self.enable(data)
-                else:
+                elif self.attributes.get("ext_botswitch", False):
                     self.logging.info(
                         "ext_botswitch set to true, bot has to be enabled by external TV signal",
                         True
@@ -449,9 +449,9 @@ class MultiBot:
                 self.logging.error(error["msg"])
             else:
                 self.logging.debug("Pairs: " + str(pairs))
-                if not self.attributes.get("ext_botswitch", False):
+                if not self.attributes.get("ext_botswitch", False) and not self.btc_downtrend:
                     self.enable(data)
-                else:
+                elif self.attributes.get("ext_botswitch", False):
                     self.logging.info(
                         "ext_botswitch set to true, bot enabling/disabling has to be managed by external TV signal",
                         True

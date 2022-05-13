@@ -8,7 +8,7 @@ from signals import Signals
 
 class SingleBot:
     def __init__(
-        self, tg_data, bot_data, account_data, attributes, p3cw, logging, dca_conf, bot_active
+        self, tg_data, bot_data, account_data, attributes, p3cw, logging, asyncState
     ):
         self.tg_data = tg_data
         self.bot_data = bot_data
@@ -16,8 +16,8 @@ class SingleBot:
         self.attributes = attributes
         self.p3cw = p3cw
         self.logging = logging
-        self.dca_conf = dca_conf
-        self.bot_active = bot_active
+        self.dca_conf = asyncState.dca_conf
+        self.bot_active = asyncState.bot_active
         self.signal = Signals(logging)
         self.prefix = self.attributes.get("prefix", "3CQSBOT", "dcabot")
         self.subprefix = self.attributes.get("subprefix", "SINGLE", "dcabot")
