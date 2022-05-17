@@ -5,3 +5,4 @@
 config.ini
 config.ini.old
 launch.json
+logs/*

@@ -48,10 +48,11 @@ class MultiBot:
                     + self.dca_conf
                     + "] section with DCA settings or decoding JSON string of deal_mode failed. Please check https://jsonformatter.curiousconcept.com/ for correct format"
                 )
+                sys.exit("Aborting script!")
 
         return strategy
 
-    def adjustmad(self, pairs, mad):
+    def adjust_mad(self, pairs, mad):
         # Lower max active deals, when pairs are under mad
         if len(pairs) * self.attributes.get("sdsp") < mad:
             self.logging.debug(
@@ -83,7 +84,7 @@ class MultiBot:
             pd = (pd * ss) + sos
 
         self.logging.info(
-            "Settings of ["
+            "Using DCA settings ["
             + self.dca_conf
             + "]:  TP: "
             + str(tp)
@@ -352,11 +353,11 @@ class MultiBot:
             self.logging.debug("Pairs after limit initial pairs filter " + str(pairs))
 
         # Adapt mad if pairs are under value
-        mad = self.adjustmad(pairs, mad)
+        mad = self.adjust_mad(pairs, mad)
         maxdeals = self.attributes.get("mad")
         self.logging.info(
             str(len(pairs)) 
-            + " out of 30 symrank pairs selected: "
+            + " out of 30 symrank pairs selected "
             + str(pairs)
             + ". Maximum active deals (mad) set to " 
             + str(mad) 
@@ -368,9 +369,7 @@ class MultiBot:
             self.logging.info(
                 "Creating multi bot '" 
                 + self.botname 
-                + "' with filtered symrank pairs using DCA settings ["
-                + self.dca_conf
-                + "]"
+                + "' with filtered symrank pairs"
             )
             self.report_funds_needed(maxdeals)
 
@@ -410,9 +409,7 @@ class MultiBot:
                 + bot["name"]
                 + "' (botid: "
                 + self.botid
-                + ") with filtered symrank pairs using DCA settings ["
-                + self.dca_conf
-                + "]"
+                + ") with filtered symrank pairs"
             )
             self.report_funds_needed(maxdeals)
 
@@ -448,7 +445,7 @@ class MultiBot:
 
                 if not triggeronly:
                     pair = self.tg_data["pair"]
-
+                    update_bot = False
                     self.logging.info(
                         "Got new 3cqs " + self.tg_data["action"] + " signal for " + pair
                     )
@@ -478,37 +475,39 @@ class MultiBot:
                             if pair:
                                 self.logging.info("Adding pair " + pair)
                                 bot["pairs"].append(pair)
+                                update_bot = True
                     else:
                         if pair in bot["pairs"]:
                             self.logging.info("Remove pair " + pair)
                             bot["pairs"].remove(pair)
+                            update_bot = True
                         else:
                             self.logging.info(
                                 pair + " was not included in the pair list - not removed"
                             )
 
-                    # Adapt mad if pairs are under value
-                    mad = self.adjustmad(bot["pairs"], mad)
-                    self.logging.info(
-                        "Adjusting mad to amount of included symrank pairs: "
-                        + str(mad)
-                        + " using DCA settings ["
-                        + self.dca_conf
-                        + "]"
-                    )
+                    # Adapt mad if included pairs and simul. deals for the same pair are lower than mad value
+                    if update_bot:
+                        mad = self.adjustmad(bot["pairs"], mad)
+                        self.logging.info(
+                            "Included pairs: "
+                            + str(bot["pairs"])
+                            + ". Adjusting mad to: "
+                            + str(mad)
+                        )
 
-                    error, data = self.p3cw.request(
-                        entity="bots",
-                        action="update",
-                        action_id=str(bot["id"]),
-                        additional_headers={
-                            "Forced-Mode": self.attributes.get("trade_mode")
-                        },
-                        payload=self.payload(bot["pairs"], mad, new_bot = False),
-                    )
+                        error, data = self.p3cw.request(
+                            entity="bots",
+                            action="update",
+                            action_id=str(bot["id"]),
+                            additional_headers={
+                                "Forced-Mode": self.attributes.get("trade_mode")
+                            },
+                            payload=self.payload(bot["pairs"], mad, new_bot = False),
+                        )
 
-                    if error:
-                        self.logging.error(error["msg"])
+                        if error:
+                            self.logging.error(error["msg"])
                 else:
                     data = bot
 
