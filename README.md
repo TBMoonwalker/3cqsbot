@@ -55,6 +55,9 @@ Name | Type | Mandatory | Values(default) | Description
 api_id | string | YES |   | Telegram API ID
 api_hash | string | YES |   | Telegram API Hash
 sessionfile | string | NO | (tgsession) | Telegram sessionfile location
+chatroom | string | NO | ("3C Quick Stats") | Telegram channel to receive the 3cqs signals
+notifications | string | NO | (false), true | set to true to enable notifications - code from Cyberjunky
+notify-urls | string | NO |   | one or a list of apprise notify urls, each in " " seperated with commas. See [Apprise website](https://github.com/caronc/apprise) for more information.
 
 **!!! ATTENTION - Do not share your sessionfile with other 3cqsbot instances - this will lead to problems and misfunctional bots. For each instance you have to create a new sessionfile !!!**
 
@@ -202,7 +205,8 @@ topcoin_filter | boolean | NO | (false), true | Disables the topcoin filter (de
 topcoin_limit | integer | NO | (3500) | Token pair has to be in the configured topcoin limit to be traded by the bot
 topcoin_volume | integer | NO | (0) | Volume check against Coingecko (btc_min_vol means volume check directly in 3commas - not before like this setting). Only pairs with the given volume are traded. Default is 0 and means volume check is disabled
 topcoin_exchange | string | NO | (binance), gdax | Name of the exchange to check the volume. Because every exchange has another id, please contact me for your exchange and I will update this list here for configuration
-limit_initial_pairs | boolean |NO | (false), true | Limit initial pairs to the max number of deals (MAD) for multi bot - top pairs are chosen
+continuous_update | boolean | NO | (true), false | If set to true the multi bot is continuously updated with pairs independent of being activated or deactivated, e.g. by btc_pulse. The top30 symrank list is called once when bot is started. 
+limit_initial_pairs | boolean | NO | (false), true | Limit initial pairs to the max number of deals (MAD) for multi bot - top pairs are chosen
 random_pair | boolean | NO | (false), true | If true then random pairs from the symrank list will be used for new deals in multibot
 btc_pulse | boolean | NO | (false), true | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
 fearandgreed | boolean | NO | (false), true | If true, three different dca settings can be used according to the market (use [fgi_aggressive] for bull market, [fgi_moderate] for sideways market, [fgi_defensive] for bear market, each with corresponding dca settings)  
@@ -253,9 +257,11 @@ TBMoonWalker or IamtheOnewhoKnocks take no responsibility for losses occurred du
 
 ### Fear and Greed Index
 This settings allows you to use the Crypto Fear and Greed index (FGI) to identify the sentiment of the corresponding market phase. The FGI is determined once a day on https://alternative.me/crypto/fear-and-greed-index/
+![Screenshot](FGI%20borders%20screenshot.png)
 How to use: when FGI is signaling "greed/very greed" (FGI values usually between 60-100) you may use aggressive DCA settings [fgi_aggressive], e.g. Mars/Banshee/69er covering a price drop of 20-40%.
 
 In phases of fear (FGI values 0-30) over a longer time that may correspond to a beginning or consolidating bear market, the bot can switch to very defensive/conservative DCA settings [fgi_defensive], eg. TA safer, ZachTech BitMan covering a price drop of up to 60%. 
+
 Get the excel lists from @Snurg at https://discord.com/channels/720875074806349874/829512509798219788/965771867413696532 to get the optimal DCA settings in corresdonding market phases according to your trade funds. 
 
 For sideways market (FGI values 31-60) you can define DCA settings under [fgi_moderate]. 

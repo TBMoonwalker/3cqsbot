@@ -10,6 +10,8 @@ api_id = "Your api id from Telegram here - without Quotes"
 api_hash = "Your api hash from Telegram here - without Quotes"
 #sessionfile = tgsession
 #chatroom = 3C Quick Stats
+#notifications = False
+#notify-urls = [ "tgram://1234567890:xxxxx/0987654321" ]
 
 [commas]
 key = "Your api key from 3Commas here - without Quotes"
@@ -95,6 +97,7 @@ symrank_signal = triple100
 # not more then 3500 coins
 #topcoin_limit = 3500
 #topcoin_exchange = binance
+#continuous_update = true
 #limit_initial_pairs = false
 #random_pair = true
 # Use different DCA settings according to FGI, define DCA settings under [fgi_aggressive], [fgi_moderate] and [fgi_defensive]

@@ -247,8 +247,11 @@ class Signals:
             fgi = int(raw_data["data"][0]["value"])
             time_until_update = int(raw_data["data"][0]["time_until_update"])
             fmt = '{0.hours}h:{0.minutes}m:{0.seconds}s'
-            self.logging.info("Current FGI: " + str(fgi) + " - time till next update: " 
-            + fmt.format(rd(seconds=time_until_update)))
+            self.logging.info(
+                "Current FGI: " + str(fgi) 
+                + " - time till next update: " + fmt.format(rd(seconds=time_until_update)), 
+                True
+            )
             asyncState.fgi = fgi
 
             # request FGI once per day, because is is calculated only once per day 
@@ -295,7 +298,7 @@ class Signals:
 
     # Credits goes to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts
-    async def getbtcbool(self, asyncState):
+    async def getbtcpulse(self, asyncState):
 
         self.logging.info("Starting btc-pulse")
 
@@ -320,14 +323,14 @@ class Signals:
                     and btcusdt.EMA50[-2] > btcusdt.EMA9[-2]
                 ):
                     self.logging.info("btc-pulse singaling uptrend (golden cross check)")
-                    asyncState.btcbool = False
+                    asyncState.btc_downtrend = False
                 else:
                     self.logging.info("btc-pulse signaling downtrend (golden cross check)")
-                    asyncState.btcbool = True
+                    asyncState.btc_downtrend = True
 
             else:
                 self.logging.info("btc-pulse signaling uptrend")
-                asyncState.btcbool = False
+                asyncState.btc_downtrend = False
 
             self.logging.info("Next btc-pulse check in 5m")
             await asyncio.sleep(300)
