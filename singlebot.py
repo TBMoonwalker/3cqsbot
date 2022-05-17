@@ -151,26 +151,18 @@ class SingleBot:
             "base_order_volume": self.attributes.get("bo", "", self.dca_conf),
             "take_profit": self.attributes.get("tp", "", self.dca_conf),
             "safety_order_volume": self.attributes.get("so", "", self.dca_conf),
-            "martingale_volume_coefficient": self.attributes.get(
-                "os", "", self.dca_conf
-            ),
+            "martingale_volume_coefficient": self.attributes.get("os", "", self.dca_conf),
             "martingale_step_coefficient": self.attributes.get("ss", "", self.dca_conf),
             "max_safety_orders": self.attributes.get("mstc", "", self.dca_conf),
-            "safety_order_step_percentage": self.attributes.get(
-                "sos", "", self.dca_conf
-            ),
+            "safety_order_step_percentage": self.attributes.get("sos", "", self.dca_conf),
             "take_profit_type": "total",
             "active_safety_orders_count": self.attributes.get("max", "", self.dca_conf),
             "cooldown": self.attributes.get("cooldown", 0),
             "strategy_list": self.strategy(),
             "trailing_enabled": self.attributes.get("trailing", False, self.dca_conf),
-            "trailing_deviation": self.attributes.get(
-                "trailing_deviation", 0.2, self.dca_conf
-            ),
+            "trailing_deviation": self.attributes.get("trailing_deviation", 0.2, self.dca_conf),
             "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0, self.dca_conf),
-            "disable_after_deals_count": self.attributes.get(
-                "deals_count", 0, self.dca_conf
-            ),
+            "disable_after_deals_count": self.attributes.get("deals_count", 0, self.dca_conf),
         }
 
         if new_bot:
@@ -185,12 +177,8 @@ class SingleBot:
                     "leverage_custom_value": self.attributes.get("leverage_value"),
                     "stop_loss_percentage": self.attributes.get("stop_loss_percent"),
                     "stop_loss_type": self.attributes.get("stop_loss_type"),
-                    "stop_loss_timeout_enabled": self.attributes.get(
-                        "stop_loss_timeout_enabled"
-                    ),
-                    "stop_loss_timeout_in_seconds": self.attributes.get(
-                        "stop_loss_timeout_seconds"
-                    ),
+                    "stop_loss_timeout_enabled": self.attributes.get("stop_loss_timeout_enabled"),
+                    "stop_loss_timeout_in_seconds": self.attributes.get("stop_loss_timeout_seconds"),
                 }
             )
 
@@ -287,7 +275,7 @@ class SingleBot:
             entity="bots",
             action="create_bot",
             additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-            payload=self.payload(self.tg_data["pair"], newbot = True),
+            payload=self.payload(self.tg_data["pair"], new_bot = True),
         )
 
         if error:
@@ -335,9 +323,7 @@ class SingleBot:
         running_deals = self.deal_count()
         running_bots = self.bot_count()
         disabled_bot_deals = self.disabled_bot_active_deals_count()
-        maxdeals = self.attributes.get("single_count", "", self.dca_conf)
-
-        self.logging.info("running_deals: " + str(running_deals))
+        maxdeals = self.attributes.get("single_count")
 
         botname = self.attributes.get("prefix", "3CQSBOT", "dcabot") \
         + "_" + self.attributes.get("subprefix", "SINGLE", "dcabot") \
@@ -352,7 +338,7 @@ class SingleBot:
 
             if new_bot:
                 if self.tg_data["action"] == "START":
-                    if running_bots < self.attributes.get("single_count"):
+                    if running_bots < maxdeals:
 
                         if self.attributes.get("topcoin_filter", False):
                             pair = self.signal.topcoin(
@@ -369,10 +355,10 @@ class SingleBot:
 
                         if pair:
                             # avoid deals over limit
-                            if running_deals < self.attributes.get("single_count"):
+                            if running_deals < maxdeals:
                                 if (
                                     running_bots + disabled_bot_deals
-                                ) < self.attributes.get("single_count"):
+                                ) < maxdeals:
                                     self.report_funds_needed(maxdeals)
                                     self.create()
                                 else:
@@ -409,12 +395,12 @@ class SingleBot:
                 self.logging.debug("Bot-Name: " + bot["name"])
 
                 if self.tg_data["action"] == "START":
-                    if running_bots < self.attributes.get("single_count"):
+                    if running_bots < maxdeals:
                         # avoid deals over limit
-                        if running_deals < self.attributes.get("single_count"):
+                        if running_deals < maxdeals:
                             if (
                                 running_bots + disabled_bot_deals
-                            ) < self.attributes.get("single_count"):
+                            ) < maxdeals:
                                 self.report_funds_needed(maxdeals)
                                 self.enable(bot)
                             else:
