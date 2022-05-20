@@ -180,7 +180,12 @@ class MultiBot:
         return payload
 
     def enable(self, bot):
-        # Enables an existing bot
+        # search for 3cqsbot by id or by name if bot not given
+        if bot == {}:
+            for bot in self.bot_data:
+                if self.botid == bot["id"] or self.botname == bot["name"]:
+                    break
+
         if not bot["is_enabled"]:
             self.logging.info(
                 "Enabling bot: " + bot["name"] + " (botid: " + str(bot["id"]) + ")", 
@@ -201,14 +206,17 @@ class MultiBot:
                 self.bot_active = True
 
         else:
-            self.logging.info("'" + bot["name"] + "' (botid: " + str(bot["id"]) + ") active")
+            self.logging.info("'" + bot["name"] + "' (botid: " + str(bot["id"]) + ") already enabled", True)
+            self.bot_active = True
 
-    def disable(self):
-        # Disables an existing bot
-        for bot in self.bot_data:
-            if self.botid == bot["id"] or self.botname == bot["name"]:
+    def disable(self, bot):
+        # search for 3cqsbot by id or by name if bot not given
+        if bot == {}:
+            for bot in self.bot_data:
+                if self.botid == bot["id"] or self.botname == bot["name"]:
+                    break
 
-                # Disables an existing bot
+        if bot["is_enabled"]:
                 self.logging.info(
                     "Disabling bot: " + bot["name"] + " (botid: " + str(bot["id"]) + ")", 
                     True
@@ -228,6 +236,10 @@ class MultiBot:
                 else:
                     self.logging.info("Disabling bot successful", True)
                     self.bot_active = False
+
+        else:
+            self.logging.info("'" + bot["name"] + "' (botid: " + str(bot["id"]) + ") already disabled", True)
+            self.bot_active = False
 
     def new_deal(self, bot, triggerpair):
         # Triggers a new deal
@@ -263,14 +275,11 @@ class MultiBot:
                 else:
                     self.logging.error(error["msg"])
 
-    def create(self):
-        # Creates a multi bot with start signal
+    def search_3cqsbot(self):
+        # Check and get existing multibot id
         bot_by_id = False
         bot_by_name = False
-        pairs = []
-        mad = self.attributes.get("mad")
 
-        # Check for existing bot id
         if self.botid != "":
             botnames = []
             self.logging.info("Searching for 3cqsbot with botid: " + self.botid)
@@ -311,6 +320,7 @@ class MultiBot:
                     break
             if not bot_by_name:
                 self.logging.info("3cqsbot not found with this name")
+                bot["name"] = ""
 
         self.logging.debug(
             "Checked bot ids/names till config id/name found: " + str(botnames)
@@ -324,6 +334,15 @@ class MultiBot:
             self.logging.error("If first time run of this script with enabled FGI and no 3cqsbot has been created so far,") 
             self.logging.error("create manually one on 3commas, get botid and leave the bot disabled") 
             sys.exit("Aborting script!")
+        
+        return bot
+
+    def create(self):
+        # Before creating a new multi bot search for existing one
+        bot = self.search_3cqsbot()
+        
+        pairs = []
+        mad = self.attributes.get("mad")
 
         # Initial pair list
         pairlist = self.tg_data
@@ -384,7 +403,7 @@ class MultiBot:
         )
 
         # Creation of multibot even with mad=1 possible
-        if not bot_by_id and not bot_by_name and mad > 0:
+        if bot["name"] == "" and mad > 0:
             # Create new multibot
             self.logging.info(
                 "Creating multi bot '" 
@@ -461,7 +480,9 @@ class MultiBot:
                 "No (filtered) pairs left for multi bot. Either weak market phase or symrank/topcoin filter too strict. Bot will be disabled to wait for better times",
                 True
                 )
-            self.disable()
+            self.disable(bot)
+
+        return bot
 
     def trigger(self, triggeronly=False):
         # Updates multi bot with new pairs

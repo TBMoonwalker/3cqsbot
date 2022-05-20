@@ -214,7 +214,7 @@ ext_botswitch | boolean | NO | (false), true | If true the automatic multibot
 token_denylist | array | NO | ([BUSD_USDT, USDC_USDT, USDT_USDT, USDT_USDP]) | Additional denylist of assets in combination to 3commas blacklist to prevent the bot from including and buying unwanted assets
 
 ### Signals
-The new version of 3cqs signals is now separated into three main versions. To decide which version fit your needs, please take a look at the indicators beneath. The description can be found on Discord too: https://discord.com/channels/720875074806349874/835100061583015947/958724423513419876
+The new version of 3cqs signals is now separated into five main versions. To decide which version fit your needs, please take a look at the indicators beneath. The description can be found on Discord too: https://discord.com/channels/720875074806349874/835100061583015947/958724423513419876
 
 #### triple100
 SIGNAL NAME: SymRank Top 100 Triple Tracker

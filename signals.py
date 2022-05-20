@@ -238,7 +238,7 @@ class Signals:
     async def get_fgi(self, asyncState):
         
         url = "https://api.alternative.me/fng/"
-        self.logging.info("Using crypto fear and greed index (FGI) from alternative.me for changing 3cqsbot DCA settings to defensive, moderate or aggressive")
+        self.logging.info("Using crypto fear and greed index (FGI) from alternative.me for changing 3cqsbot DCA settings to defensive, moderate or aggressive", True)
 
         while True:
             
@@ -300,7 +300,7 @@ class Signals:
     # https://discord.gg/tradealts
     async def getbtcpulse(self, asyncState):
 
-        self.logging.info("Starting btc-pulse")
+        self.logging.info("Starting btc-pulse", True)
 
         while True:
             btcusdt = self.btctechnical("BTC-USD")
@@ -322,14 +322,14 @@ class Signals:
                     btcusdt.EMA9[-1] > btcusdt.EMA50[-1]
                     and btcusdt.EMA50[-2] > btcusdt.EMA9[-2]
                 ):
-                    self.logging.info("btc-pulse singaling uptrend (golden cross check)")
+                    self.logging.info("btc-pulse singaling uptrend (golden cross check)", True)
                     asyncState.btc_downtrend = False
                 else:
-                    self.logging.info("btc-pulse signaling downtrend (golden cross check)")
+                    self.logging.info("btc-pulse signaling downtrend (golden cross check)", True)
                     asyncState.btc_downtrend = True
 
             else:
-                self.logging.info("btc-pulse signaling uptrend")
+                self.logging.info("btc-pulse signaling uptrend", True)
                 asyncState.btc_downtrend = False
 
             self.logging.info("Next btc-pulse check in 5m")

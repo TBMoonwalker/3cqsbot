@@ -95,6 +95,7 @@ asyncState.accountData = {}
 asyncState.pairData = []
 asyncState.loop = False
 asyncState.symrank_success = False
+asyncState.multibot = {}
 
 ######################################################
 #                     Methods                        #
@@ -184,7 +185,7 @@ def tg_data(text_lines):
 
 def bot_data():
     
-    # Gets information about existing bot in 3Commas
+    # Gets information about existing bots in 3Commas
     botlimit = attributes.get("system_bot_value", 300)
     pages = math.ceil(botlimit / 100)
     bots = []
@@ -295,19 +296,19 @@ async def bot_switch():
             if attributes.get("single"):
                 asyncState.bot_active = True
                 logging.info("Single bot mode activated - waiting for pair #start signals", True)
-            elif not attributes.get("continuous_update", True):
-                logging.info("Multi bot activated - with pairs update by top30 symrank list", True)
-                # Send new top 30 for activating the multibot
+            elif attributes.get("continuous_update", True): # listen continously to 3cqs msgs on TG, avoid symrank calls
+                bot.enable(asyncState.multibot) # search multibot by id or name and enable
+                asyncState.bot_active = bot.bot_active
+                logging.info("Multi bot activated - waiting for pair #start signals", True)
+            else: # reactivation of multibot with new symrank call
+                logging.info("Multi bot activated - with initial pairs from actual top30 symrank list - waiting for pair #start signals", True)
                 asyncState.symrank_success = False
                 while not asyncState.symrank_success:
-                    # asyncState.bot_active will be set by my_event_handler after symrank call
+                    # bot activation occurs by my_event_handler which is listening to all TG msgs on the 3cqs channel
                     await symrank()
-                    # prevent from calling the symrank command too much until success
+                    # prevent from calling the symrank command too much otherwise a timeout is caused
                     await asyncio.sleep(60)
-            else:
-                asyncState.bot_active = True
-                logging.info("Multi bot activated - waiting for pair #start signals", True)
-            
+
             logging.debug("bot_active after disabling: " + str(asyncState.bot_active))
             notification.send_notification()
 
@@ -317,10 +318,9 @@ async def bot_switch():
             
             if attributes.get("single"):
                 bot = SingleBot([], bot_data(), {}, attributes, p3cw, logging, asyncState)
-                bot.disable(bot_data(), True)
+                bot.disable(bot_data(), True) # True = disable all single bots
             else:
-                bot = MultiBot([], bot_data(), {}, 0, attributes, p3cw, logging, asyncState)
-                bot.disable()
+                bot.disable(asyncState.multibot) # search multibot by id or name and disable
             asyncState.bot_active = bot.bot_active
             logging.debug("bot_active after disabling: " + str(asyncState.bot_active))
             notification.send_notification()
@@ -467,9 +467,12 @@ async def my_event_handler(event):
             if not attributes.get("single") and not asyncState.symrank_success:
 
                 logging.info("New symrank list incoming - updating bot", True)
-                bot_output = bot_data()
+                if asyncState.multibot == {}:
+                    bot_output = bot_data()
+                else:
+                    bot_output = asyncState.multibot
 
-                # Create or update multibot with pairs from "/symrank"
+                # create/update and enable multibot with pairs from "/symrank"
                 bot = MultiBot(
                     tg_output,
                     bot_output,
@@ -480,7 +483,7 @@ async def my_event_handler(event):
                     logging,
                     asyncState,
                 )
-                bot.create()
+                asyncState.multibot = bot.create()
                 
                 asyncState.symrank_success = True
                 notification.send_notification()
