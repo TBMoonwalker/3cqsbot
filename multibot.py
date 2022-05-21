@@ -192,7 +192,7 @@ class MultiBot:
                 True
             )
 
-            error, data = self.p3cw.request(
+            error, bot = self.p3cw.request(
                 entity="bots",
                 action="enable",
                 action_id=str(bot["id"]),
@@ -202,12 +202,17 @@ class MultiBot:
             if error:
                 self.logging.error(error["msg"])
             else:
+                self.bot_data = bot
                 self.logging.info("Enabling bot successful", True)
                 self.bot_active = True
 
-        else:
+
+        elif bot["is_enabled"]:
             self.logging.info("'" + bot["name"] + "' (botid: " + str(bot["id"]) + ") already enabled", True)
             self.bot_active = True
+            self.bot_data = bot
+        else:
+            self.logging.info("'" + self.botname + "' or botid: " + str(self.botid) + " not found to enable")
 
     def disable(self, bot):
         # search for 3cqsbot by id or by name if bot not given
@@ -222,7 +227,7 @@ class MultiBot:
                     True
                 )
 
-                error, data = self.p3cw.request(
+                error, bot = self.p3cw.request(
                     entity="bots",
                     action="disable",
                     action_id=str(bot["id"]),
@@ -234,12 +239,17 @@ class MultiBot:
                 if error:
                     self.logging.error(error["msg"])
                 else:
+                    self.bot_data = bot
                     self.logging.info("Disabling bot successful", True)
                     self.bot_active = False
 
-        else:
+
+        elif not bot["is_enabled"]:
             self.logging.info("'" + bot["name"] + "' (botid: " + str(bot["id"]) + ") already disabled", True)
             self.bot_active = False
+            self.bot_data = bot
+        else:
+            self.logging.info("'" + self.botname + "' or botid: " + str(self.botid) + " not found to disable")
 
     def new_deal(self, bot, triggerpair):
         # Triggers a new deal
@@ -256,7 +266,7 @@ class MultiBot:
                 "Trigger new deal with pair " + pair, 
                 True
             )
-            error, data = self.p3cw.request(
+            error, bot = self.p3cw.request(
                 entity="bots",
                 action="start_new_deal",
                 action_id=str(bot["id"]),
@@ -274,6 +284,8 @@ class MultiBot:
                     )
                 else:
                     self.logging.error(error["msg"])
+            else:
+                self.bot_data = bot
 
     def search_3cqsbot(self):
         # Check and get existing multibot id
@@ -338,9 +350,12 @@ class MultiBot:
         return bot
 
     def create(self):
-        # Before creating a new multi bot search for existing one
-        bot = self.search_3cqsbot()
-        
+        # Check if data of 3cqsbot is given (dict format), else search for existing one in the list before creating a new one 
+        if isinstance(self.bot_data, dict):
+            bot = self.bot_data
+        else:
+            bot = self.search_3cqsbot()
+
         pairs = []
         mad = self.attributes.get("mad")
 
@@ -413,7 +428,7 @@ class MultiBot:
             )
             self.report_funds_needed(maxdeals)
 
-            error, data = self.p3cw.request(
+            error, bot = self.p3cw.request(
                 entity="bots",
                 action="create_bot",
                 additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
@@ -423,14 +438,16 @@ class MultiBot:
             if error:
                 self.logging.error(error["msg"])
             else:
+                self.bot_data = bot
                 if not self.attributes.get("ext_botswitch", False) and not self.btc_downtrend:
-                    self.enable(data)
+                    self.enable(bot)
+
                 elif self.attributes.get("ext_botswitch", False):
                     self.logging.info(
                         "ext_botswitch set to true, bot has to be enabled by external TV signal",
                         True
                     )
-                self.new_deal(data, triggerpair="")
+                self.new_deal(bot, triggerpair="")
         elif mad > 0:
             # Update existing multibot
             if self.botname != bot["name"]:
@@ -456,7 +473,7 @@ class MultiBot:
             )
             self.report_funds_needed(maxdeals)
 
-            error, data = self.p3cw.request(
+            error, bot = self.p3cw.request(
                 entity="bots",
                 action="update",
                 action_id=self.botid,
@@ -467,9 +484,10 @@ class MultiBot:
             if error:
                 self.logging.error(error["msg"])
             else:
+                self.bot_data = bot
                 self.logging.debug("Pairs: " + str(pairs))
                 if not self.attributes.get("ext_botswitch", False) and not self.btc_downtrend:
-                    self.enable(data)
+                    self.enable(bot)
                 elif self.attributes.get("ext_botswitch", False):
                     self.logging.info(
                         "ext_botswitch set to true, bot enabling/disabling has to be managed by external TV signal",
@@ -481,8 +499,6 @@ class MultiBot:
                 True
                 )
             self.disable(bot)
-
-        return bot
 
     def trigger(self, triggeronly=False):
         # Updates multi bot with new pairs
@@ -552,7 +568,7 @@ class MultiBot:
                             True
                         )
 
-                        error, data = self.p3cw.request(
+                        error, bot = self.p3cw.request(
                             entity="bots",
                             action="update",
                             action_id=str(bot["id"]),
@@ -564,8 +580,7 @@ class MultiBot:
 
                         if error:
                             self.logging.error(error["msg"])
-                else:
-                    data = bot
-
-                if self.attributes.get("deal_mode") == "signal" and data:
-                    self.new_deal(data, triggerpair)
+                        else:
+                            self.bot_data = bot
+                elif self.attributes.get("deal_mode") == "signal" and bot:
+                    self.new_deal(bot, triggerpair)

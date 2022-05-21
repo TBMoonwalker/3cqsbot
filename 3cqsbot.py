@@ -292,13 +292,15 @@ async def bot_switch():
         if not asyncState.btc_downtrend and not asyncState.bot_active:
 
             logging.debug("bot_active before enabling: " + str(asyncState.bot_active))
-            
+            logging.info("BTC uptrending", True)
             if attributes.get("single"):
                 asyncState.bot_active = True
                 logging.info("Single bot mode activated - waiting for pair #start signals", True)
-            elif attributes.get("continuous_update", True): # listen continously to 3cqs msgs on TG, avoid symrank calls
+            elif attributes.get("continuous_update", False): # listen continously to 3cqs msgs on TG, avoid symrank calls
+                bot = MultiBot([], (), {}, 0, attributes, p3cw, logging, asyncState)
                 bot.enable(asyncState.multibot) # search multibot by id or name and enable
                 asyncState.bot_active = bot.bot_active
+                asyncState.multibot = bot.bot_data
                 logging.info("Multi bot activated - waiting for pair #start signals", True)
             else: # reactivation of multibot with new symrank call
                 logging.info("Multi bot activated - with initial pairs from actual top30 symrank list - waiting for pair #start signals", True)
@@ -306,8 +308,10 @@ async def bot_switch():
                 while not asyncState.symrank_success:
                     # bot activation occurs by my_event_handler which is listening to all TG msgs on the 3cqs channel
                     await symrank()
+                    await asyncio.sleep(5)
                     # prevent from calling the symrank command too much otherwise a timeout is caused
-                    await asyncio.sleep(60)
+                    if not asyncState.symrank_success:
+                        await asyncio.sleep(60)
 
             logging.debug("bot_active after disabling: " + str(asyncState.bot_active))
             notification.send_notification()
@@ -315,13 +319,16 @@ async def bot_switch():
         elif asyncState.btc_downtrend and asyncState.bot_active:
 
             logging.debug("bot_active before disabling: " + str(asyncState.bot_active))
-            
+            logging.info("BTC downtrending", True)
             if attributes.get("single"):
                 bot = SingleBot([], bot_data(), {}, attributes, p3cw, logging, asyncState)
                 bot.disable(bot_data(), True) # True = disable all single bots
+                asyncState.bot_active = bot.bot_active
             else:
+                bot = MultiBot([], bot_data(), {}, 0, attributes, p3cw, logging, asyncState)
                 bot.disable(asyncState.multibot) # search multibot by id or name and disable
-            asyncState.bot_active = bot.bot_active
+                asyncState.bot_active = bot.bot_active
+                asyncState.multibot = bot.bot_data
             logging.debug("bot_active after disabling: " + str(asyncState.bot_active))
             notification.send_notification()
 
@@ -329,7 +336,7 @@ async def bot_switch():
             logging.debug("Nothing do to")
             logging.debug("bot_active: " + str(asyncState.bot_active))
 
-        await asyncio.sleep(60)
+        await asyncio.sleep(5)
 
 async def dca_conf_switch():
 
@@ -382,7 +389,7 @@ async def my_event_handler(event):
             logging.info(
                 "New 3CQS signal '" + str(tg_output["signal"]) + "' incoming..."
             )
-            if not asyncState.bot_active and not attributes.get("continuous_update", True):
+            if not asyncState.bot_active and not attributes.get("continuous_update", False):
                 logging.info("Signal not processed because of BTC downtrend")
             # Check if it is the right signal
             elif (
@@ -465,7 +472,7 @@ async def my_event_handler(event):
         # if symrank list
         elif tg_output and isinstance(tg_output, list):
             if not attributes.get("single") and not asyncState.symrank_success:
-
+                asyncState.symrank_success = True
                 logging.info("New symrank list incoming - updating bot", True)
                 if asyncState.multibot == {}:
                     bot_output = bot_data()
@@ -483,9 +490,10 @@ async def my_event_handler(event):
                     logging,
                     asyncState,
                 )
-                asyncState.multibot = bot.create()
-                
-                asyncState.symrank_success = True
+                bot.create()
+                asyncState.bot_active = bot.bot_active
+                asyncState.multibot = bot.bot_data
+
                 notification.send_notification()
 
             else:
