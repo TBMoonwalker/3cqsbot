@@ -5,7 +5,6 @@ import math
 import re
 import babel.numbers
 import requests
-import traceback
 import json
 from logging import exception
 from dateutil.relativedelta import relativedelta as rd
@@ -57,10 +56,13 @@ class Signals:
 
     @staticmethod
     @timed_lru_cache(seconds=10800)
+    @retry(wait=wait_fixed(60))
     def cgexchanges(exchange, id):
         cg = CoinGeckoAPI()
-        exchange = cg.get_exchanges_tickers_by_id(id=exchange, coin_ids=id)
-
+        try:
+            exchange = cg.get_exchanges_tickers_by_id(id=exchange, coin_ids=id)
+        except Exception as e:
+            raise IOError("Coingecko API error:" + e)
         return exchange
 
     @staticmethod
