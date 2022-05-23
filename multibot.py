@@ -203,7 +203,7 @@ class MultiBot:
                 self.logging.error(error["msg"])
             else:
                 self.bot_data = bot
-                self.logging.info("Enabling bot successful", True)
+                self.logging.info("Enabling successful", True)
                 self.bot_active = True
 
 
@@ -240,7 +240,7 @@ class MultiBot:
                     self.logging.error(error["msg"])
                 else:
                     self.bot_data = bot
-                    self.logging.info("Disabling bot successful", True)
+                    self.logging.info("Disabling successful", True)
                     self.bot_active = False
 
 
