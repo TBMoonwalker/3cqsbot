@@ -345,7 +345,6 @@ class SingleBot:
         pair = self.tg_data["pair"]
         running_bots = self.bot_count()
         running_deals = self.deal_count()
-        running_bots = self.bot_count()
         disabled_bot_deals = self.disabled_bot_active_deals_count()
         maxdeals = self.attributes.get("single_count")
 
