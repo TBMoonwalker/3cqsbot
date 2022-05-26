@@ -324,10 +324,9 @@ class Signals:
                     btcusdt.EMA9[-1] > btcusdt.EMA50[-1]
                     and btcusdt.EMA50[-2] > btcusdt.EMA9[-2]
                 ):
-                    self.logging.info("btc-pulse singaling uptrend (golden cross check)")
+                    self.logging.info("btc-pulse signaling uptrend (golden cross check)")
                     asyncState.btc_downtrend = False
                 else:
-                    self.logging.info("btc-pulse signaling downtrend (golden cross check)")
                     asyncState.btc_downtrend = True
 
             else:
