@@ -336,7 +336,7 @@ async def bot_switch():
             logging.debug("Nothing do to")
             logging.debug("bot_active: " + str(asyncState.bot_active))
 
-        await asyncio.sleep(5)
+        await asyncio.sleep(60)
 
 async def dca_conf_switch():
 
