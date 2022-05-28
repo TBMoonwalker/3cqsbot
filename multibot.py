@@ -29,7 +29,7 @@ class MultiBot:
         self.bot_active = asyncState.bot_active
         self.btc_downtrend = asyncState.btc_downtrend
         self.signal = Signals(logging)
-        self.given_botid = str(self.attributes.get("botid", "", "dcabot"))
+        self.config_botid = str(self.attributes.get("botid", "", "dcabot"))
         self.botname = (
             self.attributes.get("prefix", self.attributes.get("prefix", "3CQSBOT", "dcabot"), self.dca_conf)
             + "_"
@@ -183,7 +183,7 @@ class MultiBot:
         # search for 3cqsbot by id or by name if bot not given
         if bot == {}:
             for bot in self.bot_data:
-                if self.given_botid == bot["id"] or self.botname == bot["name"]:
+                if self.config_botid == bot["id"] or self.botname == bot["name"]:
                     break
 
         if not bot["is_enabled"]:
@@ -212,13 +212,13 @@ class MultiBot:
             self.bot_active = True
             self.bot_data = bot
         else:
-            self.logging.info("'" + self.botname + "' or botid: " + str(self.given_botid) + " not found to enable")
+            self.logging.info("'" + self.botname + "' or botid: " + str(self.config_botid) + " not found to enable")
 
     def disable(self, bot):
         # search for 3cqsbot by id or by name if bot not given
         if bot == {}:
             for bot in self.bot_data:
-                if self.given_botid == bot["id"] or self.botname == bot["name"]:
+                if self.config_botid == bot["id"] or self.botname == bot["name"]:
                     break
 
         if bot["is_enabled"]:
@@ -249,7 +249,7 @@ class MultiBot:
             self.bot_active = False
             self.bot_data = bot
         else:
-            self.logging.info("'" + self.botname + "' or botid: " + str(self.given_botid) + " not found to disable")
+            self.logging.info("'" + self.botname + "' or botid: " + str(self.config_botid) + " not found to disable")
 
     def new_deal(self, bot, triggerpair):
         # Triggers a new deal
@@ -292,28 +292,28 @@ class MultiBot:
         bot_by_id = False
         bot_by_name = False
 
-        if self.given_botid != "":
+        if self.config_botid != "":
             botnames = []
-            self.logging.info("Searching for 3cqsbot with botid: " + self.given_botid)
+            self.logging.info("Searching for 3cqsbot with botid: " + self.config_botid)
             for bot in self.bot_data:
                 botnames.append(bot["name"])
 
-                if self.given_botid == str(bot["id"]):
+                if self.config_botid == str(bot["id"]):
                     bot_by_id = True
                     self.logging.info(
-                        "Botid " + self.given_botid + " with name '" + bot["name"] + "' found"
+                        "Botid " + self.config_botid + " with name '" + bot["name"] + "' found"
                     )
                     break
 
         # Check for existing name
         if not bot_by_id:
-            if self.attributes.get("fearandgreed", False) and self.given_botid == "":
+            if self.attributes.get("fearandgreed", False) and self.config_botid == "":
                 self.logging.error("Please add 'botid = xxxxxxx' to [dcabot] for using FGI. FGI guided DCA settings will only applied to existent 3cqsbot.")
                 self.logging.error("Script will be aborted if no botid is found by botname")
 
             botnames = []
-            if self.given_botid != "":
-                self.logging.info("3cqsbot not found with botid: " + self.given_botid)
+            if self.config_botid != "":
+                self.logging.info("3cqsbot not found with botid: " + self.config_botid)
 
             self.logging.info("Searching for 3cqsbot with name '" + self.botname + "' to get botid")
             for bot in self.bot_data:
@@ -339,7 +339,7 @@ class MultiBot:
 
         # If FGI is used and botid is not set in [dcabot], which is mandatory to prevent creating new bots with different botids,
         # abort program for security reasons 
-        if self.attributes.get("fearandgreed", False) and self.given_botid == "":
+        if self.attributes.get("fearandgreed", False) and self.config_botid == "":
             self.logging.error("No botid set in [dcabot] and no 3cqsbot '" + self.botname + "' found on 3commas")
             self.logging.error("Please get botid on 3commas for an existent 3cqsbot and add 'botid = <botid of 3cqsbot>' under [dcabot] in config.ini")
             self.logging.error("If first time run of this script with enabled FGI and no 3cqsbot has been created so far,") 
@@ -505,7 +505,7 @@ class MultiBot:
         mad = self.attributes.get("mad")
 
         for bot in self.bot_data:
-            if self.botname == bot["name"] or self.given_botid == str(bot["id"]):
+            if self.botname == bot["name"] or self.config_botid == str(bot["id"]):
 
                 if not triggeronly:
                     pair = self.tg_data["pair"]
