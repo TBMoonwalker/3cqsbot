@@ -6,3 +6,4 @@ numpy
 tenacity
 portalocker
 Babel
+apprise

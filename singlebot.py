@@ -56,7 +56,7 @@ class SingleBot:
             if re.search(self.bot_name, bot["name"]):
                 deals += int(bot["active_deals_count"])
 
-        self.logging.info("Deal count: " + str(deals), True)
+        self.logging.info("Deal count: " + str(deals))
 
         return deals
 
@@ -68,7 +68,7 @@ class SingleBot:
             if re.search(self.bot_name, bot["name"]) and bot["is_enabled"]:
                 bots.append(bot["name"])
 
-        self.logging.info("Enabled single bot count: " + str(len(bots)), True)
+        self.logging.info("Enabled single bot count: " + str(len(bots)))
 
         return len(bots)
 
@@ -84,7 +84,7 @@ class SingleBot:
             ):
                 bots.append(bot["name"])
 
-        self.logging.info("Disabled single bot count with deals: " + str(len(bots)), True)
+        self.logging.info("Disabled single bot count with deals: " + str(len(bots)))
 
         return len(bots)
 
@@ -201,7 +201,10 @@ class SingleBot:
 
     def update(self, bot):
         # Update settings on an existing bot
-        self.logging.info("Updating bot settings on " + bot["name"])
+        self.logging.info(
+            "Updating bot settings on " + bot["name"], 
+            True
+        )
 
         error, data = self.p3cw.request(
             entity="bots",
@@ -298,7 +301,7 @@ class SingleBot:
             entity="bots",
             action="create_bot",
             additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-            payload=self.payload(self.tg_data["pair"], newbot = True),
+            payload=self.payload(self.tg_data["pair"], new_bot = True),
         )
 
         if error:
@@ -345,9 +348,8 @@ class SingleBot:
         pair = self.tg_data["pair"]
         running_bots = self.bot_count()
         running_deals = self.deal_count()
-        running_bots = self.bot_count()
         disabled_bot_deals = self.disabled_bot_active_deals_count()
-        maxdeals = self.attributes.get("single_count", "", self.dca_conf)
+        maxdeals = self.attributes.get("single_count")
 
         self.logging.info("running_deals: " + str(running_deals))
 
@@ -390,21 +392,18 @@ class SingleBot:
                                 else:
                                     self.logging.info(
                                         "Single bot not created. Blocking new deals, because last enabled bot can potentially reach max deals of "
-                                        + str(maxdeals),
-                                        True
+                                        + str(maxdeals)
                                     )
                             else:
                                 self.logging.info(
                                     "Single bot not created. Blocking new deals, because last enabled bot can potentially reach max deals of "
-                                    + str(maxdeals),
-                                    True
+                                    + str(maxdeals)
                                 )
                         else:
                             self.logging.info(
                                 "Pair "
                                 + str(self.tg_data["pair"])
-                                + " is not in the top coin list - not added!",
-                                True
+                                + " is not in the top coin list - not added!"
                             )
                     else:
                         self.logging.info(
@@ -412,14 +411,12 @@ class SingleBot:
                             + str(maxdeals)
                             + " reached. Single bot with "
                             + pair
-                            + " not added.",
-                            True
+                            + " not added."
                         )
 
                 elif self.tg_data["action"] == "STOP":
                     self.logging.info(
-                        "Stop command on a non-existing single bot with pair: " + pair,
-                        True
+                        "Stop command on a non-existing single bot with pair: " + pair
                     )
             else:
                 self.logging.debug("Pair: " + pair)
@@ -437,14 +434,12 @@ class SingleBot:
                             else:
                                 self.logging.info(
                                     "Blocking new deals, because last enabled bot can potentially reach max deals of "
-                                    + str(maxdeals),
-                                    True
+                                    + str(maxdeals)
                                 )
                         else:
                             self.logging.info(
                                 "Blocking new deals, because last enabled bot can potentially reach max deals of "
-                                + str(maxdeals),
-                                True
+                                + str(maxdeals)
                             )
 
                     else:
@@ -453,8 +448,7 @@ class SingleBot:
                             + str(maxdeals)
                             + " reached. Single bot with "
                             + pair
-                            + " not enabled.",
-                            True
+                            + " not enabled."
                         )
                 else:
                     self.delete(bot)
