@@ -56,7 +56,7 @@ class Signals:
 
     @staticmethod
     @timed_lru_cache(seconds=10800)
-    @retry(wait=wait_fixed(60))
+    @retry(wait=wait_fixed(5))
     def cgexchanges(exchange, id):
         cg = CoinGeckoAPI()
         try:

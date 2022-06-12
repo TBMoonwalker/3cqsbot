@@ -153,7 +153,7 @@ Everything is the same as with the other multi mode, but the deals are started d
 `deal_mode = signal`
 - for <u>single bot</u>: 3CQS #START signal creates the single bot and deal is started ASAP (deal start condition is set to "open new trade ASAP" by the algo)
 
-- for <u>multi bot</u>: 3CQS #START signal adds the pair and deal is started ASAP (deal start condition is set to "manual strategy" by the algo because "open new trade ASAP" is generally not implemented for multi bot because of security reasons - imagine you have a list of 100 pairs and all pairs are opened simultanousely with ASAP)
+- for <u>multi bot</u>: 3CQS #START signal adds the pair    and deal is started ASAP (deal start condition is set to "manual strategy" by the algo because "open new trade ASAP" is generally not implemented for multi bot because of security reasons - imagine you have a list of 100 pairs and all pairs are opened simultanousely with ASAP)
  
 `deal_mode = [{json coded 3commas strategy}}` 
 - for <u>single bot</u>: deal is only started when RSI-7 15min < 70 preventing from buying in the overbought area <br /> 
@@ -209,7 +209,9 @@ continuous_update | boolean | NO | (true), false | If set to true the multi bot 
 limit_initial_pairs | boolean | NO | (false), true | Limit initial pairs to the max number of deals (MAD) for multi bot - top pairs are chosen
 random_pair | boolean | NO | (false), true | If true then random pairs from the symrank list will be used for new deals in multibot
 btc_pulse | boolean | NO | (false), true | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
-fearandgreed | boolean | NO | (false), true | If true, three different dca settings can be used according to the market (use [fgi_aggressive] for bull market, [fgi_moderate] for sideways market, [fgi_defensive] for bear market, each with corresponding dca settings)  
+fearandgreed | boolean | NO | (false), true | If true, three different dca settings can be used according to the market (use [fgi_aggressive] for bull market, [fgi_moderate] for sideways market, [fgi_defensive] for bear market, each with corresponding dca settings) 
+fgi_trade_min | integer | NO | (0) | if fearandgreed set to true define minimum fgi for trading
+fgi_trade_max | integer | NO | (100) | if fearandgreed set to true define maximum fgi for trading
 ext_botswitch | boolean | NO | (false), true | If true the automatic multibot enablement will be disabled and only triggered by external events - you must disable BTC Pulse if you enable this switch !!!
 token_denylist | array | NO | ([BUSD_USDT, USDC_USDT, USDT_USDT, USDT_USDP]) | Additional denylist of assets in combination to 3commas blacklist to prevent the bot from including and buying unwanted assets
 
