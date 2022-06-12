@@ -102,6 +102,8 @@ symrank_signal = triple100
 #random_pair = true
 # Use different DCA settings according to FGI, define DCA settings under [fgi_aggressive], [fgi_moderate] and [fgi_defensive]
 #fearandgreed = false
+#fgi_trade_min = 30
+#fgi_trade_max = 100
 #btc_pulse = false
 # ATTENTION: if ext_botswitch set to true, btc_pulse will be ignored
 #ext_botswitch = false
