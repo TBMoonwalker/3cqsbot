@@ -43,11 +43,9 @@ Copy the `*.example*` from the examples directory to `config.ini` in the root fo
 ## General
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
+timezone | string | NO | Europe/Amsterdam | Set logging to timezone
 debug | boolean | NO | (false), true   | Set logging to debug
-log_to_file | boolean | NO | (false) true  | Log to file instead of console
-log_file_path | string | NO | (3cqsbot.log) | Location of the log file
-log_file_size | integer | NO | (200000) | Log file size
-log_file_count | integer | NO | (5) | How many logfiles will be archived, before deleted
+logrotate | integer | NO | (7) | How many logfiles will be archived, before deleted
 
 ## Telegram
 Name | Type | Mandatory | Values(default) | Description

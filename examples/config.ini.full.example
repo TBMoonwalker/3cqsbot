@@ -1,9 +1,7 @@
 [general]
+timezone = Europe/Amsterdam
 debug = false
-#log_to_file = false
-#log_file_path = 3cqsbot.log
-#log_file_size = 200000
-#log_file_count = 5
+logrotate = 7
 
 [telegram]
 api_id = "Your api id from Telegram here - without Quotes"
