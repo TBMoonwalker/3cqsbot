@@ -213,8 +213,8 @@ fearandgreed | boolean | NO | (false), true | If true, three different dca setti
 fgi_trade_min | integer | NO | (0) | if fearandgreed set to true define minimum fgi for trading
 fgi_trade_max | integer | NO | (100) | if fearandgreed set to true define maximum fgi for trading
 ext_botswitch | boolean | NO | (false), true | If true the automatic multibot enablement will be disabled and only triggered by external events - you must disable BTC Pulse if you enable this switch !!!
-token_denylist | array | NO | ([BUSD_USDT, USDC_USDT, USDT_USDT, USDT_USDP]) | Additional denylist of assets in combination to 3commas blacklist to prevent the bot from including and buying unwanted assets
-
+token_denylist | list | NO | ([BUSD_USDT, USDC_USDT, USDT_USDT, USDT_USDP]) | Additional denylist of assets in combination to 3commas blacklist to prevent the bot from including and buying unwanted assets
+token_whitelist | list | NO | ([BTC_BUSD, ETH_BUSD]) | Trade only whitelisted pairs
 ### Signals
 The new version of 3cqs signals is now separated into five main versions. To decide which version fit your needs, please take a look at the indicators beneath. The description can be found on Discord too: https://discord.com/channels/720875074806349874/835100061583015947/958724423513419876
 

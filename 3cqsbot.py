@@ -3,6 +3,7 @@ import re
 import asyncio
 import sys
 import os
+from numpy import true_divide
 import portalocker
 import math
 import time
@@ -271,7 +272,7 @@ def pair_data(account):
     for pair in data:
         if attributes.get("market") in pair:
             if (
-                pair not in attributes.get("token_denylist")
+                pair not in attributes.get("token_denylist", [])
                 and pair not in blacklist_data["pairs"]
             ):
                 pairs.append(pair)
@@ -406,7 +407,7 @@ async def fgi_bot_switch():
                             # prevent from calling the symrank command too much otherwise a timeout is caused
                             if not asyncState.symrank_success:
                                 await asyncio.sleep(60)
-                                
+
                 notification.send_notification()
 
         else:
@@ -465,13 +466,20 @@ async def my_event_handler(event):
             logging.info(
                 "New 3CQS signal '" + str(tg_output["signal"]) + "' incoming..."
             )
+            # Check if pair is in whitelist
+            if attributes.get("token_whitelist", []):
+                token_whitelisted = tg_output["pair"] in attributes.get("token_whitelist", [])
+            else:
+                token_whitelisted = True
+
             if not asyncState.bot_active and not attributes.get("continuous_update", False):
                 logging.info("Signal not processed because of BTC downtrend")
             # Check if it is the right signal
             elif (
                 tg_output["signal"] == attributes.get("symrank_signal")
                 or attributes.get("symrank_signal") == "all"
-            ):
+                ) and token_whitelisted:
+
                 if attributes.get("single") or asyncState.multibot == {}:
                     bot_output = bot_data()
                 else:
@@ -540,11 +548,10 @@ async def my_event_handler(event):
                         + "'"
                     )
             else:
-                logging.info(
-                    "Signal ignored because '"
-                    + attributes.get("symrank_signal")
-                    + "' is configured"
-                )
+                if tg_output["signal"] == attributes.get("symrank_signal") and attributes.get("token_whitelist", []):
+                    logging.info("Signal ignored because pair is not whitelisted")
+                else:
+                    logging.info("Signal ignored because '" + attributes.get("symrank_signal") + "' is configured")
         # if symrank list
         elif tg_output and isinstance(tg_output, list):
             if not attributes.get("single") and not asyncState.symrank_success:
@@ -625,11 +632,11 @@ async def main():
         bot_switch_task.add_done_callback(_handle_task_result)
         asyncState.loop = True
 
-    if not attributes.get("single"):
-        while not asyncState.symrank_success:
-            await symrank()
-            # prevent from calling the symrank command too much until success
-            await asyncio.sleep(60)
+    
+    while not attributes.get("single") and not asyncState.symrank_success and asyncState.fgi_allows_trading:
+        await symrank()
+        # prevent from calling the symrank command too much until success
+        await asyncio.sleep(60)
 
     while asyncState.loop:
         if attributes.get("fearandgreed", False): 

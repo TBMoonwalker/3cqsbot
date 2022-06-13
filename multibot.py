@@ -169,9 +169,7 @@ class MultiBot:
     def enable(self, bot):
         # search for 3cqsbot by id or by name if bot not given
         if bot == {}:
-            for bot in self.bot_data:
-                if bot["id"] == self.config_botid or bot["name"] == self.botname:
-                    break
+            bot = self.search_3cqsbot()
 
         if not bot["is_enabled"]:
             self.logging.info(
@@ -210,9 +208,7 @@ class MultiBot:
     def disable(self, bot):
         # search for 3cqsbot by id or by name if bot not given
         if bot == {}:
-            for bot in self.bot_data:
-                if bot["id"] == self.config_botid or bot["name"] == self.botname:
-                    break
+            bot = self.search_3cqsbot()
 
         if bot["is_enabled"]:
                 self.logging.info(

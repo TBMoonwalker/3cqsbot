@@ -108,4 +108,5 @@ symrank_signal = triple100
 # ATTENTION: if ext_botswitch set to true, btc_pulse will be ignored
 #ext_botswitch = false
 # additional token denylist (blacklist of 3commas is used by default)
-#token_denylist = [USDT_BTC, USDT_ETH, USDT_BUSD, USDT_USDC]
+#token_denylist = [USDT_BUSD, USDT_USDC]
+#token_whitelist = [BTC_BUSD, ETH_BUSD]
