@@ -94,7 +94,6 @@ asyncState.chatid = ""
 asyncState.fh = 0
 asyncState.accountData = {}
 asyncState.pairData = []
-asyncState.loop = False
 asyncState.symrank_success = False
 asyncState.multibot = {}
 asyncState.fgi_allows_trading = True
@@ -598,7 +597,7 @@ async def main():
     signals = Signals(logging)
     asyncState.accountData = account_data()
     asyncState.pairData = pair_data(asyncState.accountData)
-
+    fgi_or_btcpulse = False
     logging.debug("Refreshing cache...")
 
     user = await client.get_participants("The3CQSBot")
@@ -623,22 +622,21 @@ async def main():
         dca_conf_switch_task.add_done_callback(_handle_task_result)
         fgi_bot_switch_task = client.loop.create_task(fgi_bot_switch())
         fgi_bot_switch_task.add_done_callback(_handle_task_result)
-        asyncState.loop = True
+        fgi_or_btcpulse = True
 
     if attributes.get("btc_pulse", False):
         btcpulse_task = client.loop.create_task(signals.getbtcpulse(asyncState))
         btcpulse_task.add_done_callback(_handle_task_result)
         bot_switch_task = client.loop.create_task(bot_switch())
         bot_switch_task.add_done_callback(_handle_task_result)
-        asyncState.loop = True
+        fgi_or_btcpulse = True
 
-    
     while not attributes.get("single") and not asyncState.symrank_success and asyncState.fgi_allows_trading:
         await symrank()
         # prevent from calling the symrank command too much until success
         await asyncio.sleep(60)
 
-    while asyncState.loop:
+    while fgi_or_btcpulse:
         if attributes.get("fearandgreed", False): 
             await fgi_task
             await dca_conf_switch_task

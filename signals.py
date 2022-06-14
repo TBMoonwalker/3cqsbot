@@ -304,7 +304,7 @@ class Signals:
 
         self.logging.info("Starting btc-pulse", True)
 
-        while True:
+        while asyncState.fgi_allows_trading:
             btcusdt = self.btctechnical("BTC-USD")
             # if EMA 50 > EMA9 or <-1% drop then the sleep mode is activated
             # else bool is false and while loop is broken
