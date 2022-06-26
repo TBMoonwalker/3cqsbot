@@ -89,6 +89,7 @@ asyncState = type("", (), {})()
 asyncState.btc_downtrend = False
 asyncState.bot_active = True
 asyncState.fgi = -1
+asyncState.fgi_downtrend = False
 asyncState.dca_conf = "dcabot"
 asyncState.chatid = ""
 asyncState.fh = 0
@@ -96,7 +97,7 @@ asyncState.accountData = {}
 asyncState.pairData = []
 asyncState.symrank_success = False
 asyncState.multibot = {}
-asyncState.fgi_allows_trading = True
+asyncState.fgi_allows_trading = False
 
 ######################################################
 #                     Methods                        #
@@ -289,9 +290,9 @@ async def symrank():
 
 async def bot_switch():
     
-    while asyncState.fgi_allows_trading:
+    while True:
 
-        if not asyncState.bot_active and not asyncState.btc_downtrend:
+        if not asyncState.bot_active and not asyncState.btc_downtrend and not asyncState.fgi_downtrend:
             logging.debug("bot_active before enabling: " + str(asyncState.bot_active))
             logging.info("BTC uptrending", True)
 
@@ -321,7 +322,7 @@ async def bot_switch():
             logging.debug("bot_active after enabling: " + str(asyncState.bot_active))
             notification.send_notification()
 
-        elif asyncState.bot_active and asyncState.btc_downtrend:
+        elif asyncState.bot_active and (asyncState.btc_downtrend or asyncState.fgi_downtrend):
             logging.debug("bot_active before disabling: " + str(asyncState.bot_active))
             logging.info("BTC downtrending", True)
 
@@ -373,11 +374,11 @@ async def dca_conf_switch():
 async def fgi_bot_switch():
 
     while True:
-        if not asyncState.fgi_allows_trading:
+        if not asyncState.fgi_downtrend:
 
-            if asyncState.fgi >= attributes.get("fgi_trade_min", 0) and asyncState.fgi <= attributes.get("fgi_trade_max", 100):
+            if not asyncState.fgi_allows_trading and asyncState.fgi >= attributes.get("fgi_trade_min", 0) and asyncState.fgi <= attributes.get("fgi_trade_max", 100):
                 logging.info(
-                    "FGI inside allowed trading range [" 
+                    "FGI uptrending and inside allowed trading range [" 
                     + str(attributes.get("fgi_trade_min", 0)) + ".." + str(attributes.get("fgi_trade_max", 100)) + "]",
                     True
                     )
@@ -411,9 +412,9 @@ async def fgi_bot_switch():
 
         else:
 
-            if asyncState.fgi < attributes.get("fgi_trade_min", 0) or asyncState.fgi > attributes.get("fgi_trade_max", 100):
+            if asyncState.fgi_downtrend or asyncState.fgi < attributes.get("fgi_trade_min", 0) or asyncState.fgi > attributes.get("fgi_trade_max", 100):
                 logging.info(
-                    "FGI outside the allowed trading range [" 
+                    "FGI downtrending or outside the allowed trading range [" 
                     + str(attributes.get("fgi_trade_min", 0)) + ".." + str(attributes.get("fgi_trade_max", 100)) + "]",
                     True
                     )
@@ -616,7 +617,7 @@ async def main():
 
     # Create independent tasks for FGI and BTC pulse up-/downtrend check
     if attributes.get("fearandgreed", False):
-        fgi_task = client.loop.create_task(signals.get_fgi(asyncState))
+        fgi_task = client.loop.create_task(signals.get_fgi(asyncState, attributes.get("fgi_ema_fast", 9), attributes.get("fgi_ema_slow", 50)))
         fgi_task.add_done_callback(_handle_task_result)
         dca_conf_switch_task = client.loop.create_task(dca_conf_switch())
         dca_conf_switch_task.add_done_callback(_handle_task_result)

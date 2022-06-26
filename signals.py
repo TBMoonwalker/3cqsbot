@@ -228,7 +228,7 @@ class Signals:
 
     # Credits go to @M1ch43l
     # Adjust DCA settings dynamically according to social sentiment: greed = aggressive DCA, neutral = moderate DCA, fear = conservative DCA
-    @retry(wait=wait_fixed(60))
+    @retry(wait=wait_fixed(10))
     def requests_call(self, method, url, timeout):
         response = []
         try:
@@ -237,24 +237,44 @@ class Signals:
             raise IOError("Fear and greed index API actually down, retrying in 60s, Error is:" + e)
         return response
 
-    async def get_fgi(self, asyncState):
+    async def get_fgi(self, asyncState, ema_fast, ema_slow):
         
-        url = "https://api.alternative.me/fng/"
+        url = "https://api.alternative.me/fng/?limit=100"
         self.logging.info("Using crypto fear and greed index (FGI) from alternative.me for changing 3cqsbot DCA settings to defensive, moderate or aggressive", True)
 
         while True:
-            
-            response = self.requests_call("GET", url, 5)        
+            fgi_values = []
+            fgi_ema_fast = []
+            fgi_ema_slow = []
+            response = self.requests_call("GET", url, 5)
             raw_data = json.loads(response.text)
-            fgi = int(raw_data["data"][0]["value"])
+            for i in range(len(raw_data["data"])):
+                fgi_values.insert(0, int(raw_data["data"][i]["value"]))
+            fgi_ema_fast = self.ema(fgi_values, ema_fast)
+            fgi_ema_slow = self.ema(fgi_values, ema_slow)
             time_until_update = int(raw_data["data"][0]["time_until_update"])
             fmt = '{0.hours}h:{0.minutes}m:{0.seconds}s'
             self.logging.info(
-                "Current FGI: " + str(fgi) 
+                "Current FGI: {:d}".format(fgi_values[-1]) 
                 + " - time till next update: " + fmt.format(rd(seconds=time_until_update)), 
                 True
             )
-            asyncState.fgi = fgi
+            asyncState.fgi = fgi_values[-1]
+
+            if fgi_ema_fast[-1] < fgi_ema_slow[-1]:
+                asyncState.fgi_downtrend = True
+                self.logging.info("FGI -- EMA{0:d}: {1:.1f}".format(ema_fast, fgi_ema_fast[-1]) 
+                    + " less than EMA{:d}: {:.1f}".format(ema_slow, fgi_ema_slow[-1])
+                    + "  -- downtrending",
+                    True
+                )
+            else:
+                asyncState.fgi_downtrend = False
+                self.logging.info("FGI -- EMA{0:d}: {1:.1f}".format(ema_fast, fgi_ema_fast[-1]) 
+                    + " greater than EMA{:d}: {:.1f}".format(ema_slow, fgi_ema_slow[-1])
+                    + "  -- uptrending",
+                    True
+                )
 
             # request FGI once per day, because is is calculated only once per day 
             await asyncio.sleep(time_until_update)
