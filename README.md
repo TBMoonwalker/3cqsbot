@@ -192,7 +192,7 @@ stop_loss_timeout_seconds | integer | NO | (5) | Time interval for stop loss in
 
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
-symrank_signal | string | YES | (triple100), top30, xvol, hvol, all | Decide which signal the bot should parse.
+symrank_signal | string | YES | (triple100), quadruple100, quadruple250, top30, svol, svoldouble, hvol, hvoldouble, uvol, xvol, all | Decide which signal the bot should parse.
 symrank_limit_min | integer | NO | (1) | Bots will be created when the symrank value is over this limit
 symrank_limit_max | integer | NO | (100) | Bots will be created when the symrank value is under this limit
 volatility_limit_min | number | NO | (0.1) | Bots will be created when the volatility value is over this limit
@@ -214,29 +214,57 @@ ext_botswitch | boolean | NO | (false), true | If true the automatic multibot
 token_denylist | list | NO | ([BUSD_USDT, USDC_USDT, USDT_USDT, USDT_USDP]) | Additional denylist of assets in combination to 3commas blacklist to prevent the bot from including and buying unwanted assets
 token_whitelist | list | NO | ([BTC_BUSD, ETH_BUSD]) | Trade only whitelisted pairs
 ### Signals
-The new version of 3cqs signals is now separated into five main versions. To decide which version fit your needs, please take a look at the indicators beneath. The description can be found on Discord too: https://discord.com/channels/720875074806349874/835100061583015947/958724423513419876
+The new version of 3cqs signals is now separated into different main versions. To decide which version fit your needs, please take a look at the indicators beneath. The description can be found on Discord too: https://discord.com/channels/720875074806349874/835100061583015947/958724423513419876 or officially on https://www.3cqs.com/home/faq/
 
 #### triple100
-SIGNAL NAME: SymRank Top 100 Triple Tracker
-BOT_START: SymRank <= 100
-Volatility Score >= 3, 
-Price Action Score >= 2
+**Signal Name**: SymRank Top 100 Triple Tracker
+Criteria for BOT_START: SymRank <= 100, Volatility Score >= 3, Price Action Score >= 2
+These three indicators are tracked and if any fall out the starting thresholds for a period of time a BOT_STOP signal is sent
+
+#### quadruple100
+**Signal Name**: SymRank Top 100 Quadruple Tracker (BETA)
+Criteria for BOT_START: SymRank <= 100, Volatility Score >= 3, Price Action Score >= 2, RSI-14 15m <= 65
+These four indicators are tracked and if any fall out the starting thresholds for a period of time a BOT_STOP signal is sent
+
+#### quadruple250
+**Signal Name**: SymRank Top 250 Quadruple Tracker (BETA)
+Criteria for BOT_START: SymRank <= 250, Volatility Score >= 3, Price Action Score >= 2, RSI-14 15m <= 65
+These four indicators are tracked and if any fall out the starting thresholds for a period of time a BOT_STOP signal is sent
 
 #### top30
-SIGNAL NAME: SymRank Top 30
-BOT_START: SymRank <= 30
+**Signal Name**: SymRank Top 30
+Criteria for BOT_START: SymRank <= 30
+SymRank is tracked and if the symbol falls out of the Top 30 for a period of time a BOT_STOP signal is sent
+
+#### svol
+**Signal Name**: Super Volatility
+Criteria for BOT_START: Volatility Score >= 4
+Volatility scores are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
+
+#### svoldouble
+**Signal Name**: Super Volatility Double Tracker
+Criteria for BOT_START: Volatility Score >= 4, Price Action Score >= 2
+Volatility and price action scores are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
 
 #### hvol
-SIGNAL NAME: Hyper Volatility
-BOT_START: Volatility Score >= 6
+**Signal Name**: Hyper Volatility
+Criteria for BOT_START: Volatility Score >= 6
+Volatility scores are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
+
+#### hvoldouble
+**Signal Name**: Hyper Volatility Double Tracker
+Criteria for BOT_START: Volatility Score >= 6, Price Action Score >= 2
+Volatility and price action scores are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
 
 #### uvol
-SIGNAL NAME: Ultra Volatility
-BOT_START: Volatility Score >= 8
+**Signal Name**: Ultra Volatility
+Criteria for BOT_START: Volatility Score >= 8
+Volatility score are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
 
 #### xvol
-SIGNAL NAME: X-treme Volatility
-BOT_START: Volatility Score >= 10
+**Signal Name**: X-treme Volatility
+Criteria for BOT_START: Volatility Score >= 10
+Volatility scores are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
 
 #### all
 Pass through all signals

@@ -266,15 +266,15 @@ class Signals:
 
                 if fgi_ema_fast[-1] < fgi_ema_slow[-1]:
                     asyncState.fgi_downtrend = True
-                    self.logging.info("FGI: EMA{0:d}: {1:.1f}".format(ema_fast, fgi_ema_fast[-1]) 
-                        + " less than EMA{:d}: {:.1f}".format(ema_slow, fgi_ema_slow[-1])
+                    self.logging.info("FGI-EMA{0:d}: {1:.1f}".format(ema_fast, fgi_ema_fast[-1]) 
+                        + " less than FGI-EMA{:d}: {:.1f}".format(ema_slow, fgi_ema_slow[-1])
                         + "  -- downtrending",
                         True
                     )
                 else:
                     asyncState.fgi_downtrend = False
-                    self.logging.info("FGI: EMA{0:d}: {1:.1f}".format(ema_fast, fgi_ema_fast[-1]) 
-                        + " greater than EMA{:d}: {:.1f}".format(ema_slow, fgi_ema_slow[-1])
+                    self.logging.info("FGI-EMA{0:d}: {1:.1f}".format(ema_fast, fgi_ema_fast[-1]) 
+                        + " greater than FGI-EMA{:d}: {:.1f}".format(ema_slow, fgi_ema_slow[-1])
                         + "  -- uptrending",
                         True
                     )

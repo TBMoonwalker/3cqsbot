@@ -81,6 +81,7 @@ stop_loss_timeout_enabled = false
 stop_loss_timeout_seconds = 5
 
 [filter]
+# possible symrank_signal: triple100, quadruple100, quadruple250, top30, svol, svoldouble, hvol, hvoldouble, uvol, xvol, all
 symrank_signal = triple100
 #symrank_limit_min = 1
 #symrank_limit_max = 100

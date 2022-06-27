@@ -144,16 +144,27 @@ def tg_data(text_lines):
         if symrank == "N/A":
             symrank = 9999999
 
-        if signal == "SymRank Top 30":
-            signal = "top30"
-        elif signal == "SymRank Top 100 Triple Tracker":
+        if signal == "SymRank Top 100 Triple Tracker":
             signal = "triple100"
+        elif signal == "SymRank Top 100 Quadruple Tracker (BETA)":
+            signal = "quadruple100"
+        elif signal == "SymRank Top 250 Quadruple Tracker (BETA)":
+            signal = "quadruple250"
+        elif signal == "SymRank Top 30":
+            signal = "top30"
+        elif signal == "Super Volatility":
+            signal = "svol"
+        elif signal == "Super Volatility Double Tracker":
+            signal = "svoldouble"
         elif signal == "Hyper Volatility":
             signal = "hvol"
+        elif signal == "Hyper Volatility Double Tracker":
+            signal = "hvoldouble"
         elif signal == "Ultra Volatility":
             signal = "uvol"
-        else:
+        elif signal == "X-Treme Volatility":
             signal = "xvol"
+       
 
         data = {
             "signal": signal,
