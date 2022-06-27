@@ -103,9 +103,11 @@ symrank_signal = triple100
 #fearandgreed = false
 #fgi_trade_min = 30
 #fgi_trade_max = 100
+#fgi_ema_fast = 9
+#fgi_ema_slow = 50
 #btc_pulse = false
 # ATTENTION: if ext_botswitch set to true, btc_pulse will be ignored
 #ext_botswitch = false
 # additional token denylist (blacklist of 3commas is used by default)
 #token_denylist = [USDT_BUSD, USDT_USDC]
-#token_whitelist = [BTC_BUSD, ETH_BUSD]
+#token_whitelist = [USDT_BTC, USDT_ETH]
