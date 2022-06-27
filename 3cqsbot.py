@@ -90,6 +90,8 @@ asyncState.btc_downtrend = False
 asyncState.bot_active = True
 asyncState.fgi = -1
 asyncState.fgi_downtrend = False
+asyncState.fgi_allows_trading = False
+asyncState.fgi_time_until_update = 1
 asyncState.dca_conf = "dcabot"
 asyncState.chatid = ""
 asyncState.fh = 0
@@ -97,7 +99,6 @@ asyncState.accountData = {}
 asyncState.pairData = []
 asyncState.symrank_success = False
 asyncState.multibot = {}
-asyncState.fgi_allows_trading = False
 
 ######################################################
 #                     Methods                        #
@@ -436,7 +437,7 @@ async def fgi_bot_switch():
 
                 notification.send_notification()
 
-        await asyncio.sleep(3600)
+        await asyncio.sleep(asyncState.fgi_time_until_update + 5)
 
 def _handle_task_result(task: asyncio.Task) -> None:
     

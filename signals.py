@@ -246,6 +246,7 @@ class Signals:
             fgi_values = []
             fgi_ema_fast = []
             fgi_ema_slow = []
+            asyncState.fgi_notification = True
             response = self.requests_call("GET", url, 5)
             raw_data = json.loads(response.text)
             for i in range(len(raw_data["data"])):
@@ -254,27 +255,42 @@ class Signals:
             fgi_ema_slow = self.ema(fgi_values, ema_slow)
             time_until_update = int(raw_data["data"][0]["time_until_update"])
             fmt = '{0.hours}h:{0.minutes}m:{0.seconds}s'
-            self.logging.info(
+            # Web response sometimes slow, so proceed only if time_until_update for next web update > 10 sec
+            if time_until_update > 10:
+                self.logging.info(
                 "Current FGI: {:d}".format(fgi_values[-1]) 
                 + " - time till next update: " + fmt.format(rd(seconds=time_until_update)), 
                 True
             )
-            asyncState.fgi = fgi_values[-1]
+                asyncState.fgi = fgi_values[-1]
 
-            if fgi_ema_fast[-1] < fgi_ema_slow[-1]:
-                asyncState.fgi_downtrend = True
-                self.logging.info("FGI -- EMA{0:d}: {1:.1f}".format(ema_fast, fgi_ema_fast[-1]) 
-                    + " less than EMA{:d}: {:.1f}".format(ema_slow, fgi_ema_slow[-1])
-                    + "  -- downtrending",
-                    True
-                )
-            else:
-                asyncState.fgi_downtrend = False
-                self.logging.info("FGI -- EMA{0:d}: {1:.1f}".format(ema_fast, fgi_ema_fast[-1]) 
-                    + " greater than EMA{:d}: {:.1f}".format(ema_slow, fgi_ema_slow[-1])
-                    + "  -- uptrending",
-                    True
-                )
+                if fgi_ema_fast[-1] < fgi_ema_slow[-1]:
+                    asyncState.fgi_downtrend = True
+                    self.logging.info("FGI: EMA{0:d}: {1:.1f}".format(ema_fast, fgi_ema_fast[-1]) 
+                        + " less than EMA{:d}: {:.1f}".format(ema_slow, fgi_ema_slow[-1])
+                        + "  -- downtrending",
+                        True
+                    )
+                else:
+                    asyncState.fgi_downtrend = False
+                    self.logging.info("FGI: EMA{0:d}: {1:.1f}".format(ema_fast, fgi_ema_fast[-1]) 
+                        + " greater than EMA{:d}: {:.1f}".format(ema_slow, fgi_ema_slow[-1])
+                        + "  -- uptrending",
+                        True
+                    )
+
+                # FGI downtrend = true if FGI drops >= 10 between actual and last day 
+                # OR >= 15 between actual and second to last day
+                if ((fgi_values[-2] - fgi_values[-1]) >= 10) or ((fgi_values[-3] - fgi_values[-1]) >= 15):
+                    asyncState.fgi_downtrend = True
+                    self.logging.info("FGI actual/yesterday/before yesterday: {:d}/{:d}/{:d}".format(fgi_values[-1], fgi_values[-2], fgi_values[-3]), 
+                        True
+                    )
+                    self.logging.info("Drop > 10 between actual vs. yesterday or drop > 15 between actual vs. before yesterday", 
+                        True
+                    )
+
+                asyncState.fgi_time_until_update = time_until_update
 
             # request FGI once per day, because is is calculated only once per day 
             await asyncio.sleep(time_until_update)
