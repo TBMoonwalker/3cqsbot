@@ -236,58 +236,58 @@ Price action scores that are significantly negative are when price is moving muc
 
 Negative scores represent the lowest of all price / volatility trend movements over 24 hours whereas the color is the current projected up / downtrend. Basically significant sells that drop price drastically will likely result in larger negative price action scores, but it could increase volatility as buys increase price. So you can have a very low negative price action score with a high volatility score in many cases. The scores are constantly recalculated, so it’s helpful to see the trends when you hover over the scores.
 
-### List of 3CQS Trading Signals
-#### triple100
+### Possible strategies for symrank_signal
+#### ```triple100```
 **Signal Name**: SymRank Top 100 Triple Tracker<br>
 Criteria for BOT_START: SymRank <= 100, Volatility Score >= 3, Price Action Score >= 2<br>
 These three indicators are tracked and if any fall out the starting thresholds for a period of time a BOT_STOP signal is sent
 
-#### quadruple100
+#### ```quadruple100```
 **Signal Name**: SymRank Top 100 Quadruple Tracker (BETA)<br>
 Criteria for BOT_START: SymRank <= 100, Volatility Score >= 3, Price Action Score >= 2, RSI-14 15m <= 65<br>
 These four indicators are tracked and if any fall out the starting thresholds for a period of time a BOT_STOP signal is sent
 
-#### quadruple250
+#### ```quadruple250```
 **Signal Name**: SymRank Top 250 Quadruple Tracker (BETA)<br>
 Criteria for BOT_START: SymRank <= 250, Volatility Score >= 3, Price Action Score >= 2, RSI-14 15m <= 65<br>
 These four indicators are tracked and if any fall out the starting thresholds for a period of time a BOT_STOP signal is sent
 
-#### top30
+#### ```top30```
 **Signal Name**: SymRank Top 30<br>
 Criteria for BOT_START: SymRank <= 30<br>
 SymRank is tracked and if the symbol falls out of the Top 30 for a period of time a BOT_STOP signal is sent
 
-#### svol
+#### ```svol```
 **Signal Name**: Super Volatility<br>
 Criteria for BOT_START: Volatility Score >= 4<br>
 Volatility scores are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
 
-#### svoldouble
+#### ```svoldouble```
 **Signal Name**: Super Volatility Double Tracker<br>
 Criteria for BOT_START: Volatility Score >= 4, Price Action Score >= 2<br>
 Volatility and price action scores are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
 
-#### hvol
+#### ```hvol```
 **Signal Name**: Hyper Volatility<br>
 Criteria for BOT_START: Volatility Score >= 6<br>
 Volatility scores are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
 
-#### hvoldouble
+#### ```hvoldouble```
 **Signal Name**: Hyper Volatility Double Tracker<br>
 Criteria for BOT_START: Volatility Score >= 6, Price Action Score >= 2<br>
 Volatility and price action scores are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
 
-#### uvol
+#### ```uvol```
 **Signal Name**: Ultra Volatility<br>
 Criteria for BOT_START: Volatility Score >= 8<br>
 Volatility score are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
 
-#### xvol
+#### ```xvol```
 **Signal Name**: X-treme Volatility<br>
 Criteria for BOT_START: Volatility Score >= 10<br>
 Volatility scores are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
 
-#### all
+#### ```all```
 Process all signals
 
 ### BTC pulse
