@@ -1,5 +1,6 @@
 # Summary
-The 3cqsbot can be used to start and stop [3commas](https://3commas.io) dca bots with the help of the 3cqs signals. You can subscribe to the [telegram channel](https://t.me/The3CQSBot) to receive these signals. If you have any questions regarding the signals, please contact the developer [directly](https://www.3cqs.com/contact/).
+The 3cqsbot can be used to start and stop [3commas](https://3commas.io) dca bots with the help of the 3cqs trading signals.
+3CQS trading signals are developed using various market indicators and extensive technical research of the current and historical market atmosphere. They offer effective trading suggestions to purchase, trade, or hold an asset. 3CQS trading signals are designed to signal the start and stop of DCA (Dollar Cost Average) bots for optimal performance under a variety of market conditions. You can subscribe to the [telegram channel](https://t.me/The3CQSBot) to receive these signals. If you have any questions regarding the signals, please contact the developer [directly](https://www.3cqs.com/contact/).
 
 # Disclaimer
 **The 3cqsbot is meant to be used for educational purposes only. Use with real funds at your own risk**
@@ -210,11 +211,30 @@ btc_pulse | boolean | NO | (false), true | Activates or deactivates the bots ac
 fearandgreed | boolean | NO | (false), true | If true, three different dca settings can be used according to the market (use [fgi_aggressive] for bull market, [fgi_moderate] for sideways market, [fgi_defensive] for bear market, each with corresponding dca settings) 
 fgi_trade_min | integer | NO | (0) | if fearandgreed set to true define minimum fgi for trading
 fgi_trade_max | integer | NO | (100) | if fearandgreed set to true define maximum fgi for trading
+fgi_ema_fast | integer | NO | (9) | determine down-/uptrending of FGI using EMA fast crossing up/down EMA slow
+fgi_ema_slow | integer | NO | (50) | determine down-/uptrending of FGI using EMA fast crossing up/down EMA slow
 ext_botswitch | boolean | NO | (false), true | If true the automatic multibot enablement will be disabled and only triggered by external events - you must disable BTC Pulse if you enable this switch !!!
 token_denylist | list | NO | ([BUSD_USDT, USDC_USDT, USDT_USDT, USDT_USDP]) | Additional denylist of assets in combination to 3commas blacklist to prevent the bot from including and buying unwanted assets
 token_whitelist | list | NO | ([BTC_BUSD, ETH_BUSD]) | Trade only whitelisted pairs
-### Signals
+
+### 3CQS Trading Signals
 The new version of 3cqs signals is now separated into different main versions. To decide which version fit your needs, please take a look at the indicators beneath. The description can be found on Discord too: https://discord.com/channels/720875074806349874/835100061583015947/958724423513419876 or officially on https://www.3cqs.com/home/faq/
+
+# What is SymRank?
+SymRank is a proprietary symbol ranking system exclusive to 3CQS users that ranks symbols (coins) in near realtime based on multiple criteria including current trading volume, volatility and price action.
+
+# What are Volatiltiy Scores?
+Pricing is monitored in near realtime and calculated which results in 15m, 30m, 1h, etc. volatility interval percentages. Each interval is then weighted and averaged based on the timeframe (more recent time frames are weighted higher), from which a score is then calculated. Higher scores are greater volatility.
+
+# What are Price Action Scores?
+Realtime pricing is monitored and calculated using a combination of moving average formulas. Similar to volatility, more weight is given to recent pricing, which a score is then calculated.
+
+# Price Action & Volatility Score Insight
+3CQS price action and volatility take into account pricing over the last 24 hours. Scores that are red are considered currently on a downtrend and green if on an uptrend.
+
+Price action scores that are significantly negative are when price is moving much lower over the last 24 hours. Volatility scores can be negative as well, but are not calculated the same and won’t generally be seen with as large negative scores.
+
+Negative scores represent the lowest of all price / volatility trend movements over 24 hours whereas the color is the current projected up / downtrend. Basically significant sells that drop price drastically will likely result in larger negative price action scores, but it could increase volatility as buys increase price. So you can have a very low negative price action score with a high volatility score in many cases. The scores are constantly recalculated, so it’s helpful to see the trends when you hover over the scores.
 
 #### triple100
 **Signal Name**: SymRank Top 100 Triple Tracker

@@ -338,7 +338,8 @@ class Signals:
     # https://discord.gg/tradealts
     async def getbtcpulse(self, asyncState):
 
-        self.logging.info("Starting btc-pulse", True)
+        if asyncState.fgi_allows_trading:
+            self.logging.info("Starting btc-pulse", True)
 
         while asyncState.fgi_allows_trading:
             btcusdt = self.btctechnical("BTC-USD")
