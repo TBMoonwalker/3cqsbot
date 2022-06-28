@@ -238,66 +238,65 @@ Negative scores represent the lowest of all price / volatility trend movements o
 
 ### List of 3CQS Trading Signals
 #### triple100
-**Signal Name**: SymRank Top 100 Triple Tracker
-Criteria for BOT_START: SymRank <= 100, Volatility Score >= 3, Price Action Score >= 2
+**Signal Name**: SymRank Top 100 Triple Tracker<br>
+Criteria for BOT_START: SymRank <= 100, Volatility Score >= 3, Price Action Score >= 2<br>
 These three indicators are tracked and if any fall out the starting thresholds for a period of time a BOT_STOP signal is sent
 
 #### quadruple100
-**Signal Name**: SymRank Top 100 Quadruple Tracker (BETA)
-Criteria for BOT_START: SymRank <= 100, Volatility Score >= 3, Price Action Score >= 2, RSI-14 15m <= 65
+**Signal Name**: SymRank Top 100 Quadruple Tracker (BETA)<br>
+Criteria for BOT_START: SymRank <= 100, Volatility Score >= 3, Price Action Score >= 2, RSI-14 15m <= 65<br>
 These four indicators are tracked and if any fall out the starting thresholds for a period of time a BOT_STOP signal is sent
 
 #### quadruple250
-**Signal Name**: SymRank Top 250 Quadruple Tracker (BETA)
-Criteria for BOT_START: SymRank <= 250, Volatility Score >= 3, Price Action Score >= 2, RSI-14 15m <= 65
+**Signal Name**: SymRank Top 250 Quadruple Tracker (BETA)<br>
+Criteria for BOT_START: SymRank <= 250, Volatility Score >= 3, Price Action Score >= 2, RSI-14 15m <= 65<br>
 These four indicators are tracked and if any fall out the starting thresholds for a period of time a BOT_STOP signal is sent
 
 #### top30
-**Signal Name**: SymRank Top 30
-Criteria for BOT_START: SymRank <= 30
+**Signal Name**: SymRank Top 30<br>
+Criteria for BOT_START: SymRank <= 30<br>
 SymRank is tracked and if the symbol falls out of the Top 30 for a period of time a BOT_STOP signal is sent
 
 #### svol
-**Signal Name**: Super Volatility
-Criteria for BOT_START: Volatility Score >= 4
+**Signal Name**: Super Volatility<br>
+Criteria for BOT_START: Volatility Score >= 4<br>
 Volatility scores are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
 
 #### svoldouble
-**Signal Name**: Super Volatility Double Tracker
-Criteria for BOT_START: Volatility Score >= 4, Price Action Score >= 2
+**Signal Name**: Super Volatility Double Tracker<br>
+Criteria for BOT_START: Volatility Score >= 4, Price Action Score >= 2<br>
 Volatility and price action scores are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
 
 #### hvol
-**Signal Name**: Hyper Volatility
-Criteria for BOT_START: Volatility Score >= 6
+**Signal Name**: Hyper Volatility<br>
+Criteria for BOT_START: Volatility Score >= 6<br>
 Volatility scores are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
 
 #### hvoldouble
-**Signal Name**: Hyper Volatility Double Tracker
-Criteria for BOT_START: Volatility Score >= 6, Price Action Score >= 2
+**Signal Name**: Hyper Volatility Double Tracker<br>
+Criteria for BOT_START: Volatility Score >= 6, Price Action Score >= 2<br>
 Volatility and price action scores are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
 
 #### uvol
-**Signal Name**: Ultra Volatility
-Criteria for BOT_START: Volatility Score >= 8
+**Signal Name**: Ultra Volatility<br>
+Criteria for BOT_START: Volatility Score >= 8<br>
 Volatility score are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
 
 #### xvol
-**Signal Name**: X-treme Volatility
-Criteria for BOT_START: Volatility Score >= 10
+**Signal Name**: X-treme Volatility<br>
+Criteria for BOT_START: Volatility Score >= 10<br>
 Volatility scores are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
 
 #### all
 Process all signals
 
 ### BTC pulse
-BTC pulse is a simple strategy which monitors BTC price action to start new deals or just put the bot to sleep ( no new deals but active deals keep running) based on:-
-If BTC is uptrending new deals are started 
-If BTC is downtrending no new deals are started
+BTC pulse is a simple strategy which monitors BTC price action to start new deals or just put the bot to sleep ( no new deals but active deals keep running) based on:<br>
+- If BTC is uptrending new deals are started<br> 
+- If BTC is downtrending no new deals are started
 
-BTC pulse hence is determined using the 2 factors :-
-% price change of BTC in the last 15 minutes or
-Fast (9) and Slow (50) moving EMAs crossses
+BTC pulse hence is determined using the 2 factors:<br>
+- % price change of BTC in the last 15 minutes or Fast (9) and Slow (50) moving EMAs crossses
 
 Please test this strategy on paper before putting real money on it.
 TBMoonWalker or IamtheOnewhoKnocks take no responsibility for losses occurred due to the script/strategy
@@ -315,7 +314,7 @@ Get the excel lists from @Snurg at https://discord.com/channels/7208750748063498
 
 For sideways market (FGI values 31-60) you can define DCA settings under [fgi_moderate]. 
 
-In each fgi section define the variables fgi_min and fgi_max so that the correct DCA settings are applied. If fgi_min/fgi_max are not set, then values between fgi_min = 0 and fgi_max = 30 are assumed for defensive, FGI values between 31-60 are assumed for moderate and FGI values between 61-100 are assumed for aggressive settings.
+In each fgi section define the variables ```fgi_min``` and ```fgi_max``` so that the correct DCA settings are applied. If ```fgi_min/fgi_max``` are not set, then values between ```fgi_min = 0``` and ```fgi_max = 30``` are assumed for defensive, FGI values between 31-60 are assumed for moderate and FGI values between 61-100 are assumed for aggressive settings.
 
 If corresponding fgi section is not found, the standard [dcabot] section is used and the FGI values are ignored.
 
@@ -324,6 +323,11 @@ If corresponding fgi section is not found, the standard [dcabot] section is used
 Optionally, the multi pair bot can be renamed according to the prefix, subprefix and suffix given in the corresponding fgi section, e.g. renaming from 3CQSBOT_MULTI_aggressive to 3CQSBOT_MULTI_defensive. To make sure it is always the same bot, you can additionally use the option 'botid' with the same botid number of an already created multi bot in all fgi sections.
 
 For single bots the standard name (prefix, subprefix, suffix) defined in [dcabot] is used ensuring that the algo finds all single bots under standard name to switch them off when receiving the #STOP signal from 3CQS.
+
+### Fear and Greed Index Trading range
+
+With the options ```fgi_trade_min = 10``` and ```fgi_trade_max = 100``` you can define the allowed trading range.
+Additionally, similar to btc-pulse a fast (9)/slow (50) EMA of FGI is used to determine up-/downtrending fear and greed. Fast EMA crossing up slow EMA allows the beginning of trading as long it is over ```fgi_trade_min```. You can customize the EMA values with the options ```fgi_ema_fast``` and ```fgi_ema_slow```.
 
 ### External bot switch
 If external botswitch is enabled, the 3cqsbot can be switched on/off by external TradingView signals sent to 3commas.
