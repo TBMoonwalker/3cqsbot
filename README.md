@@ -217,25 +217,26 @@ ext_botswitch | boolean | NO | (false), true | If true the automatic multibot
 token_denylist | list | NO | ([BUSD_USDT, USDC_USDT, USDT_USDT, USDT_USDP]) | Additional denylist of assets in combination to 3commas blacklist to prevent the bot from including and buying unwanted assets
 token_whitelist | list | NO | ([BTC_BUSD, ETH_BUSD]) | Trade only whitelisted pairs
 
-### 3CQS Trading Signals
-The new version of 3cqs signals is now separated into different main versions. To decide which version fit your needs, please take a look at the indicators beneath. The description can be found on Discord too: https://discord.com/channels/720875074806349874/835100061583015947/958724423513419876 or officially on https://www.3cqs.com/home/faq/
+## 3CQS Trading Signals
+There are different 3CQS trading signals. To decide which signal fits your needs, please take a look at the signals beneath. The description can be found on Discord too: https://discord.com/channels/720875074806349874/835100061583015947/958724423513419876 or officially on https://www.3cqs.com/home/faq/
 
-# What is SymRank?
+### What is SymRank?
 SymRank is a proprietary symbol ranking system exclusive to 3CQS users that ranks symbols (coins) in near realtime based on multiple criteria including current trading volume, volatility and price action.
 
-# What are Volatiltiy Scores?
+### What are Volatiltiy Scores?
 Pricing is monitored in near realtime and calculated which results in 15m, 30m, 1h, etc. volatility interval percentages. Each interval is then weighted and averaged based on the timeframe (more recent time frames are weighted higher), from which a score is then calculated. Higher scores are greater volatility.
 
-# What are Price Action Scores?
+### What are Price Action Scores?
 Realtime pricing is monitored and calculated using a combination of moving average formulas. Similar to volatility, more weight is given to recent pricing, which a score is then calculated.
 
-# Price Action & Volatility Score Insight
+### Price Action & Volatility Score Insight
 3CQS price action and volatility take into account pricing over the last 24 hours. Scores that are red are considered currently on a downtrend and green if on an uptrend.
 
 Price action scores that are significantly negative are when price is moving much lower over the last 24 hours. Volatility scores can be negative as well, but are not calculated the same and won’t generally be seen with as large negative scores.
 
 Negative scores represent the lowest of all price / volatility trend movements over 24 hours whereas the color is the current projected up / downtrend. Basically significant sells that drop price drastically will likely result in larger negative price action scores, but it could increase volatility as buys increase price. So you can have a very low negative price action score with a high volatility score in many cases. The scores are constantly recalculated, so it’s helpful to see the trends when you hover over the scores.
 
+### List of 3CQS Trading Signals
 #### triple100
 **Signal Name**: SymRank Top 100 Triple Tracker
 Criteria for BOT_START: SymRank <= 100, Volatility Score >= 3, Price Action Score >= 2
@@ -287,7 +288,7 @@ Criteria for BOT_START: Volatility Score >= 10
 Volatility scores are tracked and if the symbol falls out of the starting threshold for a period of time a BOT_STOP signal is sent
 
 #### all
-Pass through all signals
+Process all signals
 
 ### BTC pulse
 BTC pulse is a simple strategy which monitors BTC price action to start new deals or just put the bot to sleep ( no new deals but active deals keep running) based on:-
