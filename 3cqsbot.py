@@ -139,8 +139,18 @@ def tg_data(text_lines):
             signal = "top30"
         elif signal == "SymRank Top 100 Triple Tracker":
             signal = "triple100"
+        elif signal == "SymRank Top 100 Quadruple Tracker (BETA)":
+            signal = "quad100"
+        elif signal == "SymRank Top 250 Quadruple Tracker (BETA)":
+            signal = "quad250"
+        elif signal == "Super Volatility":
+            signal = "svol"
+        elif signal == "Super Volatility Double Tracker":
+            signal = "svoldouble"
         elif signal == "Hyper Volatility":
             signal = "hvol"
+        elif signal == "Hyper Volatility Double Tracker":
+            signal = "hvoldouble"
         elif signal == "Ultra Volatility":
             signal = "uvol"
         else:
@@ -251,19 +261,19 @@ def pair_data(account):
         sys.tracebacklimit = 0
         sys.exit("Problem fetching pair data from 3commas api - stopping!")
 
-    error, blacklist_data = p3cw.request(
-        entity="bots",
-        action="pairs_black_list"
-    )
+    error, blacklist_data = p3cw.request(entity="bots", action="pairs_black_list")
 
     if error:
         logging.debug(error["msg"])
         sys.tracebacklimit = 0
         sys.exit("Problem fetching pairs blacklist data from 3commas api - stopping!")
-    
+
     for pair in data:
         if attributes.get("market") in pair:
-            if pair not in attributes.get("token_denylist") and pair not in blacklist_data["pairs"]:
+            if (
+                pair not in attributes.get("token_denylist")
+                and pair not in blacklist_data["pairs"]
+            ):
                 pairs.append(pair)
 
     return pairs
@@ -337,7 +347,9 @@ async def my_event_handler(event):
 
         if tg_output and not isinstance(tg_output, list):
 
-            logging.info("New 3CQS signal '" + str(tg_output["signal"]) + "' incoming...")
+            logging.info(
+                "New 3CQS signal '" + str(tg_output["signal"]) + "' incoming..."
+            )
 
             # Check if it is the right signal
             if (
@@ -389,7 +401,7 @@ async def my_event_handler(event):
                             + " with symrank: "
                             + str(tg_output["symrank"])
                             + ", volatility: "
-                            + str(tg_output["volatility"]) 
+                            + str(tg_output["volatility"])
                             + " and price action: "
                             + str(tg_output["price_action"])
                             + " not meeting config filter limits - signal ignored"
@@ -455,7 +467,9 @@ async def main():
             await switchtask
     elif attributes.get("btc_pulse", False) and attributes.get("ext_botswitch", False):
         sys.tracebacklimit = 0
-        sys.exit("Check config.ini, btc_pulse and ext_botswitch both set to true - not allowed")
+        sys.exit(
+            "Check config.ini, btc_pulse and ext_botswitch both set to true - not allowed"
+        )
 
 
 with client:
