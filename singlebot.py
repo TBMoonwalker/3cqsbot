@@ -34,7 +34,7 @@ class SingleBot:
         )
 
     def strategy(self):
-        if self.attributes.get("deal_mode", "signal", self.dca_conf) == "signal":
+        if self.attributes.get("deal_mode", "", self.dca_conf) == "signal":
             strategy = [{"strategy": "nonstop"}]
         else:
             try:

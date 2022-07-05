@@ -56,7 +56,7 @@ class Signals:
 
     @staticmethod
     @timed_lru_cache(seconds=10800)
-    @retry(wait=wait_fixed(60))
+    @retry(wait=wait_fixed(5))
     def cgexchanges(exchange, id):
         cg = CoinGeckoAPI()
         try:
@@ -228,7 +228,7 @@ class Signals:
 
     # Credits go to @M1ch43l
     # Adjust DCA settings dynamically according to social sentiment: greed = aggressive DCA, neutral = moderate DCA, fear = conservative DCA
-    @retry(wait=wait_fixed(60))
+    @retry(wait=wait_fixed(10))
     def requests_call(self, method, url, timeout):
         response = []
         try:
@@ -237,24 +237,60 @@ class Signals:
             raise IOError("Fear and greed index API actually down, retrying in 60s, Error is:" + e)
         return response
 
-    async def get_fgi(self, asyncState):
+    async def get_fgi(self, asyncState, ema_fast, ema_slow):
         
-        url = "https://api.alternative.me/fng/"
+        url = "https://api.alternative.me/fng/?limit=100"
         self.logging.info("Using crypto fear and greed index (FGI) from alternative.me for changing 3cqsbot DCA settings to defensive, moderate or aggressive", True)
 
         while True:
-            
-            response = self.requests_call("GET", url, 5)        
+            fgi_values = []
+            fgi_ema_fast = []
+            fgi_ema_slow = []
+            asyncState.fgi_notification = True
+            response = self.requests_call("GET", url, 5)
             raw_data = json.loads(response.text)
-            fgi = int(raw_data["data"][0]["value"])
+            for i in range(len(raw_data["data"])):
+                fgi_values.insert(0, int(raw_data["data"][i]["value"]))
+            fgi_ema_fast = self.ema(fgi_values, ema_fast)
+            fgi_ema_slow = self.ema(fgi_values, ema_slow)
             time_until_update = int(raw_data["data"][0]["time_until_update"])
             fmt = '{0.hours}h:{0.minutes}m:{0.seconds}s'
-            self.logging.info(
-                "Current FGI: " + str(fgi) 
+            # Web response sometimes slow, so proceed only if time_until_update for next web update > 10 sec
+            if time_until_update > 10:
+                self.logging.info(
+                "Current FGI: {:d}".format(fgi_values[-1]) 
                 + " - time till next update: " + fmt.format(rd(seconds=time_until_update)), 
                 True
             )
-            asyncState.fgi = fgi
+                asyncState.fgi = fgi_values[-1]
+
+                if fgi_ema_fast[-1] < fgi_ema_slow[-1]:
+                    asyncState.fgi_downtrend = True
+                    self.logging.info("FGI-EMA{0:d}: {1:.1f}".format(ema_fast, fgi_ema_fast[-1]) 
+                        + " less than FGI-EMA{:d}: {:.1f}".format(ema_slow, fgi_ema_slow[-1])
+                        + "  -- downtrending",
+                        True
+                    )
+                else:
+                    asyncState.fgi_downtrend = False
+                    self.logging.info("FGI-EMA{0:d}: {1:.1f}".format(ema_fast, fgi_ema_fast[-1]) 
+                        + " greater than FGI-EMA{:d}: {:.1f}".format(ema_slow, fgi_ema_slow[-1])
+                        + "  -- uptrending",
+                        True
+                    )
+
+                # FGI downtrend = true if FGI drops >= 10 between actual and last day 
+                # OR >= 15 between actual and second to last day
+                if ((fgi_values[-2] - fgi_values[-1]) >= 10) or ((fgi_values[-3] - fgi_values[-1]) >= 15):
+                    asyncState.fgi_downtrend = True
+                    self.logging.info("FGI actual/yesterday/before yesterday: {:d}/{:d}/{:d}".format(fgi_values[-1], fgi_values[-2], fgi_values[-3]), 
+                        True
+                    )
+                    self.logging.info("Drop > 10 between actual vs. yesterday or drop > 15 between actual vs. before yesterday", 
+                        True
+                    )
+
+                asyncState.fgi_time_until_update = time_until_update
 
             # request FGI once per day, because is is calculated only once per day 
             await asyncio.sleep(time_until_update)
@@ -302,9 +338,10 @@ class Signals:
     # https://discord.gg/tradealts
     async def getbtcpulse(self, asyncState):
 
-        self.logging.info("Starting btc-pulse", True)
+        if asyncState.fgi_allows_trading:
+            self.logging.info("Starting btc-pulse", True)
 
-        while True:
+        while asyncState.fgi_allows_trading:
             btcusdt = self.btctechnical("BTC-USD")
             # if EMA 50 > EMA9 or <-1% drop then the sleep mode is activated
             # else bool is false and while loop is broken

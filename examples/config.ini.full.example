@@ -1,9 +1,7 @@
 [general]
+timezone = Europe/Amsterdam
 debug = false
-#log_to_file = false
-#log_file_path = 3cqsbot.log
-#log_file_size = 200000
-#log_file_count = 5
+logrotate = 7
 
 [telegram]
 api_id = "Your api id from Telegram here - without Quotes"
@@ -83,6 +81,7 @@ stop_loss_timeout_enabled = false
 stop_loss_timeout_seconds = 5
 
 [filter]
+# possible symrank_signal: triple100, quadruple100, quadruple250, top30, svol, svoldouble, hvol, hvoldouble, uvol, xvol, all
 symrank_signal = triple100
 #symrank_limit_min = 1
 #symrank_limit_max = 100
@@ -102,8 +101,13 @@ symrank_signal = triple100
 #random_pair = true
 # Use different DCA settings according to FGI, define DCA settings under [fgi_aggressive], [fgi_moderate] and [fgi_defensive]
 #fearandgreed = false
+#fgi_trade_min = 30
+#fgi_trade_max = 100
+#fgi_ema_fast = 9
+#fgi_ema_slow = 50
 #btc_pulse = false
 # ATTENTION: if ext_botswitch set to true, btc_pulse will be ignored
 #ext_botswitch = false
 # additional token denylist (blacklist of 3commas is used by default)
-#token_denylist = [USDT_BTC, USDT_ETH, USDT_BUSD, USDT_USDC]
+#token_denylist = [USDT_BUSD, USDT_USDC]
+#token_whitelist = [USDT_BTC, USDT_ETH]
