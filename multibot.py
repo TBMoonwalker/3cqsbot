@@ -469,7 +469,7 @@ class MultiBot:
 
     def trigger(self, triggeronly=False):
         # Updates multi bot with new pairs
-        triggerpair = ""
+        pair = ""
         mad = self.attributes.get("mad")
         # Search for 3cqsbot by name or id
         if isinstance(self.bot_data, list):
@@ -485,7 +485,6 @@ class MultiBot:
             self.logging.info("Got new 3cqs " + self.tg_data["action"] + " signal for " + pair)
 
             if self.tg_data["action"] == "START":
-                triggerpair = pair
 
                 if pair in bot["pairs"]:
                     self.logging.info(pair + " is already included in the pair list")
@@ -503,18 +502,12 @@ class MultiBot:
                         self.logging.info("Topcoin filter disabled, not filtering pairs!")
 
                 if pair:
-                    self.logging.info(
-                        "Adding pair " + pair, 
-                        True
-                    )
+                    self.logging.info("Adding pair " + pair, True)
                     bot["pairs"].append(pair)
                     update_bot = True
             elif self.tg_data["action"] == "STOP":
                 if pair in bot["pairs"]:
-                    self.logging.info(
-                        "Removing pair " + pair, 
-                        True
-                    )
+                    self.logging.info("Removing pair " + pair, True)
                     bot["pairs"].remove(pair)
                     update_bot = True
                 else:
@@ -544,8 +537,8 @@ class MultiBot:
                 else:
                     self.bot_data = data
 
-        # if triggerpair == "" (due to triggeronly=true) and deal_mode == "signal" then 
+        # if triggeronly=true and deal_mode == "signal" then 
         # initiate deal with a random coin (random_pair=true) from the filtered symrank pair list 
-        # if triggerpair == "some coin" initiate new deal if deal_mode == "signal" 
-        if self.attributes.get("deal_mode", "", self.dca_conf) == "signal" and bot:
-            self.new_deal(bot, triggerpair)
+        # if triggerpair == "some coin" and deal_mode == "signal" then initiate new deal  
+        if (triggeronly or pair) and self.attributes.get("deal_mode", "", self.dca_conf) == "signal" and bot:
+            self.new_deal(bot, pair)
