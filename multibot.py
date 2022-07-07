@@ -510,6 +510,7 @@ class MultiBot:
                     self.logging.info("Removing pair " + pair, True)
                     bot["pairs"].remove(pair)
                     update_bot = True
+                    pair = ""
                 else:
                     self.logging.info(pair + " was not included in the pair list - not removed")
 
@@ -540,5 +541,6 @@ class MultiBot:
         # if triggeronly=true and deal_mode == "signal" then 
         # initiate deal with a random coin (random_pair=true) from the filtered symrank pair list 
         # if triggerpair == "some coin" and deal_mode == "signal" then initiate new deal  
-        if (triggeronly or pair) and self.attributes.get("deal_mode", "", self.dca_conf) == "signal" and bot:
+        if (triggeronly or pair) and self.attributes.get("deal_mode", "", self.dca_conf) == "signal" \
+        and bot and not self.btc_downtrend:
             self.new_deal(bot, pair)
