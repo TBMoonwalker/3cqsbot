@@ -31,11 +31,23 @@ class MultiBot:
         self.signal = Signals(logging)
         self.config_botid = str(self.attributes.get("botid", "", "dcabot"))
         self.botname = (
-            self.attributes.get("prefix", self.attributes.get("prefix", "3CQSBOT", "dcabot"), self.dca_conf)
+            self.attributes.get(
+                "prefix",
+                self.attributes.get("prefix", "3CQSBOT", "dcabot"),
+                self.dca_conf,
+            )
             + "_"
-            + self.attributes.get("subprefix", self.attributes.get("subprefix", "MULTI", "dcabot"), self.dca_conf)
+            + self.attributes.get(
+                "subprefix",
+                self.attributes.get("subprefix", "MULTI", "dcabot"),
+                self.dca_conf,
+            )
             + "_"
-            + self.attributes.get("suffix", self.attributes.get("suffix", "dcabot", "dcabot"), self.dca_conf)
+            + self.attributes.get(
+                "suffix",
+                self.attributes.get("suffix", "dcabot", "dcabot"),
+                self.dca_conf,
+            )
         )
 
     def strategy(self):
@@ -43,10 +55,13 @@ class MultiBot:
             strategy = [{"strategy": "manual"}]
         else:
             try:
-                strategy = json.loads(self.attributes.get("deal_mode", "", self.dca_conf))
+                strategy = json.loads(
+                    self.attributes.get("deal_mode", "", self.dca_conf)
+                )
             except ValueError:
                 self.logging.error(
-                    "Either missing [" + self.dca_conf
+                    "Either missing ["
+                    + self.dca_conf
                     + "] section with DCA settings or decoding JSON string of deal_mode failed. "
                     + "Please check https://jsonformatter.curiousconcept.com/ for correct format"
                 )
@@ -86,24 +101,37 @@ class MultiBot:
             pd = (pd * ss) + sos
 
         self.logging.info(
-            "Using DCA settings [" + self.dca_conf
-            + "]:  TP: " + str(tp)
-            + "%  BO: $" + str(bo)
-            + "  SO: $" + str(so)
-            + "  OS: " + str(os)
-            + "  SS: " + str(ss)
-            + "  SOS: " + str(sos)
-            + "%  MSTC: " + str(mstc)
-            + " - covering max. price deviation: " + f"{pd:2.1f}" + "%",
-            True
+            "Using DCA settings ["
+            + self.dca_conf
+            + "]:  TP: "
+            + str(tp)
+            + "%  BO: $"
+            + str(bo)
+            + "  SO: $"
+            + str(so)
+            + "  OS: "
+            + str(os)
+            + "  SS: "
+            + str(ss)
+            + "  SOS: "
+            + str(sos)
+            + "%  MSTC: "
+            + str(mstc)
+            + " - covering max. price deviation: "
+            + f"{pd:2.1f}"
+            + "%",
+            True,
         )
         self.logging.info(
-            "Max active deals (mad) allowed: " + str(maxdeals)
+            "Max active deals (mad) allowed: "
+            + str(maxdeals)
             + "   Max funds per active deal (all SO filled): "
             + babel.numbers.format_currency(fundsneeded, "USD", locale="en_US")
             + "   Total funds needed: "
-            + babel.numbers.format_currency(maxdeals * fundsneeded, "USD", locale="en_US"),
-            True
+            + babel.numbers.format_currency(
+                maxdeals * fundsneeded, "USD", locale="en_US"
+            ),
+            True,
         )
 
         return
@@ -145,8 +173,10 @@ class MultiBot:
 
         if new_bot:
             if payload["disable_after_deals_count"] == 0:
-                self.logging.debug("This is a new bot and deal_count set to 0, removing from payload")
-                payload.pop("disable_after_deals_count")        
+                self.logging.debug(
+                    "This is a new bot and deal_count set to 0, removing from payload"
+                )
+                payload.pop("disable_after_deals_count")
 
         if self.attributes.get("trade_future", False):
             payload.update(
@@ -173,8 +203,8 @@ class MultiBot:
 
         if not bot["is_enabled"]:
             self.logging.info(
-                "Enabling bot: " + bot["name"] + " (botid: " + str(bot["id"]) + ")", 
-                True
+                "Enabling bot: " + bot["name"] + " (botid: " + str(bot["id"]) + ")",
+                True,
             )
 
             error, data = self.p3cw.request(
@@ -188,22 +218,24 @@ class MultiBot:
                 self.logging.error(error["msg"])
             else:
                 self.bot_data = data
-                self.logging.info(
-                    "Enabling successful", 
-                    True
-                )
+                self.logging.info("Enabling successful", True)
                 self.bot_active = True
-
 
         elif bot["is_enabled"]:
             self.logging.info(
-                "'" + bot["name"] + "' (botid: " + str(bot["id"]) + ") already enabled", 
-                True
+                "'" + bot["name"] + "' (botid: " + str(bot["id"]) + ") already enabled",
+                True,
             )
             self.bot_active = True
             self.bot_data = bot
         else:
-            self.logging.info("'" + self.botname + "' or botid: " + str(self.config_botid) + " not found to enable")
+            self.logging.info(
+                "'"
+                + self.botname
+                + "' or botid: "
+                + str(self.config_botid)
+                + " not found to enable"
+            )
 
     def disable(self, bot):
         # search for 3cqsbot by id or by name if bot not given
@@ -211,37 +243,44 @@ class MultiBot:
             bot = self.search_3cqsbot()
 
         if bot["is_enabled"]:
-                self.logging.info(
-                    "Disabling bot: " + bot["name"] + " (botid: " + str(bot["id"]) + ")", 
-                    True
-                )
+            self.logging.info(
+                "Disabling bot: " + bot["name"] + " (botid: " + str(bot["id"]) + ")",
+                True,
+            )
 
-                error, data = self.p3cw.request(
-                    entity="bots",
-                    action="disable",
-                    action_id=str(bot["id"]),
-                    additional_headers={
-                        "Forced-Mode": self.attributes.get("trade_mode")
-                    },
-                )
+            error, data = self.p3cw.request(
+                entity="bots",
+                action="disable",
+                action_id=str(bot["id"]),
+                additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
+            )
 
-                if error:
-                    self.logging.error(error["msg"])
-                else:
-                    self.bot_data = data
-                    self.logging.info("Disabling successful", True)
-                    self.bot_active = False
-
+            if error:
+                self.logging.error(error["msg"])
+            else:
+                self.bot_data = data
+                self.logging.info("Disabling successful", True)
+                self.bot_active = False
 
         elif not bot["is_enabled"]:
             self.logging.info(
-                "'" + bot["name"] + "' (botid: " + str(bot["id"]) + ") already disabled", 
-                True
+                "'"
+                + bot["name"]
+                + "' (botid: "
+                + str(bot["id"])
+                + ") already disabled",
+                True,
             )
             self.bot_active = False
             self.bot_data = bot
         else:
-            self.logging.info("'" + self.botname + "' or botid: " + str(self.config_botid) + " not found to disable")
+            self.logging.info(
+                "'"
+                + self.botname
+                + "' or botid: "
+                + str(self.config_botid)
+                + " not found to disable"
+            )
 
     def new_deal(self, bot, triggerpair):
         # Triggers a new deal
@@ -255,10 +294,7 @@ class MultiBot:
                 pair = ""
 
         if pair:
-            self.logging.info(
-                "Trigger new deal with pair " + pair, 
-                True
-            )
+            self.logging.info("Triggering new deal for pair " + pair, True)
             error, data = self.p3cw.request(
                 entity="bots",
                 action="start_new_deal",
@@ -268,17 +304,22 @@ class MultiBot:
             )
 
             if error:
-                if bot["active_deals_count"] == bot["max_active_deals"]:
+                if bot["active_deals_count"] >= bot["max_active_deals"]:
                     self.logging.info(
-                        "Max active deals of " + str(bot["max_active_deals"])
+                        "Max active deals of "
+                        + str(bot["max_active_deals"])
                         + " reached, not adding a new one.",
-                        True
+                        True,
+                    )
+                elif error["status_code"] == 422:
+                    self.logging.info(
+                        "No deal triggered, because open deal already present for this pair",
+                        True,
                     )
                 else:
                     self.logging.error(error["msg"])
             else:
-                self.bot_data["active_deals_count"]=bot["active_deals_count"]+1
-
+                self.bot_data["active_deals_count"] = bot["active_deals_count"] + 1
 
     def search_3cqsbot(self):
         # Check and get existing multibot id
@@ -293,14 +334,20 @@ class MultiBot:
 
                 if self.config_botid == str(bot["id"]):
                     bot_by_id = True
-                    self.logging.info("Botid " + self.config_botid + " with name '" + bot["name"] + "' found")
+                    self.logging.info(
+                        "Botid "
+                        + self.config_botid
+                        + " with name '"
+                        + bot["name"]
+                        + "' found"
+                    )
                     break
 
         # Check for existing name
         if not bot_by_id:
             if self.attributes.get("fearandgreed", False) and self.config_botid == "":
                 self.logging.error(
-                    "Please add 'botid = xxxxxxx' to [dcabot] for using FGI. FGI guided DCA settings will only applied " 
+                    "Please add 'botid = xxxxxxx' to [dcabot] for using FGI. FGI guided DCA settings will only applied "
                     + "to existent 3cqsbot. \n Script will be aborted if no botid is found by botname"
                 )
 
@@ -308,13 +355,21 @@ class MultiBot:
             if self.config_botid != "":
                 self.logging.info("3cqsbot not found with botid: " + self.config_botid)
 
-            self.logging.info("Searching for 3cqsbot with name '" + self.botname + "' to get botid")
+            self.logging.info(
+                "Searching for 3cqsbot with name '" + self.botname + "' to get botid"
+            )
             for bot in self.bot_data:
                 botnames.append(bot["name"])
 
                 if self.botname == bot["name"]:
                     bot_by_name = True
-                    self.logging.info("3cqsbot '" + bot["name"] + "' with botid " + str(bot["id"]) + " found")
+                    self.logging.info(
+                        "3cqsbot '"
+                        + bot["name"]
+                        + "' with botid "
+                        + str(bot["id"])
+                        + " found"
+                    )
                     break
             if not bot_by_name:
                 self.logging.info("3cqsbot not found with this name")
@@ -325,18 +380,28 @@ class MultiBot:
         )
 
         # If FGI is used and botid is not set in [dcabot], which is mandatory to prevent creating new bots with different botids,
-        # abort program for security reasons 
+        # abort program for security reasons
         if self.attributes.get("fearandgreed", False) and self.config_botid == "":
-            self.logging.error("No botid set in [dcabot] and no 3cqsbot '" + self.botname + "' found on 3commas")
-            self.logging.error("Please get botid on 3commas for an existent 3cqsbot and add 'botid = <botid of 3cqsbot>' under [dcabot] in config.ini")
-            self.logging.error("If first time run of this script with enabled FGI and no 3cqsbot has been created so far,") 
-            self.logging.error("create manually one on 3commas, get botid and leave the bot disabled") 
+            self.logging.error(
+                "No botid set in [dcabot] and no 3cqsbot '"
+                + self.botname
+                + "' found on 3commas"
+            )
+            self.logging.error(
+                "Please get botid on 3commas for an existent 3cqsbot and add 'botid = <botid of 3cqsbot>' under [dcabot] in config.ini"
+            )
+            self.logging.error(
+                "If first time run of this script with enabled FGI and no 3cqsbot has been created so far,"
+            )
+            self.logging.error(
+                "create manually one on 3commas, get botid and leave the bot disabled"
+            )
             sys.exit("Aborting script!")
-        
+
         return bot
 
     def create(self):
-        # Check if data of 3cqsbot is given (dict format), else search for existing one in the list before creating a new one 
+        # Check if data of 3cqsbot is given (dict format), else search for existing one in the list before creating a new one
         if isinstance(self.bot_data, dict):
             bot = self.bot_data
         else:
@@ -368,8 +433,11 @@ class MultiBot:
                 pairs.append(pair)
             else:
                 self.logging.info(
-                    pair + " removed because pair is blacklisted on 3commas or in token_denylist " 
-                    + "or not tradable on '" + self.attributes.get("account_name") + "'"
+                    pair
+                    + " removed because pair is blacklisted on 3commas or in token_denylist "
+                    + "or not tradable on '"
+                    + self.attributes.get("account_name")
+                    + "'"
                 )
 
         self.logging.debug("Pairs after topcoin filter " + str(pairs))
@@ -391,9 +459,14 @@ class MultiBot:
         mad = self.adjust_mad(pairs, mad)
         maxdeals = self.attributes.get("mad")
         self.logging.info(
-            str(len(pairs)) + " out of 30 symrank pairs selected " + str(pairs) 
-            + ". Maximum active deals (mad) set to " + str(mad) + " out of " + str(maxdeals),
-            True
+            str(len(pairs))
+            + " out of 30 symrank pairs selected "
+            + str(pairs)
+            + ". Maximum active deals (mad) set to "
+            + str(mad)
+            + " out of "
+            + str(maxdeals),
+            True,
         )
 
         # Creation of multibot even with mad=1 possible
@@ -401,7 +474,7 @@ class MultiBot:
             # Create new multibot
             self.logging.info(
                 "Creating multi bot '" + self.botname + "' with filtered symrank pairs",
-                True
+                True,
             )
             self.report_funds_needed(maxdeals)
 
@@ -409,34 +482,47 @@ class MultiBot:
                 entity="bots",
                 action="create_bot",
                 additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-                payload=self.payload(pairs, mad, new_bot = True),
+                payload=self.payload(pairs, mad, new_bot=True),
             )
 
             if error:
                 self.logging.error(error["msg"])
             else:
                 self.bot_data = data
-                if not self.attributes.get("ext_botswitch", False) and not self.btc_downtrend:
+                if (
+                    not self.attributes.get("ext_botswitch", False)
+                    and not self.btc_downtrend
+                ):
                     self.enable(bot)
 
                 elif self.attributes.get("ext_botswitch", False):
                     self.logging.info(
                         "ext_botswitch set to true, bot has to be enabled by external TV signal",
-                        True
+                        True,
                     )
                 self.new_deal(bot, triggerpair="")
         elif mad > 0:
             # Update existing multibot
             if self.botname != bot["name"]:
                 self.logging.info(
-                    "Renaming bot name from '" + bot["name"] + "' to '" + self.botname + "' (botid: " + str(bot["id"]) + ")",
-                    True
+                    "Renaming bot name from '"
+                    + bot["name"]
+                    + "' to '"
+                    + self.botname
+                    + "' (botid: "
+                    + str(bot["id"])
+                    + ")",
+                    True,
                 )
                 bot["name"] = self.botname
 
             self.logging.info(
-                "Updating multi bot '" + bot["name"] + "' (botid: " + str(bot["id"]) + ") with filtered symrank pairs",
-                True
+                "Updating multi bot '"
+                + bot["name"]
+                + "' (botid: "
+                + str(bot["id"])
+                + ") with filtered symrank pairs",
+                True,
             )
             self.report_funds_needed(maxdeals)
 
@@ -445,7 +531,7 @@ class MultiBot:
                 action="update",
                 action_id=str(bot["id"]),
                 additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-                payload=self.payload(pairs, mad, new_bot = False),
+                payload=self.payload(pairs, mad, new_bot=False),
             )
 
             if error:
@@ -453,18 +539,21 @@ class MultiBot:
             else:
                 self.bot_data = data
                 self.logging.debug("Pairs: " + str(pairs))
-                if not self.attributes.get("ext_botswitch", False) and not self.btc_downtrend:
+                if (
+                    not self.attributes.get("ext_botswitch", False)
+                    and not self.btc_downtrend
+                ):
                     self.enable(bot)
                 elif self.attributes.get("ext_botswitch", False):
                     self.logging.info(
                         "ext_botswitch set to true, bot enabling/disabling has to be managed by external TV signal",
-                        True
+                        True,
                     )
         else:
             self.logging.info(
                 "No (filtered) pairs left for multi bot. Either weak market phase or symrank/topcoin filter too strict. Bot will be disabled to wait for better times",
-                True
-                )
+                True,
+            )
             self.disable(bot)
 
     def trigger(self, triggeronly=False):
@@ -482,7 +571,9 @@ class MultiBot:
         if not triggeronly:
             pair = self.tg_data["pair"]
             update_bot = False
-            self.logging.info("Got new 3cqs " + self.tg_data["action"] + " signal for " + pair)
+            self.logging.info(
+                "Got new 3cqs " + self.tg_data["action"] + " signal for " + pair
+            )
 
             if self.tg_data["action"] == "START":
 
@@ -498,30 +589,40 @@ class MultiBot:
                             self.attributes.get("topcoin_exchange", "binance"),
                             self.attributes.get("market"),
                         )
-                    else: 
-                        self.logging.info("Topcoin filter disabled, not filtering pairs!")
+                    else:
+                        self.logging.info(
+                            "Topcoin filter disabled, not filtering pairs!"
+                        )
 
-                if pair:
-                    self.logging.info("Adding pair " + pair, True)
-                    bot["pairs"].append(pair)
-                    update_bot = True
-            elif self.tg_data["action"] == "STOP":
+                    if pair:
+                        if self.attributes.get("topcoin_filter", False):
+                            self.logging.info("Adding topcoin pair " + pair, True)
+                        else:
+                            self.logging.info("Adding pair " + pair, True)
+                        bot["pairs"].append(pair)
+                        update_bot = True
+
+            # do not remove pairs when deal_mode == "signal" to trigger deals faster when next START signal is received
+            elif (
+                self.tg_data["action"] == "STOP"
+                and self.attributes.get("deal_mode", "", self.dca_conf) != "signal"
+            ):
+                pair = ""
                 if pair in bot["pairs"]:
                     self.logging.info("Removing pair " + pair, True)
                     bot["pairs"].remove(pair)
                     update_bot = True
-                    pair = ""
                 else:
-                    self.logging.info(pair + " was not included in the pair list - not removed")
+                    self.logging.info(
+                        pair + " not removed because it was not in the pair list"
+                    )
 
             # Adapt mad if included pairs and simul. deals for the same pair are lower than mad value
-            # Avoid ajusting mad and updating bot if there is nothing to update
             if update_bot:
-                mad = self.adjust_mad(bot["pairs"], mad)
-                self.logging.info(
-                    "Included pairs: " + str(bot["pairs"]) + ". Adjusting mad to: " + str(mad),
-                    True
-                )
+                mad_before = mad
+                mad = self.adjust_mad(bot["pairs"], mad_before)
+                if mad > mad_before:
+                    self.logging.info("Adjusting mad to: " + str(mad), True)
 
                 error, data = self.p3cw.request(
                     entity="bots",
@@ -530,7 +631,7 @@ class MultiBot:
                     additional_headers={
                         "Forced-Mode": self.attributes.get("trade_mode")
                     },
-                    payload=self.payload(bot["pairs"], mad, new_bot = False),
+                    payload=self.payload(bot["pairs"], mad, new_bot=False),
                 )
 
                 if error:
@@ -538,9 +639,13 @@ class MultiBot:
                 else:
                     self.bot_data = data
 
-        # if triggeronly=true and deal_mode == "signal" then 
-        # initiate deal with a random coin (random_pair=true) from the filtered symrank pair list 
-        # if triggerpair == "some coin" and deal_mode == "signal" then initiate new deal  
-        if (triggeronly or pair) and self.attributes.get("deal_mode", "", self.dca_conf) == "signal" \
-        and bot and not self.btc_downtrend:
+        # if triggeronly=true and deal_mode == "signal" then
+        # initiate deal with a random coin (random_pair=true) from the filtered symrank pair list
+        # if triggerpair == "some coin" and deal_mode == "signal" then initiate new deal
+        if (
+            (triggeronly or pair)
+            and self.attributes.get("deal_mode", "", self.dca_conf) == "signal"
+            and bot
+            and not self.btc_downtrend
+        ):
             self.new_deal(bot, pair)

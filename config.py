@@ -18,7 +18,7 @@ class Config:
             )
 
         sections = self.config.sections()
-        
+
         if section == None:
             for section in sections:
                 if self.config.has_option(section, attribute):
@@ -31,13 +31,13 @@ class Config:
                             data = self.check_type(raw_value)
                         break
         elif self.config.has_option(section, attribute):
-                raw_value = self.config[section].get(attribute)
-                if raw_value:
-                    if attribute in self.fixstrings:
-                        data = raw_value
-                    else:
-                        data = self.check_type(raw_value)
-        
+            raw_value = self.config[section].get(attribute)
+            if raw_value:
+                if attribute in self.fixstrings:
+                    data = raw_value
+                else:
+                    data = self.check_type(raw_value)
+
         if data == "" and str(defaultvalue):
             data = defaultvalue
         elif data == "" and defaultvalue == "" and not attribute == "botid":

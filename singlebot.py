@@ -38,7 +38,9 @@ class SingleBot:
             strategy = [{"strategy": "nonstop"}]
         else:
             try:
-                strategy = json.loads(self.attributes.get("deal_mode", "", self.dca_conf))
+                strategy = json.loads(
+                    self.attributes.get("deal_mode", "", self.dca_conf)
+                )
             except ValueError:
                 self.logging.error(
                     "Either missing ["
@@ -126,7 +128,7 @@ class SingleBot:
             + " - covering max. price deviation: "
             + f"{pd:2.1f}"
             + "%",
-            True
+            True,
         )
         self.logging.info(
             "Max possible deals: "
@@ -137,17 +139,20 @@ class SingleBot:
             + babel.numbers.format_currency(
                 maxdeals * fundsneeded, "USD", locale="en_US"
             ),
-            True
+            True,
         )
 
         return
 
     def payload(self, pair, new_bot):
         payload = {
-            "name": self.attributes.get("prefix", "3CQSBOT", "dcabot") \
-                    + "_" + self.attributes.get("subprefix", "SINGLE", "dcabot") \
-                    + "_" + pair 
-                    + "_" + self.attributes.get("suffix", "dcabot", "dcabot"),
+            "name": self.attributes.get("prefix", "3CQSBOT", "dcabot")
+            + "_"
+            + self.attributes.get("subprefix", "SINGLE", "dcabot")
+            + "_"
+            + pair
+            + "_"
+            + self.attributes.get("suffix", "dcabot", "dcabot"),
             "account_id": self.account_data["id"],
             "pairs": self.tg_data["pair"],
             "max_active_deals": self.attributes.get("mad", "", self.dca_conf),
@@ -178,8 +183,10 @@ class SingleBot:
 
         if new_bot:
             if payload["disable_after_deals_count"] == 0:
-                self.logging.debug("This is a new bot and deal_count set to 0, removing from payload")
-                payload.pop("disable_after_deals_count")        
+                self.logging.debug(
+                    "This is a new bot and deal_count set to 0, removing from payload"
+                )
+                payload.pop("disable_after_deals_count")
 
         if self.attributes.get("trade_future", False):
             payload.update(
@@ -201,17 +208,14 @@ class SingleBot:
 
     def update(self, bot):
         # Update settings on an existing bot
-        self.logging.info(
-            "Updating bot settings on " + bot["name"], 
-            True
-        )
+        self.logging.info("Updating bot settings on " + bot["name"], True)
 
         error, data = self.p3cw.request(
             entity="bots",
             action="update",
             action_id=str(bot["id"]),
             additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-            payload=self.payload(bot["pairs"][0], new_bot = False),
+            payload=self.payload(bot["pairs"][0], new_bot=False),
         )
 
         if error:
@@ -220,8 +224,7 @@ class SingleBot:
     def enable(self, bot):
 
         self.logging.info(
-            "Enabling single bot " + bot["name"] + " because of START signal", 
-            True
+            "Enabling single bot " + bot["name"] + " because of START signal", True
         )
 
         if self.attributes.get("singlebot_update", "true"):
@@ -241,9 +244,13 @@ class SingleBot:
             self.bot_active = True
 
     def disable(self, bot, allbots=False):
-        botname = self.attributes.get("prefix", "3CQSBOT", "dcabot") \
-        + "_" + self.attributes.get("subprefix", "SINGLE", "dcabot") \
-        + "_" + self.attributes.get("market") 
+        botname = (
+            self.attributes.get("prefix", "3CQSBOT", "dcabot")
+            + "_"
+            + self.attributes.get("subprefix", "SINGLE", "dcabot")
+            + "_"
+            + self.attributes.get("market")
+        )
 
         # Disable all bots
         error = {}
@@ -251,10 +258,10 @@ class SingleBot:
         if allbots:
             self.bot_active = False
             self.logging.info(
-                "Disabling all 3cqs single bots because btc-pulse is signaling downtrend", 
-                True
+                "Disabling all 3cqs single bots because btc-pulse is signaling downtrend",
+                True,
             )
-            
+
             for bots in bot:
                 if botname in bots["name"] and bot["is_enabled"]:
 
@@ -262,7 +269,7 @@ class SingleBot:
                         "Disabling single bot "
                         + bots["name"]
                         + " because of a STOP signal",
-                        True
+                        True,
                     )
 
                     error, data = self.p3cw.request(
@@ -280,7 +287,7 @@ class SingleBot:
             # Disables an existing bot
             self.logging.info(
                 "Disabling single bot " + bot["name"] + " because of a STOP signal",
-                True
+                True,
             )
 
             error, data = self.p3cw.request(
@@ -301,7 +308,7 @@ class SingleBot:
             entity="bots",
             action="create_bot",
             additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-            payload=self.payload(self.tg_data["pair"], new_bot = True),
+            payload=self.payload(self.tg_data["pair"], new_bot=True),
         )
 
         if error:
@@ -316,7 +323,9 @@ class SingleBot:
             "delete_single_bots", False
         ):
             # Deletes a single bot with stop signal
-            self.logging.info("Delete single bot with pair " + self.tg_data["pair"], True)
+            self.logging.info(
+                "Delete single bot with pair " + self.tg_data["pair"], True
+            )
             error, data = self.p3cw.request(
                 entity="bots",
                 action="delete",
@@ -332,7 +341,7 @@ class SingleBot:
                 "Disabling single bot with pair "
                 + self.tg_data["pair"]
                 + " unable to delete because of active deals or configuration.",
-                True
+                True,
             )
             self.disable(bot, False)
         # No bot to delete or disable
@@ -353,10 +362,15 @@ class SingleBot:
 
         self.logging.info("running_deals: " + str(running_deals))
 
-        botname = self.attributes.get("prefix", "3CQSBOT", "dcabot") \
-        + "_" + self.attributes.get("subprefix", "SINGLE", "dcabot") \
-        + "_" + pair + "_" \
-        + self.attributes.get("suffix", "dcabot", "dcabot")
+        botname = (
+            self.attributes.get("prefix", "3CQSBOT", "dcabot")
+            + "_"
+            + self.attributes.get("subprefix", "SINGLE", "dcabot")
+            + "_"
+            + pair
+            + "_"
+            + self.attributes.get("suffix", "dcabot", "dcabot")
+        )
 
         if self.bot_data:
             for bot in self.bot_data:
