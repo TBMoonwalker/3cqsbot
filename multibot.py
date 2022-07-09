@@ -603,19 +603,17 @@ class MultiBot:
                         update_bot = True
 
             # do not remove pairs when deal_mode == "signal" to trigger deals faster when next START signal is received
-            elif (
-                self.tg_data["action"] == "STOP"
-                and self.attributes.get("deal_mode", "", self.dca_conf) != "signal"
-            ):
+            elif self.tg_data["action"] == "STOP":
                 pair = ""
-                if pair in bot["pairs"]:
-                    self.logging.info("Removing pair " + pair, True)
-                    bot["pairs"].remove(pair)
-                    update_bot = True
-                else:
-                    self.logging.info(
-                        pair + " not removed because it was not in the pair list"
-                    )
+                if self.attributes.get("deal_mode", "", self.dca_conf) != "signal":
+                    if pair in bot["pairs"]:
+                        self.logging.info("Removing pair " + pair, True)
+                        bot["pairs"].remove(pair)
+                        update_bot = True
+                    else:
+                        self.logging.info(
+                            pair + " not removed because it was not in the pair list"
+                        )
 
             # Adapt mad if included pairs and simul. deals for the same pair are lower than mad value
             if update_bot:
@@ -642,6 +640,7 @@ class MultiBot:
         # if triggeronly=true and deal_mode == "signal" then
         # initiate deal with a random coin (random_pair=true) from the filtered symrank pair list
         # if triggerpair == "some coin" and deal_mode == "signal" then initiate new deal
+        # btc_downtrend always set to false if btc_pulse not used
         if (
             (triggeronly or pair)
             and self.attributes.get("deal_mode", "", self.dca_conf) == "signal"
