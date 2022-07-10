@@ -25,43 +25,41 @@ class MultiBot:
         self.attributes = attributes
         self.p3cw = p3cw
         self.logging = logging
-        self.dca_conf = asyncState.dca_conf
-        self.bot_active = asyncState.bot_active
-        self.btc_downtrend = asyncState.btc_downtrend
+        self.asyncState = asyncState
         self.signal = Signals(logging)
         self.config_botid = str(self.attributes.get("botid", "", "dcabot"))
         self.botname = (
             self.attributes.get(
                 "prefix",
                 self.attributes.get("prefix", "3CQSBOT", "dcabot"),
-                self.dca_conf,
+                self.asyncState.dca_conf,
             )
             + "_"
             + self.attributes.get(
                 "subprefix",
                 self.attributes.get("subprefix", "MULTI", "dcabot"),
-                self.dca_conf,
+                self.asyncState.dca_conf,
             )
             + "_"
             + self.attributes.get(
                 "suffix",
                 self.attributes.get("suffix", "dcabot", "dcabot"),
-                self.dca_conf,
+                self.asyncState.dca_conf,
             )
         )
 
     def strategy(self):
-        if self.attributes.get("deal_mode", "", self.dca_conf) == "signal":
+        if self.attributes.get("deal_mode", "", self.asyncState.dca_conf) == "signal":
             strategy = [{"strategy": "manual"}]
         else:
             try:
                 strategy = json.loads(
-                    self.attributes.get("deal_mode", "", self.dca_conf)
+                    self.attributes.get("deal_mode", "", self.asyncState.dca_conf)
                 )
             except ValueError:
                 self.logging.error(
                     "Either missing ["
-                    + self.dca_conf
+                    + self.asyncState.dca_conf
                     + "] section with DCA settings or decoding JSON string of deal_mode failed. "
                     + "Please check https://jsonformatter.curiousconcept.com/ for correct format"
                 )
@@ -84,13 +82,13 @@ class MultiBot:
         return mad
 
     def report_funds_needed(self, maxdeals):
-        tp = self.attributes.get("tp", "", self.dca_conf)
-        bo = self.attributes.get("bo", "", self.dca_conf)
-        so = self.attributes.get("so", "", self.dca_conf)
-        os = self.attributes.get("os", "", self.dca_conf)
-        ss = self.attributes.get("ss", "", self.dca_conf)
-        sos = self.attributes.get("sos", "", self.dca_conf)
-        mstc = self.attributes.get("mstc", "", self.dca_conf)
+        tp = self.attributes.get("tp", "", self.asyncState.dca_conf)
+        bo = self.attributes.get("bo", "", self.asyncState.dca_conf)
+        so = self.attributes.get("so", "", self.asyncState.dca_conf)
+        os = self.attributes.get("os", "", self.asyncState.dca_conf)
+        ss = self.attributes.get("ss", "", self.asyncState.dca_conf)
+        sos = self.attributes.get("sos", "", self.asyncState.dca_conf)
+        mstc = self.attributes.get("mstc", "", self.asyncState.dca_conf)
 
         fundsneeded = bo + so
         socalc = so
@@ -102,7 +100,7 @@ class MultiBot:
 
         self.logging.info(
             "Using DCA settings ["
-            + self.dca_conf
+            + self.asyncState.dca_conf
             + "]:  TP: "
             + str(tp)
             + "%  BO: $"
@@ -143,31 +141,45 @@ class MultiBot:
             "account_id": self.account_data["id"],
             "pairs": pairs,
             "max_active_deals": mad,
-            "base_order_volume": self.attributes.get("bo", "", self.dca_conf),
-            "take_profit": self.attributes.get("tp", "", self.dca_conf),
-            "safety_order_volume": self.attributes.get("so", "", self.dca_conf),
-            "martingale_volume_coefficient": self.attributes.get(
-                "os", "", self.dca_conf
+            "base_order_volume": self.attributes.get(
+                "bo", "", self.asyncState.dca_conf
             ),
-            "martingale_step_coefficient": self.attributes.get("ss", "", self.dca_conf),
-            "max_safety_orders": self.attributes.get("mstc", "", self.dca_conf),
+            "take_profit": self.attributes.get("tp", "", self.asyncState.dca_conf),
+            "safety_order_volume": self.attributes.get(
+                "so", "", self.asyncState.dca_conf
+            ),
+            "martingale_volume_coefficient": self.attributes.get(
+                "os", "", self.asyncState.dca_conf
+            ),
+            "martingale_step_coefficient": self.attributes.get(
+                "ss", "", self.asyncState.dca_conf
+            ),
+            "max_safety_orders": self.attributes.get(
+                "mstc", "", self.asyncState.dca_conf
+            ),
             "safety_order_step_percentage": self.attributes.get(
-                "sos", "", self.dca_conf
+                "sos", "", self.asyncState.dca_conf
             ),
             "take_profit_type": "total",
-            "active_safety_orders_count": self.attributes.get("max", "", self.dca_conf),
-            "cooldown": self.attributes.get("cooldown", 0, self.dca_conf),
+            "active_safety_orders_count": self.attributes.get(
+                "max", "", self.asyncState.dca_conf
+            ),
+            "cooldown": self.attributes.get("cooldown", 0, self.asyncState.dca_conf),
             "strategy_list": self.strategy(),
-            "trailing_enabled": self.attributes.get("trailing", False, self.dca_conf),
+            "trailing_enabled": self.attributes.get(
+                "trailing", False, self.asyncState.dca_conf
+            ),
             "trailing_deviation": self.attributes.get(
-                "trailing_deviation", 0.2, self.dca_conf
+                "trailing_deviation", 0.2, self.asyncState.dca_conf
             ),
             "allowed_deals_on_same_pair": self.attributes.get(
-                "sdsp", "", self.dca_conf
+                "sdsp", "", self.asyncState.dca_conf
             ),
-            "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0, self.dca_conf),
+            "min_volume_btc_24h": self.attributes.get(
+                "btc_min_vol", 0, self.asyncState.dca_conf
+            ),
             "disable_after_deals_count": self.attributes.get(
-                "deals_count", 0, self.dca_conf
+                "deals_count", 0, self.asyncState.dca_conf
             ),
         }
 
@@ -219,14 +231,14 @@ class MultiBot:
             else:
                 self.bot_data = data
                 self.logging.info("Enabling successful", True)
-                self.bot_active = True
+                self.asyncState.bot_active = True
 
         elif bot["is_enabled"]:
             self.logging.info(
                 "'" + bot["name"] + "' (botid: " + str(bot["id"]) + ") already enabled",
                 True,
             )
-            self.bot_active = True
+            self.asyncState.bot_active = True
             self.bot_data = bot
         else:
             self.logging.info(
@@ -260,7 +272,7 @@ class MultiBot:
             else:
                 self.bot_data = data
                 self.logging.info("Disabling successful", True)
-                self.bot_active = False
+                self.asyncState.bot_active = False
 
         elif not bot["is_enabled"]:
             self.logging.info(
@@ -271,7 +283,7 @@ class MultiBot:
                 + ") already disabled",
                 True,
             )
-            self.bot_active = False
+            self.asyncState.bot_active = False
             self.bot_data = bot
         else:
             self.logging.info(
@@ -491,7 +503,7 @@ class MultiBot:
                 self.bot_data = data
                 if (
                     not self.attributes.get("ext_botswitch", False)
-                    and not self.btc_downtrend
+                    and not self.asyncState.btc_downtrend
                 ):
                     self.enable(bot)
 
@@ -541,7 +553,7 @@ class MultiBot:
                 self.logging.debug("Pairs: " + str(pairs))
                 if (
                     not self.attributes.get("ext_botswitch", False)
-                    and not self.btc_downtrend
+                    and not self.asyncState.btc_downtrend
                 ):
                     self.enable(bot)
                 elif self.attributes.get("ext_botswitch", False):
@@ -568,7 +580,9 @@ class MultiBot:
         else:
             bot = self.bot_data
 
-        if not triggeronly:
+        if not triggeronly and (
+            not self.asyncState.btc_downtrend or self.continuous_update
+        ):
             pair = self.tg_data["pair"]
             update_bot = False
             self.logging.info(
@@ -605,7 +619,10 @@ class MultiBot:
             # do not remove pairs when deal_mode == "signal" to trigger deals faster when next START signal is received
             elif self.tg_data["action"] == "STOP":
                 pair = ""
-                if self.attributes.get("deal_mode", "", self.dca_conf) != "signal":
+                if (
+                    self.attributes.get("deal_mode", "", self.asyncState.dca_conf)
+                    != "signal"
+                ):
                     if pair in bot["pairs"]:
                         self.logging.info("Removing pair " + pair, True)
                         bot["pairs"].remove(pair)
@@ -643,8 +660,9 @@ class MultiBot:
         # btc_downtrend always set to false if btc_pulse not used
         if (
             (triggeronly or pair)
-            and self.attributes.get("deal_mode", "", self.dca_conf) == "signal"
+            and self.attributes.get("deal_mode", "", self.asyncState.dca_conf)
+            == "signal"
             and bot
-            and not self.btc_downtrend
+            and not self.asyncState.btc_downtrend
         ):
             self.new_deal(bot, pair)
