@@ -131,7 +131,7 @@ class MultiBot:
                     + deals["pair"]
                     + " open since "
                     + format_timedelta(
-                        datetime.now()
+                        datetime.utcnow()
                         - datetime.strptime(
                             deals["created_at"], "%Y-%m-%dT%H:%M:%S.%fZ"
                         ),

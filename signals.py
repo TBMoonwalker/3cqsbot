@@ -277,18 +277,22 @@ class Signals:
                     ) + " less than FGI-EMA{:d}: {:.1f}".format(
                         ema_slow, fgi_ema_slow[-1]
                     )
-                    if fgi_ema_fast[-1] < fgi_ema_fast[-2]:
+                    if round(fgi_ema_fast[-1], 1) < round(fgi_ema_fast[-2], 1):
                         self.logging.info(
                             "FGI in the downtrend zone - "
                             + output_str
-                            + " - Fast EMA falling compared to yesterday",
+                            + " - Fast EMA falling compared to yesterday"
+                            + " ("
+                            + str(round(fgi_ema_fast[-2], 1))
+                            + ")",
                             True,
                         )
                     else:
                         self.logging.info(
                             "FGI in the downtrend zone - "
                             + output_str
-                            + " - Fast EMA rising compared to yesterday",
+                            + " - Fast EMA equal or rising compared to yesterday"
+                            " (" + str(round(fgi_ema_fast[-2], 1)) + ")",
                             True,
                         )
                 else:
@@ -298,18 +302,20 @@ class Signals:
                     ) + " greater than FGI-EMA{:d}: {:.1f}".format(
                         ema_slow, fgi_ema_slow[-1]
                     )
-                    if fgi_ema_fast[-1] < fgi_ema_fast[-2]:
+                    if round(fgi_ema_fast[-1], 1) < round(fgi_ema_fast[-2], 1):
                         self.logging.info(
                             "FGI in the uptrend zone - "
                             + output_str
-                            + "  - Fast EMA falling compared to yesterday",
+                            + "  - Fast EMA falling compared to yesterday"
+                            " (" + str(round(fgi_ema_fast[-2], 1)) + ")",
                             True,
                         )
                     else:
                         self.logging.info(
-                            "FGI in the uptrend zone -- "
+                            "FGI in the uptrend zone - "
                             + output_str
-                            + "  - Fast EMA rising compared to yesterday",
+                            + "  - Fast EMA equal or rising compared to yesterday"
+                            " (" + str(round(fgi_ema_fast[-2], 1)) + ")",
                             True,
                         )
 

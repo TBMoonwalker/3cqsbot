@@ -2,6 +2,8 @@ import re
 import json
 import time
 
+from pytz import UTC
+
 from signals import Signals
 from datetime import datetime
 from babel.numbers import format_currency
@@ -197,7 +199,7 @@ class SingleBot:
                         + deals["pair"]
                         + " open since "
                         + format_timedelta(
-                            datetime.now()
+                            datetime.utcnow()
                             - datetime.strptime(
                                 deals["created_at"], "%Y-%m-%dT%H:%M:%S.%fZ"
                             ),
