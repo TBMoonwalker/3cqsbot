@@ -239,7 +239,7 @@ def account_data():
     )
 
     if error:
-        logging.debug(error["msg"])
+        logging.error(error["msg"])
         sys.tracebacklimit = 0
         sys.exit("Problem fetching account data from 3commas api - stopping!")
     else:
@@ -269,14 +269,14 @@ def pair_data(account):
     )
 
     if error:
-        logging.debug(error["msg"])
+        logging.error(error["msg"])
         sys.tracebacklimit = 0
         sys.exit("Problem fetching pair data from 3commas api - stopping!")
 
     error, blacklist_data = p3cw.request(entity="bots", action="pairs_black_list")
 
     if error:
-        logging.debug(error["msg"])
+        logging.error(error["msg"])
         sys.tracebacklimit = 0
         sys.exit("Problem fetching pairs blacklist data from 3commas api - stopping!")
 
@@ -337,7 +337,7 @@ async def bot_switch():
                 bot.enable(
                     asyncState.multibot
                 )  # if asyncState.multibot=={} search multibot by id or name and enable it
-                asyncState.bot_active = bot.bot_active
+                asyncState.bot_active = bot.asyncState.bot_active
                 asyncState.multibot = bot.bot_data
                 logging.info(
                     "Multi bot activated - waiting for pair #start signals", True
@@ -370,7 +370,7 @@ async def bot_switch():
                     [], bot_data(), {}, attributes, p3cw, logging, asyncState
                 )
                 bot.disable(bot_data(), True)  # True = disable all single bots
-                asyncState.bot_active = bot.bot_active
+                asyncState.bot_active = bot.asyncState.bot_active
             else:
                 if asyncState.multibot == {}:
                     bot = MultiBot(
@@ -390,7 +390,7 @@ async def bot_switch():
                 bot.disable(
                     asyncState.multibot
                 )  # if asyncState.multibot=={} search multibot by id or name and disable it
-                asyncState.bot_active = bot.bot_active
+                asyncState.bot_active = bot.asyncState.bot_active
                 asyncState.multibot = bot.bot_data
 
             logging.debug("bot_active after disabling: " + str(asyncState.bot_active))
@@ -446,7 +446,7 @@ async def fgi_bot_switch():
                 and asyncState.fgi <= attributes.get("fgi_trade_max", 100)
             ):
                 logging.info(
-                    "FGI uptrending and inside allowed trading range ["
+                    "FGI inside allowed trading range ["
                     + str(attributes.get("fgi_trade_min", 0))
                     + ".."
                     + str(attributes.get("fgi_trade_max", 100))
@@ -490,7 +490,7 @@ async def fgi_bot_switch():
                         bot.enable(
                             asyncState.multibot
                         )  # if asyncState.multibot=={} search multibot by id or name and enable it
-                        asyncState.bot_active = bot.bot_active
+                        asyncState.bot_active = bot.asyncState.bot_active
                         asyncState.multibot = bot.bot_data
                         logging.info(
                             "Multi bot activated - waiting for pair #start signals",
@@ -535,7 +535,7 @@ async def fgi_bot_switch():
                             [], bot_data(), {}, attributes, p3cw, logging, asyncState
                         )
                         bot.disable(bot_data(), True)  # True = disable all single bots
-                        asyncState.bot_active = bot.bot_active
+                        asyncState.bot_active = bot.asyncState.bot_active
                     else:
                         if asyncState.multibot == {}:
                             bot = MultiBot(
@@ -562,7 +562,7 @@ async def fgi_bot_switch():
                         bot.disable(
                             asyncState.multibot
                         )  # if asyncState.multibot=={} search multibot by id or name and disable it
-                        asyncState.bot_active = bot.bot_active
+                        asyncState.bot_active = bot.asyncState.bot_active
                         asyncState.multibot = bot.bot_data
 
                 notification.send_notification()
@@ -716,24 +716,24 @@ async def my_event_handler(event):
                     asyncState,
                 )
                 bot.create()
-                asyncState.bot_active = bot.bot_active
+                asyncState.bot_active = bot.asyncState.bot_active
                 asyncState.multibot = bot.bot_data
                 # if deal_mode == signal configured, trigger a deal if random_pair == true
                 if attributes.get(
                     "deal_mode", "", asyncState.dca_conf
                 ) == "signal" and attributes.get("random_pair", "False"):
                     if (
-                        not asyncState.multibot["active_deals_count"]
-                        == asyncState.multibot["max_active_deals"]
+                        asyncState.multibot["active_deals_count"]
+                        != asyncState.multibot["max_active_deals"]
                     ):
                         bot.trigger(triggeronly=True)
                         asyncState.multibot = bot.bot_data
                     else:
                         logging.info(
                             "No random deal for filtered coins started because "
-                            + asyncState.multibot["active_deals_count"]
+                            + str(asyncState.multibot["active_deals_count"])
                             + "/"
-                            + asyncState.multibot["max_active_deals"]
+                            + str(asyncState.multibot["max_active_deals"])
                             + " deals already active"
                         )
                 notification.send_notification()
@@ -756,10 +756,39 @@ async def main():
     asyncState.chatid = user[0].id
 
     logging.info("*** 3CQS Bot started ***", True)
+    logging.info("** Configuration **", True)
     if attributes.get("single"):
-        logging.info("Single pair bot mode activated", True)
+        logging.info("Bot mode: 'Single Pair'", True)
     else:
-        logging.info("Multi pair bot mode activated", True)
+        logging.info("Bot Mode: 'Multi Pair'", True)
+
+    logging.info(
+        "Listening to 3cqs signals: '" + str(attributes.get("symrank_signal")) + "'",
+        True,
+    )
+    logging.info(
+        "Topcoin filter: '" + str(attributes.get("topcoin_filter", False)) + "'", True
+    )
+    logging.info("BTC Pulse: '" + str(attributes.get("btc_pulse", False)) + "'", True)
+    logging.info(
+        "FGI Trading: '" + str(attributes.get("fearandgreed", False)) + "'", True
+    )
+    logging.info(
+        "Continuous pair update: '"
+        + str(attributes.get("continuous_update", False))
+        + "'",
+        True,
+    )
+    logging.info(
+        "External/TV bot switching: '"
+        + str(attributes.get("ext_botswitch", False))
+        + "'",
+        True,
+    )
+    logging.info("Quote currency: '" + str(attributes.get("market")) + "'")
+    logging.info(
+        "Token whitelist: '" + str(attributes.get("token_whitelist", "No")) + "'", True
+    )
 
     # Check part of the config before starting the client
     if attributes.get("btc_pulse", False) and attributes.get("ext_botswitch", False):

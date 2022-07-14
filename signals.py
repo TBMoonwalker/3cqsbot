@@ -272,24 +272,46 @@ class Signals:
 
                 if fgi_ema_fast[-1] < fgi_ema_slow[-1]:
                     asyncState.fgi_downtrend = True
-                    self.logging.info(
-                        "FGI-EMA{0:d}: {1:.1f}".format(ema_fast, fgi_ema_fast[-1])
-                        + " less than FGI-EMA{:d}: {:.1f}".format(
-                            ema_slow, fgi_ema_slow[-1]
-                        )
-                        + "  -- downtrending",
-                        True,
+                    output_str = "FGI-EMA{0:d}: {1:.1f}".format(
+                        ema_fast, fgi_ema_fast[-1]
+                    ) + " less than FGI-EMA{:d}: {:.1f}".format(
+                        ema_slow, fgi_ema_slow[-1]
                     )
+                    if fgi_ema_fast[-1] < fgi_ema_fast[-2]:
+                        self.logging.info(
+                            "FGI in the downtrend zone - "
+                            + output_str
+                            + " - Fast EMA falling compared to yesterday",
+                            True,
+                        )
+                    else:
+                        self.logging.info(
+                            "FGI in the downtrend zone - "
+                            + output_str
+                            + " - Fast EMA rising compared to yesterday",
+                            True,
+                        )
                 else:
                     asyncState.fgi_downtrend = False
-                    self.logging.info(
-                        "FGI-EMA{0:d}: {1:.1f}".format(ema_fast, fgi_ema_fast[-1])
-                        + " greater than FGI-EMA{:d}: {:.1f}".format(
-                            ema_slow, fgi_ema_slow[-1]
-                        )
-                        + "  -- uptrending",
-                        True,
+                    output_str = "FGI-EMA{0:d}: {1:.1f}".format(
+                        ema_fast, fgi_ema_fast[-1]
+                    ) + " greater than FGI-EMA{:d}: {:.1f}".format(
+                        ema_slow, fgi_ema_slow[-1]
                     )
+                    if fgi_ema_fast[-1] < fgi_ema_fast[-2]:
+                        self.logging.info(
+                            "FGI in the uptrend zone - "
+                            + output_str
+                            + "  - Fast EMA falling compared to yesterday",
+                            True,
+                        )
+                    else:
+                        self.logging.info(
+                            "FGI in the uptrend zone -- "
+                            + output_str
+                            + "  - Fast EMA rising compared to yesterday",
+                            True,
+                        )
 
                 # FGI downtrend = true if FGI drops >= 10 between actual and last day
                 # OR >= 15 between actual and second to last day

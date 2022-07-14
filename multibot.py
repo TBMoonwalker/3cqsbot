@@ -1,9 +1,11 @@
 import random
 import json
-import babel.numbers
 import sys
 
 from signals import Signals
+from datetime import datetime
+from babel.numbers import format_currency
+from babel.dates import format_timedelta
 
 
 class MultiBot:
@@ -76,10 +78,78 @@ class MultiBot:
             mad = len(pairs)
         # Raise max active deals to minimum pairs or mad if possible
         elif len(pairs) * self.attributes.get("sdsp") >= mad:
-            self.logging.debug("Pairs are over 'mad' - nothing to do")
+            self.logging.debug("Pairs are equal or over 'mad' - nothing to do")
             mad = self.attributes.get("mad")
 
         return mad
+
+    def report_deals(self, bot):
+        self.logging.info(
+            "Deals active: "
+            + str(bot["active_deals_count"])
+            + "/"
+            + str(bot["max_active_deals"]),
+            True,
+        )
+        self.logging.info(
+            "Profits of "
+            + str(bot["finished_deals_count"])
+            + " finished deals: "
+            + format_currency(bot["finished_deals_profit_usd"], "USD", locale="en_US"),
+            True,
+        )
+        self.logging.info(
+            "Profits of active deals: "
+            + format_currency(bot["active_deals_usd_profit"], "USD", locale="en_US"),
+            True,
+        )
+
+        error, data = self.p3cw.request(
+            entity="deals",
+            action="",
+            action_id="",
+            additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
+            payload={"limit": 100, "bot_id": bot["id"], "scope": "active"},
+        )
+        if error:
+            self.logging.error(error["msg"])
+        else:
+            for deals in data:
+                if (
+                    deals["bought_volume"] == None
+                ):  # if no bought_volume, then use base_order_volume for bought_volume
+                    bought_volume = format_currency(
+                        deals["base_order_volume"], "USD", locale="en_US"
+                    )
+                else:
+                    bought_volume = format_currency(
+                        deals["bought_volume"], "USD", locale="en_US"
+                    )
+
+                self.logging.info(
+                    "Deal "
+                    + deals["pair"]
+                    + " open since "
+                    + format_timedelta(
+                        datetime.now()
+                        - datetime.strptime(
+                            deals["created_at"], "%Y-%m-%dT%H:%M:%S.%fZ"
+                        ),
+                        locale="en_US",
+                    )
+                    + "   Actual profit: "
+                    + format_currency(deals["actual_usd_profit"], "USD", locale="en_US")
+                    + " ("
+                    + deals["actual_profit_percentage"]
+                    + "%)"
+                    + "   Bought volume: "
+                    + bought_volume
+                    + "   Deal error: "
+                    + str(deals["deal_has_error"]),
+                    True,
+                )
+
+        return
 
     def report_funds_needed(self, maxdeals):
         tp = self.attributes.get("tp", "", self.asyncState.dca_conf)
@@ -124,11 +194,9 @@ class MultiBot:
             "Max active deals (mad) allowed: "
             + str(maxdeals)
             + "   Max funds per active deal (all SO filled): "
-            + babel.numbers.format_currency(fundsneeded, "USD", locale="en_US")
+            + format_currency(fundsneeded, "USD", locale="en_US")
             + "   Total funds needed: "
-            + babel.numbers.format_currency(
-                maxdeals * fundsneeded, "USD", locale="en_US"
-            ),
+            + format_currency(maxdeals * fundsneeded, "USD", locale="en_US"),
             True,
         )
 
@@ -306,7 +374,6 @@ class MultiBot:
                 pair = ""
 
         if pair:
-            self.logging.info("Triggering new deal for pair " + pair, True)
             error, data = self.p3cw.request(
                 entity="bots",
                 action="start_new_deal",
@@ -316,6 +383,9 @@ class MultiBot:
             )
 
             if error:
+                self.logging.info(
+                    "Triggering new deal for pair " + pair + " - unsuccessful", True
+                )
                 if bot["active_deals_count"] >= bot["max_active_deals"]:
                     self.logging.info(
                         "Max active deals of "
@@ -331,7 +401,10 @@ class MultiBot:
                 else:
                     self.logging.error(error["msg"])
             else:
-                self.bot_data["active_deals_count"] = bot["active_deals_count"] + 1
+                self.logging.info(
+                    "Triggering new deal for pair " + pair + " - successful", True
+                )
+                bot["active_deals_count"] += 1
 
     def search_3cqsbot(self):
         # Check and get existing multibot id
@@ -459,7 +532,7 @@ class MultiBot:
             # Limit pairs to the maximal deals (mad)
             if self.attributes.get("mad") == 1:
                 maxpairs = 1
-            elif self.attributes.get("mad") <= len(pairs):
+            elif len(pairs) >= self.attributes.get("mad"):
                 maxpairs = self.attributes.get("mad")
             else:
                 maxpairs = len(pairs)
@@ -638,6 +711,12 @@ class MultiBot:
                 mad = self.adjust_mad(bot["pairs"], mad_before)
                 if mad > mad_before:
                     self.logging.info("Adjusting mad to: " + str(mad), True)
+                    # Report deals when adding pair; for deal_mode == signal it is reported separately
+                    if (
+                        self.attributes.get("deal_mode", "", self.asyncState.dca_conf)
+                        != "signal"
+                    ):
+                        self.report_deals(bot)
 
                 error, data = self.p3cw.request(
                     entity="bots",
@@ -652,7 +731,7 @@ class MultiBot:
                 if error:
                     self.logging.error(error["msg"])
                 else:
-                    self.bot_data = data
+                    bot = data
 
         # if triggeronly=true and deal_mode == "signal" then
         # initiate deal with a random coin (random_pair=true) from the filtered symrank pair list
@@ -666,3 +745,5 @@ class MultiBot:
             and not self.asyncState.btc_downtrend
         ):
             self.new_deal(bot, pair)
+            self.report_deals(bot)
+            self.bot_data = bot
