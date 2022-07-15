@@ -426,6 +426,37 @@ class MultiBot:
                         + bot["name"]
                         + "' found"
                     )
+                    # if 3cqsbot found by id, rename bot if needed according to config name settings
+                    if self.botname != bot["name"]:
+                        self.logging.info(
+                            "Renaming bot name from '"
+                            + bot["name"]
+                            + "' to '"
+                            + self.botname
+                            + "' (botid: "
+                            + str(bot["id"])
+                            + ")",
+                            True,
+                        )
+                        bot["name"] = self.botname
+                        mad = self.attributes.get("mad")
+                        mad = self.adjust_mad(bot["pairs"], mad)
+
+                        error, data = self.p3cw.request(
+                            entity="bots",
+                            action="update",
+                            action_id=str(bot["id"]),
+                            additional_headers={
+                                "Forced-Mode": self.attributes.get("trade_mode")
+                            },
+                            payload=self.payload(bot["pairs"], mad, new_bot=False),
+                        )
+
+                        if error:
+                            self.logging.error(error["msg"])
+                        else:
+                            self.bot_data = data
+
                     break
 
         # Check for existing name
@@ -588,19 +619,6 @@ class MultiBot:
                 self.new_deal(bot, triggerpair="")
         elif mad > 0:
             # Update existing multibot
-            if self.botname != bot["name"]:
-                self.logging.info(
-                    "Renaming bot name from '"
-                    + bot["name"]
-                    + "' to '"
-                    + self.botname
-                    + "' (botid: "
-                    + str(bot["id"])
-                    + ")",
-                    True,
-                )
-                bot["name"] = self.botname
-
             self.logging.info(
                 "Updating multi bot '"
                 + bot["name"]
@@ -645,13 +663,12 @@ class MultiBot:
         # Updates multi bot with new pairs
         pair = ""
         mad = self.attributes.get("mad")
-        # Search for 3cqsbot by name or id
-        if isinstance(self.bot_data, list):
-            for bot in self.bot_data:
-                if bot["name"] == self.botname or str(bot["id"]) == self.config_botid:
-                    break
-        else:
+
+        # Check if data of 3cqsbot is given (dict format), else search for existing one in the list before creating a new one
+        if isinstance(self.bot_data, dict):
             bot = self.bot_data
+        else:
+            bot = self.search_3cqsbot()
 
         if not triggeronly and (
             not self.asyncState.btc_downtrend or self.continuous_update
