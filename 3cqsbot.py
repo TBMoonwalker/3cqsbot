@@ -105,10 +105,13 @@ asyncState.multibot = {}
 ######################################################
 #                     Methods                        #
 ######################################################
+
+
 def run_once():
     asyncState.fh = open(os.path.realpath(__file__), "r")
     try:
-        portalocker.lock(asyncState.fh, portalocker.LOCK_EX | portalocker.LOCK_NB)
+        portalocker.lock(asyncState.fh, portalocker.LOCK_EX |
+                         portalocker.LOCK_NB)
     except:
         sys.exit(
             "Another 3CQSBot is already running in this directory - please use another one!"
@@ -186,7 +189,8 @@ def tg_data(text_lines):
                     # Sort the pair list from Telegram
                     line = re.split(" +", row)
                     pairs.update(
-                        {int(line[0][:-1]): line[1], int(line[2][:-1]): line[3]}
+                        {int(line[0][:-1]): line[1],
+                         int(line[2][:-1]): line[3]}
                     )
 
             allpairs = dict(sorted(pairs.items()))
@@ -253,7 +257,8 @@ def account_data():
         if "id" not in account:
             sys.tracebacklimit = 0
             sys.exit(
-                "Account with name '" + attributes.get("account_name") + "' not found"
+                "Account with name '" +
+                attributes.get("account_name") + "' not found"
             )
 
     return account
@@ -277,7 +282,8 @@ def pair_data(account, interval_sec):
             sys.tracebacklimit = 0
             sys.exit("Problem fetching pair data from 3commas api - stopping!")
 
-        error, blacklist_data = p3cw.request(entity="bots", action="pairs_black_list")
+        error, blacklist_data = p3cw.request(
+            entity="bots", action="pairs_black_list")
 
         if error:
             logging.error(error["msg"])
@@ -404,7 +410,8 @@ def bot_switch(interval_sec):
                     bot = SingleBot(
                         [], bot_data(), {}, attributes, p3cw, logging, asyncState
                     )
-                    bot.disable(bot_data(), True)  # True = disable all single bots
+                    # True = disable all single bots
+                    bot.disable(bot_data(), True)
                     asyncState.bot_active = bot.asyncState.bot_active
                 else:
                     if asyncState.multibot == {}:
@@ -493,7 +500,8 @@ async def my_event_handler(event):
         if tg_output and not isinstance(tg_output, list):
 
             logging.info(
-                "New 3CQS signal '" + str(tg_output["signal"]) + "' incoming..."
+                "New 3CQS signal '" +
+                str(tg_output["signal"]) + "' incoming..."
             )
             # Check if pair is in whitelist
             if attributes.get("token_whitelist", []):
@@ -585,7 +593,8 @@ async def my_event_handler(event):
                 if tg_output["signal"] == attributes.get(
                     "symrank_signal"
                 ) and attributes.get("token_whitelist", []):
-                    logging.info("Signal ignored because pair is not whitelisted")
+                    logging.info(
+                        "Signal ignored because pair is not whitelisted")
                 else:
                     logging.info(
                         "Signal ignored because '"
@@ -678,15 +687,19 @@ async def main():
         logging.info("Bot Mode: 'Multi Pair'", True)
 
     logging.info(
-        "Listening to 3cqs signals: '" + str(attributes.get("symrank_signal")) + "'",
+        "Listening to 3cqs signals: '" +
+        str(attributes.get("symrank_signal")) + "'",
         True,
     )
     logging.info(
-        "Topcoin filter: '" + str(attributes.get("topcoin_filter", False)) + "'", True
+        "Topcoin filter: '" +
+        str(attributes.get("topcoin_filter", False)) + "'", True
     )
-    logging.info("BTC Pulse: '" + str(attributes.get("btc_pulse", False)) + "'", True)
+    logging.info("BTC Pulse: '" +
+                 str(attributes.get("btc_pulse", False)) + "'", True)
     logging.info(
-        "FGI Trading: '" + str(attributes.get("fearandgreed", False)) + "'", True
+        "FGI Trading: '" +
+        str(attributes.get("fearandgreed", False)) + "'", True
     )
     logging.info(
         "Continuous pair update: '"
@@ -702,7 +715,8 @@ async def main():
     )
     logging.info("Quote currency: '" + str(attributes.get("market")) + "'")
     logging.info(
-        "Token whitelist: '" + str(attributes.get("token_whitelist", "No")) + "'", True
+        "Token whitelist: '" +
+        str(attributes.get("token_whitelist", "No")) + "'", True
     )
 
     # Check part of the config before starting the client
@@ -767,6 +781,9 @@ async def main():
         bot_switch_thread.start()
         while not asyncState.fgi_allows_trading:
             time.sleep(1)
+
+    logging.info("** Waiting for action **", True)
+    notification.send_notification()
 
     while True:
         while (
