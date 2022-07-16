@@ -1,6 +1,5 @@
 import yfinance as yf
 import numpy as np
-import asyncio
 import math
 import re
 import babel.numbers
@@ -55,7 +54,7 @@ class Signals:
             return wrapper_cache(_func)
 
     @staticmethod
-    @timed_lru_cache(seconds=10800)
+    @timed_lru_cache(seconds=10800, maxsize=None)
     @retry(wait=wait_fixed(5))
     def cgexchanges(exchange, id):
         cg = CoinGeckoAPI()
@@ -66,7 +65,7 @@ class Signals:
         return exchange
 
     @staticmethod
-    @timed_lru_cache(seconds=10800)
+    @timed_lru_cache(seconds=10800, maxsize=None)
     def cgvalues(rank):
         cg = CoinGeckoAPI()
         market = []
@@ -91,7 +90,7 @@ class Signals:
 
             exchange = self.cgexchanges(exchange, id)
 
-            self.logging.debug(self.cgvalues.cache_info())
+            self.logging.debug(self.cgexchanges.cache_info())
 
             for target in exchange["tickers"]:
                 converted_btc = babel.numbers.format_currency(
@@ -152,7 +151,7 @@ class Signals:
 
         return volume_target
 
-    def topcoin(self, pairs, rank, volume, exchange, trademarket):
+    def topcoin(self, pairs, rank, volume, exchange, trademarket, first_time):
 
         market = self.cgvalues(rank)
 
@@ -187,6 +186,9 @@ class Signals:
                             + " and has passed marketcap filter limit of #"
                             + str(rank)
                         )
+                        # Prevent from being block for 30sec from too many API requests
+                        if first_time:
+                            sleep(2.2)
                         # Check if topcoin has enough volume
                         if self.topvolume(symbol["id"], volume, exchange, trademarket):
                             pairlist.append(pair)
@@ -382,7 +384,7 @@ class Signals:
 
     # Credits goes to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts
-    async def getbtcpulse(self, asyncState):
+    def getbtcpulse(self, asyncState, interval_sec):
 
         if asyncState.fgi_allows_trading:
             self.logging.info("Starting btc-pulse", True)
@@ -398,7 +400,7 @@ class Signals:
                 self.logging.info("btc-pulse signaling downtrend")
 
                 # after 5mins getting the latest BTC data to see if it has had a sharp rise in previous 5 mins
-                await asyncio.sleep(300)
+                sleep(interval_sec)
                 btcusdt = self.btctechnical("BTC-USD")
 
                 # this is the golden cross check fast moving EMA
@@ -418,5 +420,5 @@ class Signals:
                 self.logging.info("btc-pulse signaling uptrend")
                 asyncState.btc_downtrend = False
 
-            self.logging.info("Next btc-pulse check in 5m")
-            await asyncio.sleep(300)
+            self.logging.info("Next btc-pulse check in " + str(interval_sec) + "sec")
+            sleep(interval_sec)

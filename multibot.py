@@ -539,7 +539,9 @@ class MultiBot:
                 self.attributes.get("topcoin_volume", 0),
                 self.attributes.get("topcoin_exchange", "binance"),
                 self.attributes.get("market"),
+                self.asyncState.first_topcoin_call,
             )
+            self.asyncState.first_topcoin_call = False
         else:
             self.logging.info("Topcoin filter disabled, not filtering pairs!")
 
@@ -691,7 +693,9 @@ class MultiBot:
                         self.attributes.get("topcoin_volume", 0),
                         self.attributes.get("topcoin_exchange", "binance"),
                         self.attributes.get("market"),
+                        self.asyncState.first_topcoin_call,
                     )
+                    self.asyncState.first_topcoin_call = False
                 else:
                     self.logging.info("Topcoin filter disabled, not filtering pairs!")
                 if pair:
@@ -709,7 +713,7 @@ class MultiBot:
 
             # do not remove pairs when deal_mode == "signal" to trigger deals faster when next START signal is received
             elif self.tg_data["action"] == "STOP":
-                pair = ""
+
                 if (
                     self.attributes.get("deal_mode", "", self.asyncState.dca_conf)
                     != "signal"
