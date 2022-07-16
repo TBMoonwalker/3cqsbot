@@ -12,7 +12,7 @@ from dateutil.relativedelta import relativedelta as rd
 from pycoingecko import CoinGeckoAPI
 from tenacity import retry, wait_fixed
 from functools import lru_cache, wraps
-from time import monotonic_ns
+from time import monotonic_ns, sleep
 
 
 class Signals:
@@ -239,7 +239,7 @@ class Signals:
             )
         return response
 
-    async def get_fgi(self, asyncState, ema_fast, ema_slow):
+    def get_fgi(self, asyncState, ema_fast, ema_slow):
 
         url = "https://api.alternative.me/fng/?limit=100"
         self.logging.info(
@@ -339,7 +339,7 @@ class Signals:
                 asyncState.fgi_time_until_update = time_until_update
 
             # request FGI once per day, because is is calculated only once per day
-            await asyncio.sleep(time_until_update)
+            sleep(time_until_update)
 
     # Credits goes to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts

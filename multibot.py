@@ -279,7 +279,7 @@ class MultiBot:
     def enable(self, bot):
         # search for 3cqsbot by id or by name if bot not given
         if bot == {}:
-            bot = self.search_3cqsbot()
+            bot = self.search_rename_3cqsbot()
 
         if not bot["is_enabled"]:
             self.logging.info(
@@ -320,7 +320,7 @@ class MultiBot:
     def disable(self, bot):
         # search for 3cqsbot by id or by name if bot not given
         if bot == {}:
-            bot = self.search_3cqsbot()
+            bot = self.search_rename_3cqsbot()
 
         if bot["is_enabled"]:
             self.logging.info(
@@ -393,20 +393,18 @@ class MultiBot:
                         + " reached, not adding a new one.",
                         True,
                     )
-                elif error["status_code"] == 422:
-                    self.logging.info(
-                        "No deal triggered, because open deal already present for this pair",
-                        True,
-                    )
                 else:
-                    self.logging.error(error["msg"])
+                    # modified output because this will be the most common error
+                    self.logging.error(
+                        "No deal triggered: " + error["msg"].split(":")[1].split(" ")[1]
+                    )
             else:
                 self.logging.info(
                     "Triggering new deal for pair " + pair + " - successful", True
                 )
                 bot["active_deals_count"] += 1
 
-    def search_3cqsbot(self):
+    def search_rename_3cqsbot(self):
         # Check and get existing multibot id
         bot_by_id = False
         bot_by_name = False
@@ -456,6 +454,8 @@ class MultiBot:
                             self.logging.error(error["msg"])
                         else:
                             self.bot_data = data
+                    else:
+                        self.bot_data = bot
 
                     break
 
@@ -486,7 +486,9 @@ class MultiBot:
                         + str(bot["id"])
                         + " found"
                     )
+                    self.bot_data = bot
                     break
+
             if not bot_by_name:
                 self.logging.info("3cqsbot not found with this name")
                 bot["name"] = ""
@@ -521,7 +523,7 @@ class MultiBot:
         if isinstance(self.bot_data, dict):
             bot = self.bot_data
         else:
-            bot = self.search_3cqsbot()
+            bot = self.search_rename_3cqsbot()
 
         pairs = []
         mad = self.attributes.get("mad")
@@ -659,7 +661,7 @@ class MultiBot:
             )
             self.disable(bot)
 
-    def trigger(self, triggeronly=False):
+    def trigger(self, random_only=False):
         # Updates multi bot with new pairs
         pair = ""
         mad = self.attributes.get("mad")
@@ -668,43 +670,42 @@ class MultiBot:
         if isinstance(self.bot_data, dict):
             bot = self.bot_data
         else:
-            bot = self.search_3cqsbot()
+            bot = self.search_rename_3cqsbot()
 
-        if not triggeronly and (
+        if not random_only and (
             not self.asyncState.btc_downtrend or self.continuous_update
         ):
             pair = self.tg_data["pair"]
-            update_bot = False
+            update_bot_with_pair = False
             self.logging.info(
                 "Got new 3cqs " + self.tg_data["action"] + " signal for " + pair
             )
 
             if self.tg_data["action"] == "START":
 
-                if pair in bot["pairs"]:
-                    self.logging.info(pair + " is already included in the pair list")
+                # Filter pair according to topcoin criteria if set
+                if self.attributes.get("topcoin_filter", False):
+                    pair = self.signal.topcoin(
+                        pair,
+                        self.attributes.get("topcoin_limit", 3500),
+                        self.attributes.get("topcoin_volume", 0),
+                        self.attributes.get("topcoin_exchange", "binance"),
+                        self.attributes.get("market"),
+                    )
                 else:
-                    # Filter topcoins (if set)
-                    if self.attributes.get("topcoin_filter", False):
-                        pair = self.signal.topcoin(
-                            pair,
-                            self.attributes.get("topcoin_limit", 3500),
-                            self.attributes.get("topcoin_volume", 0),
-                            self.attributes.get("topcoin_exchange", "binance"),
-                            self.attributes.get("market"),
+                    self.logging.info("Topcoin filter disabled, not filtering pairs!")
+                if pair:
+                    if pair in bot["pairs"]:
+                        self.logging.info(
+                            pair + " is already included in the pair list"
                         )
                     else:
-                        self.logging.info(
-                            "Topcoin filter disabled, not filtering pairs!"
-                        )
-
-                    if pair:
                         if self.attributes.get("topcoin_filter", False):
                             self.logging.info("Adding topcoin pair " + pair, True)
                         else:
                             self.logging.info("Adding pair " + pair, True)
                         bot["pairs"].append(pair)
-                        update_bot = True
+                        update_bot_with_pair = True
 
             # do not remove pairs when deal_mode == "signal" to trigger deals faster when next START signal is received
             elif self.tg_data["action"] == "STOP":
@@ -716,14 +717,14 @@ class MultiBot:
                     if pair in bot["pairs"]:
                         self.logging.info("Removing pair " + pair, True)
                         bot["pairs"].remove(pair)
-                        update_bot = True
+                        update_bot_with_pair = True
                     else:
                         self.logging.info(
                             pair + " not removed because it was not in the pair list"
                         )
 
             # Adapt mad if included pairs and simul. deals for the same pair are lower than mad value
-            if update_bot:
+            if update_bot_with_pair:
                 mad_before = mad
                 mad = self.adjust_mad(bot["pairs"], mad_before)
                 if mad > mad_before:
@@ -750,12 +751,12 @@ class MultiBot:
                 else:
                     bot = data
 
-        # if triggeronly=true and deal_mode == "signal" then
+        # if random_only == true and deal_mode == "signal" then
         # initiate deal with a random coin (random_pair=true) from the filtered symrank pair list
-        # if triggerpair == "some coin" and deal_mode == "signal" then initiate new deal
+        # if pair not empty and deal_mode == "signal" then initiate new deal
         # btc_downtrend always set to false if btc_pulse not used
         if (
-            (triggeronly or pair)
+            (random_only or pair)
             and self.attributes.get("deal_mode", "", self.asyncState.dca_conf)
             == "signal"
             and bot

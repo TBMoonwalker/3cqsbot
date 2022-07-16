@@ -16,6 +16,7 @@ from signals import Signals
 from config import Config
 from pathlib import Path
 from logger import Logger, NotificationHandler
+from threading import Thread
 
 ######################################################
 #                       Config                       #
@@ -95,8 +96,8 @@ asyncState.fgi_time_until_update = 1
 asyncState.dca_conf = "dcabot"
 asyncState.chatid = ""
 asyncState.fh = 0
-asyncState.accountData = {}
-asyncState.pairData = []
+asyncState.account_data = {}
+asyncState.pair_data = []
 asyncState.symrank_success = False
 asyncState.multibot = {}
 
@@ -257,38 +258,43 @@ def account_data():
     return account
 
 
-def pair_data(account):
+def pair_data(account, interval_sec):
 
-    pairs = []
+    while True:
+        pairs = []
+        asyncState.pair_data = []
 
-    error, data = p3cw.request(
-        entity="accounts",
-        action="market_pairs",
-        additional_headers={"Forced-Mode": attributes.get("trade_mode")},
-        payload={"market_code": account["market_code"]},
-    )
+        error, data = p3cw.request(
+            entity="accounts",
+            action="market_pairs",
+            additional_headers={"Forced-Mode": attributes.get("trade_mode")},
+            payload={"market_code": account["market_code"]},
+        )
 
-    if error:
-        logging.error(error["msg"])
-        sys.tracebacklimit = 0
-        sys.exit("Problem fetching pair data from 3commas api - stopping!")
+        if error:
+            logging.error(error["msg"])
+            sys.tracebacklimit = 0
+            sys.exit("Problem fetching pair data from 3commas api - stopping!")
 
-    error, blacklist_data = p3cw.request(entity="bots", action="pairs_black_list")
+        error, blacklist_data = p3cw.request(entity="bots", action="pairs_black_list")
 
-    if error:
-        logging.error(error["msg"])
-        sys.tracebacklimit = 0
-        sys.exit("Problem fetching pairs blacklist data from 3commas api - stopping!")
+        if error:
+            logging.error(error["msg"])
+            sys.tracebacklimit = 0
+            sys.exit(
+                "Problem fetching pairs blacklist data from 3commas api - stopping!"
+            )
 
-    for pair in data:
-        if attributes.get("market") in pair:
-            if (
-                pair not in attributes.get("token_denylist", [])
-                and pair not in blacklist_data["pairs"]
-            ):
-                pairs.append(pair)
+        for pair in data:
+            if attributes.get("market") in pair:
+                if (
+                    pair not in attributes.get("token_denylist", [])
+                    and pair not in blacklist_data["pairs"]
+                ):
+                    pairs.append(pair)
 
-    return pairs
+        asyncState.pair_data = pairs
+        time.sleep(interval_sec)
 
 
 async def symrank():
@@ -299,7 +305,7 @@ async def symrank():
     await client.send_message(asyncState.chatid, "/symrank")
 
 
-async def bot_switch():
+async def btc_bot_switch():
 
     while True:
 
@@ -403,7 +409,7 @@ async def bot_switch():
         await asyncio.sleep(60)
 
 
-async def dca_conf_switch():
+def fgi_dca_conf_change(interval_sec):
 
     while True:
         if asyncState.fgi >= attributes.get(
@@ -432,10 +438,10 @@ async def dca_conf_switch():
             )
             asyncState.dca_conf = "dcabot"
 
-        await asyncio.sleep(3600)
+        time.sleep(interval_sec)
 
 
-async def fgi_bot_switch():
+def fgi_bot_switch(interval_sec):
 
     while True:
         if not asyncState.fgi_downtrend:
@@ -504,11 +510,11 @@ async def fgi_bot_switch():
                         asyncState.symrank_success = False
                         while not asyncState.symrank_success:
                             # bot activation occurs by my_event_handler which is listening to all TG msgs on the 3cqs channel
-                            await symrank()
-                            await asyncio.sleep(5)
+                            symrank()
+                            time.sleep(5)
                             # prevent from calling the symrank command too much otherwise a timeout is caused
                             if not asyncState.symrank_success:
-                                await asyncio.sleep(60)
+                                time.sleep(60)
 
                 notification.send_notification()
 
@@ -567,7 +573,7 @@ async def fgi_bot_switch():
 
                 notification.send_notification()
 
-        await asyncio.sleep(asyncState.fgi_time_until_update + 5)
+        time.sleep(interval_sec)
 
 
 def _handle_task_result(task: asyncio.Task) -> None:
@@ -590,8 +596,8 @@ async def my_event_handler(event):
     logging.debug("TG msg: " + str(tg_output))
 
     if tg_output and asyncState.fgi_allows_trading:
-        account_output = asyncState.accountData
-        pair_output = asyncState.pairData
+        account_output = asyncState.account_data
+        pair_output = asyncState.pair_data
         # if signal with #START or #STOP
         if tg_output and not isinstance(tg_output, list):
 
@@ -662,6 +668,7 @@ async def my_event_handler(event):
                     ) or tg_output["action"] == "STOP":
 
                         bot.trigger()
+                        asyncState.multibot = bot.bot_data
                         notification.send_notification()
 
                     else:
@@ -696,7 +703,11 @@ async def my_event_handler(event):
                     )
         # if symrank list
         elif tg_output and isinstance(tg_output, list):
-            if not attributes.get("single") and not asyncState.symrank_success:
+            if (
+                not attributes.get("single")
+                and not attributes.get("deal_mode", "", asyncState.dca_conf) == "signal"
+                and not asyncState.symrank_success
+            ):
                 asyncState.symrank_success = True
                 logging.info("New symrank list incoming - updating bot", True)
                 if asyncState.multibot == {}:
@@ -726,7 +737,7 @@ async def my_event_handler(event):
                         asyncState.multibot["active_deals_count"]
                         != asyncState.multibot["max_active_deals"]
                     ):
-                        bot.trigger(triggeronly=True)
+                        bot.trigger(random_only=True)
                         asyncState.multibot = bot.bot_data
                     else:
                         logging.info(
@@ -747,9 +758,22 @@ async def my_event_handler(event):
 async def main():
 
     signals = Signals(logging)
-    asyncState.accountData = account_data()
-    asyncState.pairData = pair_data(asyncState.accountData)
-    fgi_or_btcpulse = False
+    asyncState.account_data = account_data()
+
+    # Update available pair_data every 360 minutes for e.g. new blacklisted pairs or new tradable pairs
+    pair_data_thread = Thread(
+        target=pair_data,
+        args=(
+            asyncState.account_data,
+            3600 * 6,
+        ),
+        daemon=True,
+        name="Background update pair_data",
+    )
+    pair_data_thread.start()
+    while not asyncState.pair_data:
+        time.sleep(1)
+
     logging.debug("Refreshing cache...")
 
     user = await client.get_participants("The3CQSBot")
@@ -797,28 +821,43 @@ async def main():
             "Check config.ini: btc_pulse AND ext_botswitch both set to true - not allowed"
         )
 
-    # Create independent tasks for FGI and BTC pulse up-/downtrend check
+    # Create independent threads for FGI and tasks for BTC pulse up-/downtrend check
     if attributes.get("fearandgreed", False):
-        fgi_task = client.loop.create_task(
-            signals.get_fgi(
+
+        fgi_thread = Thread(
+            target=signals.get_fgi,
+            args=(
                 asyncState,
                 attributes.get("fgi_ema_fast", 9),
                 attributes.get("fgi_ema_slow", 50),
-            )
+            ),
+            daemon=True,
+            name="Background FGI update",
         )
-        fgi_task.add_done_callback(_handle_task_result)
-        dca_conf_switch_task = client.loop.create_task(dca_conf_switch())
-        dca_conf_switch_task.add_done_callback(_handle_task_result)
-        fgi_bot_switch_task = client.loop.create_task(fgi_bot_switch())
-        fgi_bot_switch_task.add_done_callback(_handle_task_result)
-        fgi_or_btcpulse = True
+        fgi_thread.start()
+        while asyncState.fgi == -1:
+            time.sleep(1)
+
+        fgi_dca_conf_change_thread = Thread(
+            target=fgi_dca_conf_change,
+            args=(asyncState.fgi_time_until_update + 5,),
+            daemon=True,
+            name="Background dca_setting change according to FGI",
+        )
+        fgi_dca_conf_change_thread.start()
+        fgi_bot_switch_thread = Thread(
+            target=fgi_bot_switch,
+            args=(asyncState.fgi_time_until_update + 5,),
+            daemon=True,
+            name="Background bot switch according to FGI",
+        )
+        fgi_bot_switch_thread.start()
 
     if attributes.get("btc_pulse", False):
         btcpulse_task = client.loop.create_task(signals.getbtcpulse(asyncState))
         btcpulse_task.add_done_callback(_handle_task_result)
-        bot_switch_task = client.loop.create_task(bot_switch())
-        bot_switch_task.add_done_callback(_handle_task_result)
-        fgi_or_btcpulse = True
+        btc_bot_switch_task = client.loop.create_task(btc_bot_switch())
+        btc_bot_switch_task.add_done_callback(_handle_task_result)
 
     while (
         not attributes.get("single")
@@ -829,21 +868,11 @@ async def main():
         # prevent from calling the symrank command too much until success
         await asyncio.sleep(60)
 
-    while fgi_or_btcpulse:
-        if attributes.get("fearandgreed", False):
-            await fgi_task
-            await dca_conf_switch_task
-            await fgi_bot_switch_task
+    while attributes.get("btc_pulse", False):
+        await btcpulse_task
+        await btc_bot_switch_task
 
-        if attributes.get("btc_pulse", False):
-            await btcpulse_task
-            await bot_switch_task
-
-
-with client:
-    client.loop.run_until_complete(main())
 
 client.start()
-
-if not attributes.get("btc_pulse", False):
-    client.run_until_disconnected()
+client.loop.run_until_complete(main())
+client.run_until_disconnected()
