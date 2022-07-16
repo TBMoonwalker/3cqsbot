@@ -56,7 +56,8 @@ class MultiBot:
         else:
             try:
                 strategy = json.loads(
-                    self.attributes.get("deal_mode", "", self.asyncState.dca_conf)
+                    self.attributes.get(
+                        "deal_mode", "", self.asyncState.dca_conf)
                 )
             except ValueError:
                 self.logging.error(
@@ -95,12 +96,14 @@ class MultiBot:
             "Profits of "
             + str(bot["finished_deals_count"])
             + " finished deals: "
-            + format_currency(bot["finished_deals_profit_usd"], "USD", locale="en_US"),
+            + format_currency(bot["finished_deals_profit_usd"],
+                              "USD", locale="en_US"),
             True,
         )
         self.logging.info(
             "Profits of active deals: "
-            + format_currency(bot["active_deals_usd_profit"], "USD", locale="en_US"),
+            + format_currency(bot["active_deals_usd_profit"],
+                              "USD", locale="en_US"),
             True,
         )
 
@@ -108,7 +111,8 @@ class MultiBot:
             entity="deals",
             action="",
             action_id="",
-            additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
+            additional_headers={
+                "Forced-Mode": self.attributes.get("trade_mode")},
             payload={"limit": 100, "bot_id": bot["id"], "scope": "active"},
         )
         if error:
@@ -138,7 +142,8 @@ class MultiBot:
                         locale="en_US",
                     )
                     + "   Actual profit: "
-                    + format_currency(deals["actual_usd_profit"], "USD", locale="en_US")
+                    + format_currency(deals["actual_usd_profit"],
+                                      "USD", locale="en_US")
                     + " ("
                     + deals["actual_profit_percentage"]
                     + "%)"
@@ -283,7 +288,8 @@ class MultiBot:
 
         if not bot["is_enabled"]:
             self.logging.info(
-                "Enabling bot: " + bot["name"] + " (botid: " + str(bot["id"]) + ")",
+                "Enabling bot: " + bot["name"] +
+                " (botid: " + str(bot["id"]) + ")",
                 True,
             )
 
@@ -291,7 +297,8 @@ class MultiBot:
                 entity="bots",
                 action="enable",
                 action_id=str(bot["id"]),
-                additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
+                additional_headers={
+                    "Forced-Mode": self.attributes.get("trade_mode")},
             )
 
             if error:
@@ -303,7 +310,8 @@ class MultiBot:
 
         elif bot["is_enabled"]:
             self.logging.info(
-                "'" + bot["name"] + "' (botid: " + str(bot["id"]) + ") already enabled",
+                "'" + bot["name"] +
+                "' (botid: " + str(bot["id"]) + ") already enabled",
                 True,
             )
             self.asyncState.bot_active = True
@@ -324,7 +332,8 @@ class MultiBot:
 
         if bot["is_enabled"]:
             self.logging.info(
-                "Disabling bot: " + bot["name"] + " (botid: " + str(bot["id"]) + ")",
+                "Disabling bot: " + bot["name"] +
+                " (botid: " + str(bot["id"]) + ")",
                 True,
             )
 
@@ -332,7 +341,8 @@ class MultiBot:
                 entity="bots",
                 action="disable",
                 action_id=str(bot["id"]),
-                additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
+                additional_headers={
+                    "Forced-Mode": self.attributes.get("trade_mode")},
             )
 
             if error:
@@ -369,7 +379,8 @@ class MultiBot:
         else:
             if self.attributes.get("random_pair", "False"):
                 pair = random.choice(bot["pairs"])
-                self.logging.info(pair + " is the randomly chosen pair to start")
+                self.logging.info(
+                    pair + " is the randomly chosen pair to start")
             else:
                 pair = ""
 
@@ -378,7 +389,8 @@ class MultiBot:
                 entity="bots",
                 action="start_new_deal",
                 action_id=str(bot["id"]),
-                additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
+                additional_headers={
+                    "Forced-Mode": self.attributes.get("trade_mode")},
                 payload={"pair": pair},
             )
 
@@ -396,7 +408,8 @@ class MultiBot:
                 else:
                     # modified output because this will be the most common error
                     self.logging.error(
-                        "No deal triggered: " + error["msg"].split(":")[1].split(" ")[1]
+                        "No deal triggered: " +
+                        error["msg"].split(":")[1].split(" ")[1]
                     )
             else:
                 self.logging.info(
@@ -411,7 +424,8 @@ class MultiBot:
 
         if self.config_botid != "":
             botnames = []
-            self.logging.info("Searching for 3cqsbot with botid: " + self.config_botid)
+            self.logging.info(
+                "Searching for 3cqsbot with botid: " + self.config_botid)
             for bot in self.bot_data:
                 botnames.append(bot["name"])
 
@@ -447,7 +461,8 @@ class MultiBot:
                             additional_headers={
                                 "Forced-Mode": self.attributes.get("trade_mode")
                             },
-                            payload=self.payload(bot["pairs"], mad, new_bot=False),
+                            payload=self.payload(
+                                bot["pairs"], mad, new_bot=False),
                         )
 
                         if error:
@@ -469,7 +484,8 @@ class MultiBot:
 
             botnames = []
             if self.config_botid != "":
-                self.logging.info("3cqsbot not found with botid: " + self.config_botid)
+                self.logging.info(
+                    "3cqsbot not found with botid: " + self.config_botid)
 
             self.logging.info(
                 "Searching for 3cqsbot with name '" + self.botname + "' to get botid"
@@ -573,7 +589,8 @@ class MultiBot:
                 maxpairs = len(pairs)
             pairs = pairs[0:maxpairs]
 
-            self.logging.debug("Pairs after limit initial pairs filter " + str(pairs))
+            self.logging.debug(
+                "Pairs after limit initial pairs filter " + str(pairs))
 
         # Adapt mad if pairs are under value
         mad = self.adjust_mad(pairs, mad)
@@ -601,7 +618,8 @@ class MultiBot:
             error, data = self.p3cw.request(
                 entity="bots",
                 action="create_bot",
-                additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
+                additional_headers={
+                    "Forced-Mode": self.attributes.get("trade_mode")},
                 payload=self.payload(pairs, mad, new_bot=True),
             )
 
@@ -637,7 +655,8 @@ class MultiBot:
                 entity="bots",
                 action="update",
                 action_id=str(bot["id"]),
-                additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
+                additional_headers={
+                    "Forced-Mode": self.attributes.get("trade_mode")},
                 payload=self.payload(pairs, mad, new_bot=False),
             )
 
@@ -675,13 +694,19 @@ class MultiBot:
             bot = self.search_rename_3cqsbot()
 
         if not random_only and (
-            not self.asyncState.btc_downtrend or self.continuous_update
+            self.asyncState.bot_active or self.attributes.get(
+                "continuous_update", False)
         ):
             pair = self.tg_data["pair"]
             update_bot_with_pair = False
-            self.logging.info(
-                "Got new 3cqs " + self.tg_data["action"] + " signal for " + pair
-            )
+
+            if self.attributes.get("continuous_update", False) and not self.asyncState.bot_active:
+                self.logging.info("Continuous update active for disabled bot")
+            else:
+                self.logging.info(
+                    "Got new 3cqs " +
+                    self.tg_data["action"] + " signal for " + pair
+                )
 
             if self.tg_data["action"] == "START":
 
@@ -697,7 +722,8 @@ class MultiBot:
                     )
                     self.asyncState.first_topcoin_call = False
                 else:
-                    self.logging.info("Topcoin filter disabled, not filtering pairs!")
+                    self.logging.info(
+                        "Topcoin filter disabled, not filtering pairs!")
                 if pair:
                     if pair in bot["pairs"]:
                         self.logging.info(
@@ -705,7 +731,8 @@ class MultiBot:
                         )
                     else:
                         if self.attributes.get("topcoin_filter", False):
-                            self.logging.info("Adding topcoin pair " + pair, True)
+                            self.logging.info(
+                                "Adding topcoin pair " + pair, True)
                         else:
                             self.logging.info("Adding pair " + pair, True)
                         bot["pairs"].append(pair)
@@ -715,7 +742,8 @@ class MultiBot:
             elif self.tg_data["action"] == "STOP":
 
                 if (
-                    self.attributes.get("deal_mode", "", self.asyncState.dca_conf)
+                    self.attributes.get(
+                        "deal_mode", "", self.asyncState.dca_conf)
                     != "signal"
                 ):
                     if pair in bot["pairs"]:
@@ -726,6 +754,8 @@ class MultiBot:
                         self.logging.info(
                             pair + " not removed because it was not in the pair list"
                         )
+                else:
+                    self.logging.info(pair + " not removed because deal_mode = signal")
 
             # Adapt mad if included pairs and simul. deals for the same pair are lower than mad value
             if update_bot_with_pair:
@@ -735,7 +765,8 @@ class MultiBot:
                     self.logging.info("Adjusting mad to: " + str(mad), True)
                     # Report deals when adding pair; for deal_mode == signal it is reported separately
                     if (
-                        self.attributes.get("deal_mode", "", self.asyncState.dca_conf)
+                        self.attributes.get(
+                            "deal_mode", "", self.asyncState.dca_conf)
                         != "signal"
                     ):
                         self.report_deals(bot)
@@ -755,6 +786,10 @@ class MultiBot:
                 else:
                     bot = data
 
+            # avoid triggering a deal when STOP signal
+            if self.tg_data["action"] == "STOP":
+                pair = ""
+
         # if random_only == true and deal_mode == "signal" then
         # initiate deal with a random coin (random_pair=true) from the filtered symrank pair list
         # if pair not empty and deal_mode == "signal" then initiate new deal
@@ -764,7 +799,7 @@ class MultiBot:
             and self.attributes.get("deal_mode", "", self.asyncState.dca_conf)
             == "signal"
             and bot
-            and not self.asyncState.btc_downtrend
+            and self.asyncState.bot_active
         ):
             self.new_deal(bot, pair)
             self.report_deals(bot)

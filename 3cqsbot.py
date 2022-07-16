@@ -352,7 +352,7 @@ def bot_switch(interval_sec):
                         True,
                     )
                 elif attributes.get("continuous_update", False):
-                    # listen continously to 3cqs msgs on TG, avoid symrank calls
+                    # listen continuously to 3cqs msgs on TG, avoid symrank calls
                     if asyncState.multibot == {}:
                         bot = MultiBot(
                             [], bot_data(), {}, 0, attributes, p3cw, logging, asyncState
@@ -496,7 +496,8 @@ async def my_event_handler(event):
     if tg_output and asyncState.fgi_allows_trading:
         account_output = asyncState.account_data
         pair_output = asyncState.pair_data
-        # if signal with #START or #STOP
+
+        # if TG message with #START or #STOP
         if tg_output and not isinstance(tg_output, list):
 
             logging.info(
@@ -601,7 +602,8 @@ async def my_event_handler(event):
                         + attributes.get("symrank_signal")
                         + "' is configured"
                     )
-        # if symrank list
+
+        # if TG message with symrank list
         elif tg_output and isinstance(tg_output, list):
             if (
                 not attributes.get("single")
@@ -785,12 +787,11 @@ async def main():
     logging.info("** Waiting for action **", True)
     notification.send_notification()
 
-    while True:
+    while attributes.get("deal_mode", "", asyncState.dca_conf) != "signal":
         while (
             asyncState.fgi_allows_trading
             and not asyncState.symrank_success
             and not attributes.get("single")
-            and attributes.get("deal_mode", "", asyncState.dca_conf) != "signal"
         ):
             await symrank()
 
