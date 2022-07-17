@@ -101,7 +101,7 @@ class MultiBot:
             True,
         )
         self.logging.info(
-            "Profits of active deals: "
+            "uPNL of active deals: "
             + format_currency(bot["active_deals_usd_profit"],
                               "USD", locale="en_US"),
             True,
@@ -469,6 +469,7 @@ class MultiBot:
                             self.logging.error(error["msg"])
                         else:
                             self.bot_data = data
+                            bot = data
                     else:
                         self.bot_data = bot
 
@@ -732,9 +733,9 @@ class MultiBot:
                     else:
                         if self.attributes.get("topcoin_filter", False):
                             self.logging.info(
-                                "Adding topcoin pair " + pair, True)
+                                "Adding " + pair + " after passing topcoin filter", True)
                         else:
-                            self.logging.info("Adding pair " + pair, True)
+                            self.logging.info("Adding " + pair, True)
                         bot["pairs"].append(pair)
                         update_bot_with_pair = True
 
@@ -747,7 +748,7 @@ class MultiBot:
                     != "signal"
                 ):
                     if pair in bot["pairs"]:
-                        self.logging.info("Removing pair " + pair, True)
+                        self.logging.info("Removing " + pair, True)
                         bot["pairs"].remove(pair)
                         update_bot_with_pair = True
                     else:
@@ -755,22 +756,23 @@ class MultiBot:
                             pair + " not removed because it was not in the pair list"
                         )
                 else:
-                    self.logging.info(pair + " not removed because deal_mode = signal")
+                    self.logging.info(
+                        pair + " not removed from pair list because using 'signal' as deal_mode")
 
             # Adapt mad if included pairs and simul. deals for the same pair are lower than mad value
-            if update_bot_with_pair:
-                mad_before = mad
-                mad = self.adjust_mad(bot["pairs"], mad_before)
-                if mad > mad_before:
-                    self.logging.info("Adjusting mad to: " + str(mad), True)
-                    # Report deals when adding pair; for deal_mode == signal it is reported separately
-                    if (
-                        self.attributes.get(
-                            "deal_mode", "", self.asyncState.dca_conf)
-                        != "signal"
-                    ):
-                        self.report_deals(bot)
+            mad_before = mad
+            mad = self.adjust_mad(bot["pairs"], mad_before)
+            if mad > mad_before:
+                self.logging.info("Adjusting mad to: " + str(mad), True)
+                # Report deals when adding pair; for deal_mode == signal it is reported separately
+                if (
+                    self.attributes.get(
+                        "deal_mode", "", self.asyncState.dca_conf)
+                    != "signal"
+                ):
+                    self.report_deals(bot)
 
+            if update_bot_with_pair:
                 error, data = self.p3cw.request(
                     entity="bots",
                     action="update",
@@ -786,7 +788,7 @@ class MultiBot:
                 else:
                     bot = data
 
-            # avoid triggering a deal when STOP signal
+            # avoid triggering a deal if STOP signal
             if self.tg_data["action"] == "STOP":
                 pair = ""
 
@@ -801,6 +803,12 @@ class MultiBot:
             and bot
             and self.asyncState.bot_active
         ):
-            self.new_deal(bot, pair)
+            if bot["active_deals_count"] < bot["max_active_deals"]:
+                self.new_deal(bot, pair)
+                self.bot_data = bot
+            else:
+                self.logging.info(
+                    "Max active deals of reached, not adding a new one.",
+                    True,
+                )
             self.report_deals(bot)
-            self.bot_data = bot
