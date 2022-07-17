@@ -1,17 +1,16 @@
-import yfinance as yf
-import numpy as np
+import json
 import math
 import re
-import babel.numbers
-import requests
-import json
-from logging import exception
-from dateutil.relativedelta import relativedelta as rd
-
-from pycoingecko import CoinGeckoAPI
-from tenacity import retry, wait_fixed
 from functools import lru_cache, wraps
 from time import monotonic_ns, sleep
+
+import babel.numbers
+import numpy as np
+import requests
+import yfinance as yf
+from dateutil.relativedelta import relativedelta as rd
+from pycoingecko import CoinGeckoAPI
+from tenacity import retry, wait_fixed
 
 
 class Signals:

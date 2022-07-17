@@ -1,12 +1,12 @@
 """Cyberjunky's 3Commas bot helpers."""
-### many thanks to Cyberjunky for using his code ###
+### credits got to Cyberjunky for using his logging code ###
+import datetime
 import json
 import logging
 import os
 import queue
 import threading
 import time
-import datetime
 from logging.handlers import TimedRotatingFileHandler as _TimedRotatingFileHandler
 
 import apprise

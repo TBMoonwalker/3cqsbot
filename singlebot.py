@@ -1,13 +1,13 @@
-import re
 import json
+import re
 import time
+from datetime import datetime
 
+from babel.dates import format_timedelta
+from babel.numbers import format_currency
 from pytz import UTC
 
 from signals import Signals
-from datetime import datetime
-from babel.numbers import format_currency
-from babel.dates import format_timedelta
 
 
 class SingleBot:
@@ -494,7 +494,7 @@ class SingleBot:
                                 self.attributes.get("topcoin_volume", 0),
                                 self.attributes.get("topcoin_exchange", "binance"),
                                 self.attributes.get("market"),
-                                self.asyncState.first_topcoin_call
+                                self.asyncState.first_topcoin_call,
                             )
                             self.asyncState.first_topcoin_call = False
                         else:

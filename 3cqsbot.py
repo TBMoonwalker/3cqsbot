@@ -1,22 +1,23 @@
 import argparse
-import re
 import asyncio
-import sys
-import os
-from numpy import true_divide
-import portalocker
 import math
+import os
+import re
+import sys
 import time
+from pathlib import Path
+from threading import Thread
 
-from telethon import TelegramClient, events
+import portalocker
+from numpy import true_divide
 from py3cw.request import Py3CW
-from singlebot import SingleBot
+from telethon import TelegramClient, events
+
+from config import Config
+from logger import Logger, NotificationHandler
 from multibot import MultiBot
 from signals import Signals
-from config import Config
-from pathlib import Path
-from logger import Logger, NotificationHandler
-from threading import Thread
+from singlebot import SingleBot
 
 ######################################################
 #                       Config                       #
@@ -110,8 +111,7 @@ asyncState.multibot = {}
 def run_once():
     asyncState.fh = open(os.path.realpath(__file__), "r")
     try:
-        portalocker.lock(asyncState.fh, portalocker.LOCK_EX |
-                         portalocker.LOCK_NB)
+        portalocker.lock(asyncState.fh, portalocker.LOCK_EX | portalocker.LOCK_NB)
     except:
         sys.exit(
             "Another 3CQSBot is already running in this directory - please use another one!"
@@ -189,8 +189,7 @@ def tg_data(text_lines):
                     # Sort the pair list from Telegram
                     line = re.split(" +", row)
                     pairs.update(
-                        {int(line[0][:-1]): line[1],
-                         int(line[2][:-1]): line[3]}
+                        {int(line[0][:-1]): line[1], int(line[2][:-1]): line[3]}
                     )
 
             allpairs = dict(sorted(pairs.items()))
@@ -257,8 +256,7 @@ def account_data():
         if "id" not in account:
             sys.tracebacklimit = 0
             sys.exit(
-                "Account with name '" +
-                attributes.get("account_name") + "' not found"
+                "Account with name '" + attributes.get("account_name") + "' not found"
             )
 
     return account
@@ -282,8 +280,7 @@ def pair_data(account, interval_sec):
             sys.tracebacklimit = 0
             sys.exit("Problem fetching pair data from 3commas api - stopping!")
 
-        error, blacklist_data = p3cw.request(
-            entity="bots", action="pairs_black_list")
+        error, blacklist_data = p3cw.request(entity="bots", action="pairs_black_list")
 
         if error:
             logging.error(error["msg"])
@@ -351,7 +348,9 @@ def bot_switch(interval_sec):
                         "Single bot mode activated - waiting for pair #start signals",
                         True,
                     )
-                elif attributes.get("continuous_update", False):
+                elif attributes.get(
+                    "deal_mode", "", asyncState.dca_conf
+                ) == "signal" or attributes.get("continuous_update", False):
                     # listen continuously to 3cqs msgs on TG, avoid symrank calls
                     if asyncState.multibot == {}:
                         bot = MultiBot(
@@ -501,8 +500,7 @@ async def my_event_handler(event):
         if tg_output and not isinstance(tg_output, list):
 
             logging.info(
-                "New 3CQS signal '" +
-                str(tg_output["signal"]) + "' incoming..."
+                "New 3CQS signal '" + str(tg_output["signal"]) + "' incoming..."
             )
             # Check if pair is in whitelist
             if attributes.get("token_whitelist", []):
@@ -594,8 +592,7 @@ async def my_event_handler(event):
                 if tg_output["signal"] == attributes.get(
                     "symrank_signal"
                 ) and attributes.get("token_whitelist", []):
-                    logging.info(
-                        "Signal ignored because pair is not whitelisted")
+                    logging.info("Signal ignored because pair is not whitelisted")
                 else:
                     logging.info(
                         "Signal ignored because '"
@@ -690,19 +687,15 @@ async def main():
         logging.info("Bot Mode: 'Multi Pair'", True)
 
     logging.info(
-        "Listening to 3cqs signals: '" +
-        str(attributes.get("symrank_signal")) + "'",
+        "Listening to 3cqs signals: '" + str(attributes.get("symrank_signal")) + "'",
         True,
     )
     logging.info(
-        "Topcoin filter: '" +
-        str(attributes.get("topcoin_filter", False)) + "'", True
+        "Topcoin filter: '" + str(attributes.get("topcoin_filter", False)) + "'", True
     )
-    logging.info("BTC Pulse: '" +
-                 str(attributes.get("btc_pulse", False)) + "'", True)
+    logging.info("BTC Pulse: '" + str(attributes.get("btc_pulse", False)) + "'", True)
     logging.info(
-        "FGI Trading: '" +
-        str(attributes.get("fearandgreed", False)) + "'", True
+        "FGI Trading: '" + str(attributes.get("fearandgreed", False)) + "'", True
     )
     logging.info(
         "Continuous pair update for multibot with other deal_mode than 'signal': '"
@@ -718,8 +711,7 @@ async def main():
     )
     logging.info("Quote currency: '" + str(attributes.get("market")) + "'")
     logging.info(
-        "Token whitelist: '" +
-        str(attributes.get("token_whitelist", "No")) + "'", True
+        "Token whitelist: '" + str(attributes.get("token_whitelist", "No")) + "'", True
     )
 
     # Check part of the config before starting the client
