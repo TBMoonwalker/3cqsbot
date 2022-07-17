@@ -205,6 +205,12 @@ class MultiBot:
             True,
         )
 
+        self.logging.info(
+            "Deal start condition(s): "
+            + self.attributes.get("deal_mode", "", self.asyncState.dca_conf),
+            True
+        )
+
         return
 
     def payload(self, pairs, mad, new_bot):

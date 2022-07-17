@@ -681,6 +681,7 @@ async def main():
     user = await client.get_participants("The3CQSBot")
     asyncState.chatid = user[0].id
 
+    ##### Initial reporting #####
     logging.info("*** 3CQS Bot started ***", True)
     logging.info("** Configuration **", True)
     if attributes.get("single"):
@@ -704,7 +705,7 @@ async def main():
         str(attributes.get("fearandgreed", False)) + "'", True
     )
     logging.info(
-        "Continuous pair update: '"
+        "Continuous pair update for multibot with other deal_mode than 'signal': '"
         + str(attributes.get("continuous_update", False))
         + "'",
         True,
@@ -728,7 +729,7 @@ async def main():
             "Check config.ini: btc_pulse AND ext_botswitch both set to true - not allowed"
         )
 
-    # Create independent threads for FGI and tasks for BTC pulse up-/downtrend check
+    ##### Threads for FGI and BTC pulse up-/downtrend check #####
     if attributes.get("fearandgreed", False):
 
         fgi_thread = Thread(
@@ -784,6 +785,7 @@ async def main():
         while not asyncState.fgi_allows_trading:
             time.sleep(1)
 
+    ##### Wait for TG signals of 3C Quick Stats channel #####
     logging.info("** Waiting for action **", True)
     notification.send_notification()
 
