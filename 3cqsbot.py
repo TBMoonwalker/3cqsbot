@@ -496,7 +496,7 @@ async def my_event_handler(event):
         account_output = asyncState.account_data
         pair_output = asyncState.pair_data
 
-        # if TG message with #START or #STOP
+        ##### if TG message with #START or #STOP
         if tg_output and not isinstance(tg_output, list):
 
             logging.info(
@@ -513,7 +513,7 @@ async def my_event_handler(event):
             if not asyncState.bot_active and not attributes.get(
                 "continuous_update", False
             ):
-                logging.info("Signal not processed because of BTC downtrend")
+                logging.info("Signal not processed because bot is disabled")
             # Check if it is the right signal
             elif (
                 tg_output["signal"] == attributes.get("symrank_signal")
@@ -564,6 +564,15 @@ async def my_event_handler(event):
                         and tg_output["symrank"]
                         <= attributes.get("symrank_limit_max", 100)
                     ) or tg_output["action"] == "STOP":
+
+                        # if multibot empty and dealmode == signal, first create/update and enable multibot before processing deals
+                        if (
+                            asyncState.multibot == {}
+                            and attributes.get("deal_mode", "", asyncState.dca_conf)
+                            == "signal"
+                        ):
+                            bot.create()
+                            asyncState.multibot = bot.bot_data
 
                         bot.trigger()
                         asyncState.multibot = bot.bot_data

@@ -182,7 +182,7 @@ class Signals:
                             str(pair)
                             + " is ranked #"
                             + str(symbol["market_cap_rank"])
-                            + " and has passed marketcap filter limit of #"
+                            + " and has passed marketcap filter limit of top #"
                             + str(rank)
                         )
                         # Prevent from being block for 30sec from too many API requests
@@ -205,7 +205,7 @@ class Signals:
                         str(pairs)
                         + " is ranked #"
                         + str(symbol["market_cap_rank"])
-                        + " and has passed marketcap filter limit of #"
+                        + " and has passed marketcap filter limit of top #"
                         + str(rank)
                     )
                     # Check if topcoin has enough volume

@@ -51,39 +51,6 @@ class MultiBot:
             )
         )
 
-    def strategy(self):
-        if self.attributes.get("deal_mode", "", self.asyncState.dca_conf) == "signal":
-            strategy = [{"strategy": "manual"}]
-        else:
-            try:
-                strategy = json.loads(
-                    self.attributes.get("deal_mode", "", self.asyncState.dca_conf)
-                )
-            except ValueError:
-                self.logging.error(
-                    "Either missing ["
-                    + self.asyncState.dca_conf
-                    + "] section with DCA settings or decoding JSON string of deal_mode failed. "
-                    + "Please check https://jsonformatter.curiousconcept.com/ for correct format"
-                )
-                sys.exit("Aborting script!")
-
-        return strategy
-
-    def adjust_mad(self, pairs, mad):
-        # Lower max active deals, when pairs are under mad
-        if len(pairs) * self.attributes.get("sdsp") < mad:
-            self.logging.debug(
-                "Pairs are under 'mad' - Lower max active deals to actual pairs"
-            )
-            mad = len(pairs)
-        # Raise max active deals to minimum pairs or mad if possible
-        elif len(pairs) * self.attributes.get("sdsp") >= mad:
-            self.logging.debug("Pairs are equal or over 'mad' - nothing to do")
-            mad = self.attributes.get("mad")
-
-        return mad
-
     def report_deals(self, bot):
         self.logging.info(
             "Deals active: "
@@ -153,6 +120,13 @@ class MultiBot:
         return
 
     def report_funds_needed(self, maxdeals):
+
+        self.logging.info(
+            "Deal start condition(s): "
+            + self.attributes.get("deal_mode", "", self.asyncState.dca_conf),
+            True,
+        )
+
         tp = self.attributes.get("tp", "", self.asyncState.dca_conf)
         bo = self.attributes.get("bo", "", self.asyncState.dca_conf)
         so = self.attributes.get("so", "", self.asyncState.dca_conf)
@@ -201,13 +175,26 @@ class MultiBot:
             True,
         )
 
-        self.logging.info(
-            "Deal start condition(s): "
-            + self.attributes.get("deal_mode", "", self.asyncState.dca_conf),
-            True,
-        )
-
         return
+
+    def strategy(self):
+        if self.attributes.get("deal_mode", "", self.asyncState.dca_conf) == "signal":
+            strategy = [{"strategy": "manual"}]
+        else:
+            try:
+                strategy = json.loads(
+                    self.attributes.get("deal_mode", "", self.asyncState.dca_conf)
+                )
+            except ValueError:
+                self.logging.error(
+                    "Either missing ["
+                    + self.asyncState.dca_conf
+                    + "] section with DCA settings or decoding JSON string of deal_mode failed. "
+                    + "Please check https://jsonformatter.curiousconcept.com/ for correct format"
+                )
+                sys.exit("Aborting script!")
+
+        return strategy
 
     def payload(self, pairs, mad, new_bot):
 
@@ -282,6 +269,135 @@ class MultiBot:
             )
 
         return payload
+
+    def adjust_mad(self, pairs, mad):
+        # Lower max active deals, when pairs are under mad
+        if len(pairs) * self.attributes.get("sdsp") < mad:
+            self.logging.debug(
+                "Pairs are under 'mad' - Lower max active deals to actual pairs"
+            )
+            mad = len(pairs)
+        # Raise max active deals to minimum pairs or mad if possible
+        elif len(pairs) * self.attributes.get("sdsp") >= mad:
+            self.logging.debug("Pairs are equal or over 'mad' - nothing to do")
+            mad = self.attributes.get("mad")
+
+        return mad
+
+    def search_rename_3cqsbot(self):
+        # Check and get existing multibot id
+        bot_by_id = False
+        bot_by_name = False
+
+        if self.config_botid != "":
+            botnames = []
+            self.logging.info("Searching for 3cqsbot with botid: " + self.config_botid)
+            for bot in self.bot_data:
+                botnames.append(bot["name"])
+
+                if self.config_botid == str(bot["id"]):
+                    bot_by_id = True
+                    self.logging.info(
+                        "Botid "
+                        + self.config_botid
+                        + " with name '"
+                        + bot["name"]
+                        + "' found"
+                    )
+                    # if 3cqsbot found by id, rename bot if needed according to config name settings
+                    if self.botname != bot["name"]:
+                        self.logging.info(
+                            "Renaming bot name from '"
+                            + bot["name"]
+                            + "' to '"
+                            + self.botname
+                            + "' (botid: "
+                            + str(bot["id"])
+                            + ")",
+                            True,
+                        )
+                        bot["name"] = self.botname
+                        mad = self.attributes.get("mad")
+                        mad = self.adjust_mad(bot["pairs"], mad)
+
+                        error, data = self.p3cw.request(
+                            entity="bots",
+                            action="update",
+                            action_id=str(bot["id"]),
+                            additional_headers={
+                                "Forced-Mode": self.attributes.get("trade_mode")
+                            },
+                            payload=self.payload(bot["pairs"], mad, new_bot=False),
+                        )
+
+                        if error:
+                            self.logging.error(error["msg"])
+                        else:
+                            self.bot_data = data
+                            bot = data
+                    else:
+                        self.bot_data = bot
+
+                    break
+
+        # Check for existing name
+        if not bot_by_id:
+            if self.attributes.get("fearandgreed", False) and self.config_botid == "":
+                self.logging.error(
+                    "Please add 'botid = xxxxxxx' to [dcabot] for using FGI. FGI guided DCA settings will only applied "
+                    + "to existent 3cqsbot. \n Script will be aborted if no botid is found by botname"
+                )
+
+            botnames = []
+            if self.config_botid != "":
+                self.logging.info("3cqsbot not found with botid: " + self.config_botid)
+
+            self.logging.info(
+                "Searching for 3cqsbot with name '" + self.botname + "' to get botid"
+            )
+            for bot in self.bot_data:
+                botnames.append(bot["name"])
+
+                if self.botname == bot["name"]:
+                    bot_by_name = True
+                    self.logging.info(
+                        "3cqsbot '"
+                        + bot["name"]
+                        + "' with botid "
+                        + str(bot["id"])
+                        + " found"
+                    )
+                    self.bot_data = bot
+                    break
+
+            if not bot_by_name:
+                self.logging.info("3cqsbot not found with this name")
+                bot["name"] = ""
+
+        self.logging.debug(
+            "Checked bot ids/names till config id/name found: " + str(botnames)
+        )
+
+        # If FGI is used and botid is not set in [dcabot], which is mandatory to prevent creating new bots with different botids,
+        # abort program for security reasons
+        if self.attributes.get("fearandgreed", False) and self.config_botid == "":
+            self.logging.error(
+                "No botid set in [dcabot] and no 3cqsbot '"
+                + self.botname
+                + "' found on 3commas"
+            )
+            self.logging.error(
+                "Please get botid on 3commas for an existent 3cqsbot and add 'botid = <botid of 3cqsbot>' under [dcabot] in config.ini"
+            )
+            self.logging.error(
+                "If first time run of this script with enabled FGI and no 3cqsbot has been created so far,"
+            )
+            self.logging.error(
+                "create manually one on 3commas, get botid and leave the bot disabled"
+            )
+            sys.exit("Aborting script!")
+
+        return bot
 
     def enable(self, bot):
         # search for 3cqsbot by id or by name if bot not given
@@ -411,121 +527,6 @@ class MultiBot:
                 )
                 bot["active_deals_count"] += 1
 
-    def search_rename_3cqsbot(self):
-        # Check and get existing multibot id
-        bot_by_id = False
-        bot_by_name = False
-
-        if self.config_botid != "":
-            botnames = []
-            self.logging.info("Searching for 3cqsbot with botid: " + self.config_botid)
-            for bot in self.bot_data:
-                botnames.append(bot["name"])
-
-                if self.config_botid == str(bot["id"]):
-                    bot_by_id = True
-                    self.logging.info(
-                        "Botid "
-                        + self.config_botid
-                        + " with name '"
-                        + bot["name"]
-                        + "' found"
-                    )
-                    # if 3cqsbot found by id, rename bot if needed according to config name settings
-                    if self.botname != bot["name"]:
-                        self.logging.info(
-                            "Renaming bot name from '"
-                            + bot["name"]
-                            + "' to '"
-                            + self.botname
-                            + "' (botid: "
-                            + str(bot["id"])
-                            + ")",
-                            True,
-                        )
-                        bot["name"] = self.botname
-                        mad = self.attributes.get("mad")
-                        mad = self.adjust_mad(bot["pairs"], mad)
-
-                        error, data = self.p3cw.request(
-                            entity="bots",
-                            action="update",
-                            action_id=str(bot["id"]),
-                            additional_headers={
-                                "Forced-Mode": self.attributes.get("trade_mode")
-                            },
-                            payload=self.payload(bot["pairs"], mad, new_bot=False),
-                        )
-
-                        if error:
-                            self.logging.error(error["msg"])
-                        else:
-                            self.bot_data = data
-                            bot = data
-                    else:
-                        self.bot_data = bot
-
-                    break
-
-        # Check for existing name
-        if not bot_by_id:
-            if self.attributes.get("fearandgreed", False) and self.config_botid == "":
-                self.logging.error(
-                    "Please add 'botid = xxxxxxx' to [dcabot] for using FGI. FGI guided DCA settings will only applied "
-                    + "to existent 3cqsbot. \n Script will be aborted if no botid is found by botname"
-                )
-
-            botnames = []
-            if self.config_botid != "":
-                self.logging.info("3cqsbot not found with botid: " + self.config_botid)
-
-            self.logging.info(
-                "Searching for 3cqsbot with name '" + self.botname + "' to get botid"
-            )
-            for bot in self.bot_data:
-                botnames.append(bot["name"])
-
-                if self.botname == bot["name"]:
-                    bot_by_name = True
-                    self.logging.info(
-                        "3cqsbot '"
-                        + bot["name"]
-                        + "' with botid "
-                        + str(bot["id"])
-                        + " found"
-                    )
-                    self.bot_data = bot
-                    break
-
-            if not bot_by_name:
-                self.logging.info("3cqsbot not found with this name")
-                bot["name"] = ""
-
-        self.logging.debug(
-            "Checked bot ids/names till config id/name found: " + str(botnames)
-        )
-
-        # If FGI is used and botid is not set in [dcabot], which is mandatory to prevent creating new bots with different botids,
-        # abort program for security reasons
-        if self.attributes.get("fearandgreed", False) and self.config_botid == "":
-            self.logging.error(
-                "No botid set in [dcabot] and no 3cqsbot '"
-                + self.botname
-                + "' found on 3commas"
-            )
-            self.logging.error(
-                "Please get botid on 3commas for an existent 3cqsbot and add 'botid = <botid of 3cqsbot>' under [dcabot] in config.ini"
-            )
-            self.logging.error(
-                "If first time run of this script with enabled FGI and no 3cqsbot has been created so far,"
-            )
-            self.logging.error(
-                "create manually one on 3commas, get botid and leave the bot disabled"
-            )
-            sys.exit("Aborting script!")
-
-        return bot
-
     def create(self):
         # Check if data of 3cqsbot is given (dict format), else search for existing one in the list before creating a new one
         if isinstance(self.bot_data, dict):
@@ -535,27 +536,31 @@ class MultiBot:
 
         pairs = []
         mad = self.attributes.get("mad")
+        maxdeals = mad
 
-        # Initial pair list
-        pairlist = self.tg_data
+        if self.attributes.get("deal_mode", "", self.asyncState.dca_conf) == "signal":
+            pairlist = self.tg_data["pair"]
+        else:
+            # Initial pair list
+            pairlist = self.tg_data
 
         # Filter topcoins (if set)
         if self.attributes.get("topcoin_filter", False):
             pairlist = self.signal.topcoin(
-                self.tg_data,
+                pairlist,
                 self.attributes.get("topcoin_limit", 3500),
                 self.attributes.get("topcoin_volume", 0),
                 self.attributes.get("topcoin_exchange", "binance"),
                 self.attributes.get("market"),
                 self.asyncState.first_topcoin_call,
             )
-            self.asyncState.first_topcoin_call = False
+            if isinstance(pairlist, list):
+                self.asyncState.first_topcoin_call = False
         else:
             self.logging.info("Topcoin filter disabled, not filtering pairs!")
 
-        for pair in pairlist:
-            pair = self.attributes.get("market") + "_" + pair
-            # Traded on our exchange?
+        if self.attributes.get("deal_mode", "", self.asyncState.dca_conf) == "signal":
+            pair = pairlist
             if pair in self.pair_data:
                 self.logging.debug(pair + " added to the list")
                 pairs.append(pair)
@@ -567,6 +572,21 @@ class MultiBot:
                     + self.attributes.get("account_name")
                     + "'"
                 )
+        else:
+            for pair in pairlist:
+                pair = self.attributes.get("market") + "_" + pair
+                # Traded on our exchange?
+                if pair in self.pair_data:
+                    self.logging.debug(pair + " added to the list")
+                    pairs.append(pair)
+                else:
+                    self.logging.info(
+                        pair
+                        + " removed because pair is blacklisted on 3commas or in token_denylist "
+                        + "or not tradable on '"
+                        + self.attributes.get("account_name")
+                        + "'"
+                    )
 
         self.logging.debug("Pairs after topcoin filter " + str(pairs))
 
@@ -580,31 +600,39 @@ class MultiBot:
             else:
                 maxpairs = len(pairs)
             pairs = pairs[0:maxpairs]
-
             self.logging.debug("Pairs after limit initial pairs filter " + str(pairs))
 
         # Adapt mad if pairs are under value
         mad = self.adjust_mad(pairs, mad)
-        maxdeals = self.attributes.get("mad")
-        self.logging.info(
-            str(len(pairs))
-            + " out of 30 symrank pairs selected "
-            + str(pairs)
-            + ". Maximum active deals (mad) set to "
-            + str(mad)
-            + " out of "
-            + str(maxdeals),
-            True,
-        )
-
-        # Creation of multibot even with mad=1 possible
-        if bot["name"] == "" and mad > 0:
-            # Create new multibot
+        if self.attributes.get("deal_mode", "", self.asyncState.dca_conf) != "signal":
             self.logging.info(
-                "Creating multi bot '" + self.botname + "' with filtered symrank pairs",
+                str(len(pairs))
+                + " out of 30 symrank pairs selected "
+                + str(pairs)
+                + ". Maximum active deals (mad) set to "
+                + str(mad)
+                + " out of "
+                + str(maxdeals),
+                True,
+            )
+
+        # Create new multibot
+        if bot["name"] == "" and mad > 0:
+            self.logging.info(
+                "Creating multi bot '" + self.botname + "'",
                 True,
             )
             self.report_funds_needed(maxdeals)
+            # for creating a multibot at least 2 pairs needed
+            if mad == 1:
+                pairs.append(self.attributes.get("market") + "_BTC")
+                self.logging.info(
+                    "For creating a multipair bot at least 2 pairs needed, adding "
+                    + pairs[1]
+                    + " to signal pair "
+                    + pairs[0]
+                )
+                mad = 2
 
             error, data = self.p3cw.request(
                 entity="bots",
@@ -615,11 +643,15 @@ class MultiBot:
 
             if error:
                 self.logging.error(error["msg"])
+                if error["msg"].find("Read timed out") > -1:
+                    sys.exit("HTTPS connection problems to 3commas - retry later")
             else:
                 self.bot_data = data
+                bot = data
                 if (
                     not self.attributes.get("ext_botswitch", False)
                     and not self.asyncState.btc_downtrend
+                    and self.asyncState.fgi_allows_trading
                 ):
                     self.enable(bot)
 
@@ -629,14 +661,14 @@ class MultiBot:
                         True,
                     )
                 self.new_deal(bot, triggerpair="")
+        # Update existing multibot
         elif mad > 0:
-            # Update existing multibot
             self.logging.info(
                 "Updating multi bot '"
                 + bot["name"]
                 + "' (botid: "
                 + str(bot["id"])
-                + ") with filtered symrank pairs",
+                + ") with filtered pair(s)",
                 True,
             )
             self.report_funds_needed(maxdeals)
@@ -657,6 +689,7 @@ class MultiBot:
                 if (
                     not self.attributes.get("ext_botswitch", False)
                     and not self.asyncState.btc_downtrend
+                    and self.asyncState.fgi_allows_trading
                 ):
                     self.enable(bot)
                 elif self.attributes.get("ext_botswitch", False):
@@ -711,7 +744,6 @@ class MultiBot:
                         self.attributes.get("market"),
                         self.asyncState.first_topcoin_call,
                     )
-                    self.asyncState.first_topcoin_call = False
                 else:
                     self.logging.info("Topcoin filter disabled, not filtering pairs!")
                 if pair:
