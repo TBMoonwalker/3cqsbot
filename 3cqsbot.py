@@ -367,7 +367,7 @@ def bot_switch(interval_sec):
                             logging,
                             asyncState,
                         )
-                    bot.enable(asyncState.multibot)
+                    bot.enable()
                     asyncState.bot_active = bot.asyncState.bot_active
                     asyncState.multibot = bot.bot_data
                     logging.info(
@@ -428,7 +428,7 @@ def bot_switch(interval_sec):
                             logging,
                             asyncState,
                         )
-                    bot.disable(asyncState.multibot)
+                    bot.disable()
                     asyncState.bot_active = bot.asyncState.bot_active
                     asyncState.multibot = bot.bot_data
 
@@ -491,6 +491,7 @@ async def my_event_handler(event):
 
     tg_output = tg_data(parse_tg(event.raw_text))
     logging.debug("TG msg: " + str(tg_output))
+    dealmode_signal = attributes.get("deal_mode", "", asyncState.dca_conf) == "signal"
 
     if tg_output and asyncState.fgi_allows_trading:
         account_output = asyncState.account_data
@@ -507,6 +508,7 @@ async def my_event_handler(event):
                 token_whitelisted = tg_output["pair"] in attributes.get(
                     "token_whitelist", []
                 )
+                logging.info(tg_output["pair"] + " in whitelist, processing signal.")
             else:
                 token_whitelisted = True
 
@@ -568,14 +570,23 @@ async def my_event_handler(event):
                         # if multibot empty and dealmode == signal, first create/update and enable multibot before processing deals
                         if (
                             asyncState.multibot == {}
-                            and attributes.get("deal_mode", "", asyncState.dca_conf)
-                            == "signal"
+                            and dealmode_signal
+                            and not tg_output["action"] == "STOP"
                         ):
                             bot.create()
                             asyncState.multibot = bot.bot_data
+                        if (
+                            asyncState.multibot == {}
+                            and dealmode_signal
+                            and tg_output["action"] == "STOP"
+                        ):
+                            logging.info(
+                                "STOP signal received and ignored, waiting for START signal to initialize 3cqsbot"
+                            )
+                        if asyncState.multibot != {}:
+                            bot.trigger()
+                            asyncState.multibot = bot.bot_data
 
-                        bot.trigger()
-                        asyncState.multibot = bot.bot_data
                         notification.send_notification()
 
                     else:
@@ -613,7 +624,7 @@ async def my_event_handler(event):
         elif tg_output and isinstance(tg_output, list):
             if (
                 not attributes.get("single")
-                and not attributes.get("deal_mode", "", asyncState.dca_conf) == "signal"
+                and not dealmode_signal
                 and not asyncState.symrank_success
             ):
                 asyncState.symrank_success = True
@@ -637,24 +648,7 @@ async def my_event_handler(event):
                 bot.create()
                 asyncState.bot_active = bot.asyncState.bot_active
                 asyncState.multibot = bot.bot_data
-                # if deal_mode == signal configured, trigger a deal if random_pair == true
-                if attributes.get(
-                    "deal_mode", "", asyncState.dca_conf
-                ) == "signal" and attributes.get("random_pair", "False"):
-                    if (
-                        asyncState.multibot["active_deals_count"]
-                        != asyncState.multibot["max_active_deals"]
-                    ):
-                        bot.trigger(random_only=True)
-                        asyncState.multibot = bot.bot_data
-                    else:
-                        logging.info(
-                            "No random deal for filtered coins started because "
-                            + str(asyncState.multibot["active_deals_count"])
-                            + "/"
-                            + str(asyncState.multibot["max_active_deals"])
-                            + " deals already active"
-                        )
+
                 notification.send_notification()
 
             else:
