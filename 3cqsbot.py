@@ -5,6 +5,7 @@ import os
 import re
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 from threading import Thread
 
@@ -102,6 +103,7 @@ asyncState.account_data = {}
 asyncState.pair_data = []
 asyncState.symrank_success = False
 asyncState.multibot = {}
+asyncState.latest_signal_time = 0
 
 ######################################################
 #                     Methods                        #
@@ -499,6 +501,9 @@ async def my_event_handler(event):
 
         ##### if TG message with #START or #STOP
         if tg_output and not isinstance(tg_output, list):
+            # track time from START signal to deal creation
+            if tg_output["action"] == "START":
+                asyncState.latest_signal_time = datetime.utcnow()
 
             logging.info(
                 "New 3CQS signal '" + str(tg_output["signal"]) + "' incoming..."
@@ -575,6 +580,7 @@ async def my_event_handler(event):
                         ):
                             bot.create()
                             asyncState.multibot = bot.bot_data
+
                         if (
                             asyncState.multibot == {}
                             and dealmode_signal
@@ -583,6 +589,7 @@ async def my_event_handler(event):
                             logging.info(
                                 "STOP signal received and ignored, waiting for START signal to initialize 3cqsbot"
                             )
+                        # trigger deal
                         if asyncState.multibot != {}:
                             bot.trigger()
                             asyncState.multibot = bot.bot_data
@@ -755,7 +762,10 @@ async def main():
         ]:
             time.sleep(1)
 
-    logging.info("DCA settings: '[" + asyncState.dca_conf + "]'", True)
+    logging.info("DCA setting: '[" + asyncState.dca_conf + "]'", True)
+    logging.info(
+        "Deal mode of actual DCA setting: '" + attributes.get("deal_mode") + "'", True
+    )
 
     if attributes.get("btc_pulse", False):
         btcpulse_thread = Thread(
