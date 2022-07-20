@@ -833,7 +833,6 @@ class MultiBot:
             # avoid triggering a deal if STOP signal
             if self.tg_data["action"] == "STOP":
                 pair = ""
-                self.report_deals()
 
         # if random_only == true and deal_mode == "signal" then
         # initiate deal with a random coin (random_pair=true) from the filtered symrank pair list
