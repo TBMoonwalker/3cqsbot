@@ -1,4 +1,3 @@
-telethon
 py3cw
 pycoingecko
 yfinance
@@ -6,3 +5,4 @@ numpy
 tenacity
 portalocker
 Babel
+python-socketio[asyncio_client]
