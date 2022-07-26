@@ -30,9 +30,7 @@ attributes = Config()
 program = Path(__file__).stem
 
 # Parse and interpret options
-parser = argparse.ArgumentParser(
-    description="3CQSBot bringing 3CQS signals to 3Commas."
-)
+parser = argparse.ArgumentParser(description="3CQSBot bringing 3CQS signals to 3Commas")
 
 parser.add_argument("-d", "--datadir", help="data directory to use", type=str)
 args = parser.parse_args()
@@ -370,8 +368,8 @@ def bot_switch(interval_sec):
                             asyncState,
                         )
                     bot.enable()
-                    asyncState.bot_active = bot.asyncState.bot_active
-                    asyncState.multibot = bot.bot_data
+                    asyncState.multibot = bot.asyncState.multibot
+                    asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
                     logging.info(
                         "Multi bot activated - waiting for pair #start signals", True
                     )
@@ -431,9 +429,8 @@ def bot_switch(interval_sec):
                             asyncState,
                         )
                     bot.disable()
-                    asyncState.bot_active = bot.asyncState.bot_active
-                    asyncState.multibot = bot.bot_data
-
+                    asyncState.multibot = bot.asyncState.multibot
+                    asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
                 notification.send_notification()
 
         else:
@@ -579,7 +576,13 @@ async def my_event_handler(event):
                             and not tg_output["action"] == "STOP"
                         ):
                             bot.create()
-                            asyncState.multibot = bot.bot_data
+                            asyncState.multibot = bot.asyncState.multibot
+                            asyncState.bot_active = bot.asyncState.multibot[
+                                "is_enabled"
+                            ]
+                            asyncState.first_topcoin_call = (
+                                bot.asyncState.first_topcoin_call
+                            )
 
                         if (
                             asyncState.multibot == {}
@@ -592,7 +595,10 @@ async def my_event_handler(event):
                         # trigger deal
                         if asyncState.multibot != {}:
                             bot.trigger()
-                            asyncState.multibot = bot.bot_data
+                            asyncState.multibot = bot.asyncState.multibot
+                            asyncState.bot_active = bot.asyncState.multibot[
+                                "is_enabled"
+                            ]
 
                         notification.send_notification()
 
@@ -653,8 +659,9 @@ async def my_event_handler(event):
                     asyncState,
                 )
                 bot.create()
-                asyncState.bot_active = bot.asyncState.bot_active
-                asyncState.multibot = bot.bot_data
+                asyncState.multibot = bot.asyncState.multibot
+                asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
+                asyncState.first_topcoin_call = bot.asyncState.first_topcoin_call
 
                 notification.send_notification()
 
@@ -723,6 +730,22 @@ async def main():
     logging.info(
         "Token whitelist: '" + str(attributes.get("token_whitelist", "No")) + "'", True
     )
+
+    if not attributes.get("single"):
+        if asyncState.multibot == {}:
+            bot = MultiBot(
+                [],
+                bot_data(),
+                asyncState.account_data,
+                0,
+                attributes,
+                p3cw,
+                logging,
+                asyncState,
+            )
+            bot.search_rename_3cqsbot()
+            asyncState.multibot = bot.asyncState.multibot
+            asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
 
     # Check part of the config before starting the client
     if attributes.get("btc_pulse", False) and attributes.get("ext_botswitch", False):

@@ -4,10 +4,10 @@ import re
 from functools import lru_cache, wraps
 from time import monotonic_ns, sleep
 
-import babel.numbers
 import numpy as np
 import requests
 import yfinance as yf
+from babel.numbers import format_currency
 from dateutil.relativedelta import relativedelta as rd
 from pycoingecko import CoinGeckoAPI
 from tenacity import retry, wait_fixed
@@ -92,17 +92,17 @@ class Signals:
             self.logging.debug(self.cgexchanges.cache_info())
 
             for target in exchange["tickers"]:
-                converted_btc = babel.numbers.format_currency(
+                converted_btc = format_currency(
                     target["converted_volume"]["btc"], "", locale="en_US"
                 )
-                converted_usd = babel.numbers.format_currency(
+                converted_usd = format_currency(
                     target["converted_volume"]["usd"], "USD", locale="en_US"
                 )
                 btc_price = (
                     target["converted_volume"]["usd"]
                     / target["converted_volume"]["btc"]
                 )
-                configured_usd = babel.numbers.format_currency(
+                configured_usd = format_currency(
                     (volume * btc_price),
                     "USD",
                     locale="en_US",
@@ -236,23 +236,22 @@ class Signals:
             response = requests.request(method, url, timeout=timeout)
         except Exception as e:
             raise IOError(
-                "Fear and greed index API actually down, retrying in 60s, Error is:" + e
+                "Fear and greed index API actually down, retrying in 10s, Error is:" + e
             )
         return response
 
     def get_fgi(self, asyncState, ema_fast, ema_slow):
 
-        url = "https://api.alternative.me/fng/?limit=100"
         self.logging.info(
             "Using crypto fear and greed index (FGI) from alternative.me for changing 3cqsbot DCA settings to defensive, moderate or aggressive",
             True,
         )
 
         while True:
+            url = "https://api.alternative.me/fng/?limit=100"
             fgi_values = []
             fgi_ema_fast = []
             fgi_ema_slow = []
-            asyncState.fgi_notification = True
             response = self.requests_call("GET", url, 5)
             raw_data = json.loads(response.text)
             for i in range(len(raw_data["data"])):
@@ -262,7 +261,9 @@ class Signals:
             time_until_update = int(raw_data["data"][0]["time_until_update"])
             fmt = "{0.hours}h:{0.minutes}m:{0.seconds}s"
             # Web response sometimes slow, so proceed only if time_until_update for next web update > 10 sec
-            if time_until_update > 10:
+            if time_until_update < 0:
+                time_until_update = 10
+            elif time_until_update > 10:
                 self.logging.info(
                     "Current FGI: {:d}".format(fgi_values[-1])
                     + " - time till next update: "
@@ -396,8 +397,6 @@ class Signals:
                 btcusdt.percentchange_15mins[-1] < -1
                 or btcusdt.EMA50[-1] > btcusdt.EMA9[-1]
             ):
-                self.logging.info("btc-pulse signaling downtrend")
-
                 # after 5mins getting the latest BTC data to see if it has had a sharp rise in previous 5 mins
                 sleep(interval_sec)
                 btcusdt = self.btctechnical("BTC-USD")
@@ -406,17 +405,43 @@ class Signals:
                 # cuts slow moving EMA from bottom, if that is true then bool=false and break while loop
                 if (
                     btcusdt.EMA9[-1] > btcusdt.EMA50[-1]
-                    and btcusdt.EMA50[-2] > btcusdt.EMA9[-2]
+                    and btcusdt.EMA9[-2] < btcusdt.EMA50[-2]
                 ):
                     self.logging.info(
-                        "btc-pulse signaling uptrend (golden cross check)"
+                        "btc-pulse signaling uptrend (golden cross check). Actual BTC price: "
+                        + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
+                        + "   EMA9-5m: "
+                        + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
+                        + "  >  EMA50-5m: "
+                        + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US")
+                        + " and BTC price 5 minutes before: "
+                        + format_currency(btcusdt[-2])
+                        + "   EMA9-5m: "
+                        + format_currency(btcusdt.EMA9[-2], "USD", locale="en_US")
+                        + "  <  EMA50-5m: "
+                        + format_currency(btcusdt.EMA50[-2], "USD", locale="en_US")
                     )
                     asyncState.btc_downtrend = False
                 else:
+                    self.logging.info(
+                        "btc-pulse signaling downtrend. Actual BTC price: "
+                        + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
+                        + "   EMA9-5m: "
+                        + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
+                        + "  <  EMA50-5m: "
+                        + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US")
+                    )
                     asyncState.btc_downtrend = True
 
             else:
-                self.logging.info("btc-pulse signaling uptrend")
+                self.logging.info(
+                    "btc-pulse signaling uptrend. Actual BTC price: "
+                    + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
+                    + "   EMA9-5m: "
+                    + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
+                    + "  >  EMA50-5m: "
+                    + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US")
+                )
                 asyncState.btc_downtrend = False
 
             self.logging.info("Next btc-pulse check in " + str(interval_sec) + "sec")
