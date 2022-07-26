@@ -5,11 +5,10 @@ debug = false
 #log_file_size = 200000
 #log_file_count = 5
 
-[telegram]
-api_id = "Your api id from Telegram here - without Quotes"
-api_hash = "Your api hash from Telegram here - without Quotes"
-#sessionfile = tgsession
-#chatroom = 3C Quick Stats
+[websocket]
+api_version = 0.5-beta
+api_key = "Your api key from 3CQS here - without Quotes"
+api_url = https://stream.3cqs.com
 
 [commas]
 key = "Your api key from 3Commas here - without Quotes"
@@ -58,13 +57,15 @@ stop_loss_timeout_enabled = false
 stop_loss_timeout_seconds = 5
 
 [filter]
-symrank_signal = triple100
+# possible symrank_signal: SymRank Top 10, SymRank Top 30, SymRank Top 50, Hyper Volatility, Hyper Volatility Double Tracker, Super Volatility, Super Volatility Double Tracker, Ultra Volatility, X-Treme Volatility, all
+symrank_signal = all
 #symrank_limit_min = 1
 #symrank_limit_max = 100
 #volatility_limit_min = 0.1
 #volatility_limit_max = 100
 #price_action_limit_min = 0.1
 #price_action_limit_max = 100
+#marketcap_limit = 100
 #topcoin_filter = False
 # warning to not use this attribute for large bots!
 # set it to 0 if you want to disable it
@@ -83,3 +84,4 @@ deal_mode = [{"options": {"time": "3m", "points": "100", "time_period": "7", "tr
 # ATTENTION: if ext_botswitch set to true, btc_pulse will be ignored
 #ext_botswitch = false
 token_denylist = [USDT_BTC, USDT_ETH, USDT_BUSD, USDT_USDC]
+#token_whitelist = [USDT_BTC, USDT_ETH]

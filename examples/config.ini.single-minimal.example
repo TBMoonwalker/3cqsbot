@@ -1,9 +1,10 @@
 [general]
 debug = false
 
-[telegram]
-api_id = "Your api id from Telegram here - without Quotes"
-api_hash = "Your api hash from Telegram here - without Quotes"
+[websocket]
+api_version = 0.5-beta
+api_key = "Your api key from 3CQS here - without Quotes"
+api_url = https://stream.3cqs.com
 
 [commas]
 key = "Your api key from 3Commas here - without Quotes"

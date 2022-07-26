@@ -2,20 +2,17 @@ import re
 import json
 import time
 
-from signals import Signals
-
 deal_lock = False
 
 
 class SingleBot:
-    def __init__(self, tg_data, bot_data, account_data, attributes, p3cw, logging):
-        self.tg_data = tg_data
+    def __init__(self, ws_data, bot_data, account_data, attributes, p3cw, logging):
+        self.ws_data = ws_data
         self.bot_data = bot_data
         self.account_data = account_data
         self.attributes = attributes
         self.p3cw = p3cw
         self.logging = logging
-        self.signal = Signals(logging)
         self.prefix = self.attributes.get("prefix")
         self.subprefix = self.attributes.get("subprefix")
         self.suffix = self.attributes.get("suffix")
@@ -29,6 +26,7 @@ class SingleBot:
             + "_"
             + self.suffix
         )
+        self.pair = self.attributes.get("market") + "_" + self.ws_data["symbol"]
 
     def strategy(self):
         if self.attributes.get("deal_mode", "signal") == "signal":
@@ -87,7 +85,7 @@ class SingleBot:
         payload = {
             "name": self.prefix + "_" + self.subprefix + "_" + pair + "_" + self.suffix,
             "account_id": self.account_data["id"],
-            "pairs": self.tg_data["pair"],
+            "pairs": pair,
             "max_active_deals": self.attributes.get("mad"),
             "base_order_volume": self.attributes.get("bo"),
             "take_profit": self.attributes.get("tp"),
@@ -105,10 +103,12 @@ class SingleBot:
             "min_volume_btc_24h": self.attributes.get("btc_min_vol"),
             "disable_after_deals_count": self.attributes.get("deals_count", 0),
         }
-        
+
         if new_bot:
             if payload["disable_after_deals_count"] == 0:
-                self.logging.info("This is a new bot and deal_count set to 0, removing from payload")
+                self.logging.info(
+                    "This is a new bot and deal_count set to 0, removing from payload"
+                )
                 payload.pop("disable_after_deals_count")
 
         if self.attributes.get("trade_future", False):
@@ -216,13 +216,13 @@ class SingleBot:
 
     def create(self):
         # Creates a single bot with start signal
-        self.logging.info("Create single bot with pair " + self.tg_data["pair"])
+        self.logging.info("Create single bot with pair " + self.pair)
 
         error, data = self.p3cw.request(
             entity="bots",
             action="create_bot",
             additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-            payload=self.payload(self.tg_data["pair"], new_bot=True),
+            payload=self.payload(self.pair, new_bot=True),
         )
 
         if error:
@@ -237,7 +237,7 @@ class SingleBot:
             "delete_single_bots", False
         ):
             # Deletes a single bot with stop signal
-            self.logging.info("Delete single bot with pair " + self.tg_data["pair"])
+            self.logging.info("Delete single bot with pair " + self.pair)
             error, data = self.p3cw.request(
                 entity="bots",
                 action="delete",
@@ -260,7 +260,7 @@ class SingleBot:
 
         global deal_lock
         new_bot = True
-        pair = self.tg_data["pair"]
+        pair = self.pair
         running_deals = self.deal_count()
 
         if self.bot_data:
@@ -272,21 +272,8 @@ class SingleBot:
                     break
 
             if new_bot:
-                if self.tg_data["action"] == "START":
+                if self.ws_data["signal"] == "BOT_START":
                     if self.bot_count() < self.attributes.get("single_count"):
-
-                        if self.attributes.get("topcoin_filter", False):
-                            pair = self.signal.topcoin(
-                                pair,
-                                self.attributes.get("topcoin_limit", 0),
-                                self.attributes.get("topcoin_volume", 0),
-                                self.attributes.get("topcoin_exchange", "binance"),
-                                self.attributes.get("market"),
-                            )
-                        else:
-                            self.logging.info(
-                                "Topcoin filter disabled, not filtering pairs!"
-                            )
 
                         if pair:
                             self.logging.info(
@@ -306,12 +293,6 @@ class SingleBot:
                                     "Blocking new deals, because last enabled bot can potentially reach max deals!"
                                 )
 
-                        else:
-                            self.logging.info(
-                                "Pair "
-                                + str(self.tg_data["pair"])
-                                + " is not in the top coin list - not added!"
-                            )
                     else:
                         self.logging.info(
                             "Maximum bots/deals reached. Bot with pair: "
@@ -319,7 +300,7 @@ class SingleBot:
                             + " not added."
                         )
 
-                elif self.tg_data["action"] == "STOP":
+                elif self.ws_data["signal"] == "BOT_STOP":
                     self.logging.info(
                         "Stop command on a non-existing single bot with pair: " + pair
                     )
@@ -327,7 +308,7 @@ class SingleBot:
                 self.logging.debug("Pair: " + pair)
                 self.logging.debug("Bot-Name: " + bot["name"])
 
-                if self.tg_data["action"] == "START":
+                if self.ws_data["signal"] == "BOT_START":
                     if self.bot_count() < self.attributes.get("single_count"):
                         # avoid deals over limit
                         if self.deal_count() < self.attributes.get("single_count") - 1:

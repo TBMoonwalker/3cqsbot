@@ -2,8 +2,6 @@ import random
 import json
 from sys import prefix
 
-from signals import Signals
-
 
 class MultiBot:
     def __init__(
@@ -16,7 +14,6 @@ class MultiBot:
         self.attributes = attributes
         self.p3cw = p3cw
         self.logging = logging
-        self.signal = Signals(logging)
         self.prefix = self.attributes.get("prefix")
         self.subprefix = self.attributes.get("subprefix")
         self.suffix = self.attributes.get("suffix")
@@ -75,7 +72,9 @@ class MultiBot:
 
         if new_bot:
             if payload["disable_after_deals_count"] == 0:
-                self.logging.info("This is a new bot and deal_count set to 0, removing from payload")
+                self.logging.info(
+                    "This is a new bot and deal_count set to 0, removing from payload"
+                )
                 payload.pop("disable_after_deals_count")
 
         if self.attributes.get("trade_future", False):
@@ -186,18 +185,6 @@ class MultiBot:
         # Initial pairlist
         pairlist = self.tg_data
 
-        # Filter topcoins (if set)
-        if self.attributes.get("topcoin_filter", False):
-            pairlist = self.signal.topcoin(
-                self.tg_data,
-                self.attributes.get("topcoin_limit", 3500),
-                self.attributes.get("topcoin_volume", 0),
-                self.attributes.get("topcoin_exchange", "binance"),
-                self.attributes.get("market"),
-            )
-        else:
-            self.logging.info("Topcoin filter disabled, not filtering pairs!")
-
         for pair in pairlist:
             pair = self.attributes.get("market") + "_" + pair
             # Traded on our exchange?
@@ -211,8 +198,6 @@ class MultiBot:
                     + self.attributes.get("account_name")
                     + "'"
                 )
-
-        self.logging.debug("Pairs after topcoin filter " + str(pairs))
 
         # Run filters to adapt pair list
         if self.attributes.get("limit_initial_pairs", False):
@@ -304,20 +289,6 @@ class MultiBot:
                                 pair + " is already included in the pair list"
                             )
                         else:
-                            # Filter topcoins (if set)
-                            if self.attributes.get("topcoin_filter", False):
-                                pair = self.signal.topcoin(
-                                    pair,
-                                    self.attributes.get("topcoin_limit", 3500),
-                                    self.attributes.get("topcoin_volume", 0),
-                                    self.attributes.get("topcoin_exchange", "binance"),
-                                    self.attributes.get("market"),
-                                )
-                            else:
-                                self.logging.info(
-                                    "Topcoin filter disabled, not filtering pairs!"
-                                )
-
                             if pair:
                                 self.logging.info("Adding pair " + pair)
                                 bot["pairs"].append(pair)
