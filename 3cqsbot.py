@@ -41,7 +41,7 @@ args = parser.parse_args()
 if attributes.get("debug", False):
     loglevel = "DEBUG"
 else:
-    loglevel = getattr(logging, args.loglevel.upper(), None)
+    loglevel = "INFO"
 
 # Set logging output
 # Thanks to @M1cha3l for improving logging output
@@ -260,7 +260,12 @@ async def my_message(data):
                 # Choose multibot or singlebot
                 if attributes.get("single"):
                     bot = SingleBot(
-                        data, bot_output, account_output, attributes, p3cw, logging
+                        data,
+                        bot_output,
+                        asyncState.accountData,
+                        attributes,
+                        p3cw,
+                        logging,
                     )
                 else:
                     bot = MultiBot(
