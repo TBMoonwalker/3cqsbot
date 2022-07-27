@@ -144,6 +144,14 @@ class Filters:
             # Topcoin marketcap
             if self.ws_data["market_cap_rank"] <= self.attributes.get("topcoin_limit"):
                 token_topcoin = True
+                self.logging.info(
+                    "Signal passed because "
+                    + self.ws_data["symbol"]
+                    + " is ranked #"
+                    + str(self.ws_data["market_cap_rank"])
+                    + " and is under the marketcap filter limit of #"
+                    + str(self.attributes.get("topcoin_limit"))
+                )
             else:
                 self.logging.info(
                     "Signal ignored because "
@@ -173,6 +181,16 @@ class Filters:
                     self.attributes.get("topcoin_volume")
                 ):
                     token_topcoin = True
+                    self.logging.info(
+                        "Signal passed because symbol "
+                        + self.ws_data["symbol"]
+                        + " daily volume is "
+                        + volume
+                        + " USD"
+                        + " and over the configured value of "
+                        + self.attributes.get("topcoin_volume")
+                        + " USD"
+                    )
                 else:
                     token_topcoin = False
                     self.logging.info(
