@@ -164,6 +164,18 @@ class SingleBot:
         if error:
             self.logging.error(error["msg"])
 
+        # Start new deal asap
+        error, data = self.p3cw.request(
+            entity="bots",
+            action="start_new_deal",
+            action_id=str(bot["id"]),
+            additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
+            payload={"only_for_enabled": True},
+        )
+
+        if error:
+            self.logging.error(error["msg"])
+
     def disable(self, bot, allbots=False):
         # Disable all bots
         error = {}
