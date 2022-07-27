@@ -731,22 +731,6 @@ async def main():
         "Token whitelist: '" + str(attributes.get("token_whitelist", "No")) + "'", True
     )
 
-    if not attributes.get("single"):
-        if asyncState.multibot == {}:
-            bot = MultiBot(
-                [],
-                bot_data(),
-                asyncState.account_data,
-                0,
-                attributes,
-                p3cw,
-                logging,
-                asyncState,
-            )
-            bot.search_rename_3cqsbot()
-            asyncState.multibot = bot.asyncState.multibot
-            asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
-
     # Check part of the config before starting the client
     if attributes.get("btc_pulse", False) and attributes.get("ext_botswitch", False):
         sys.tracebacklimit = 0
@@ -754,7 +738,7 @@ async def main():
             "Check config.ini: btc_pulse AND ext_botswitch both set to true - not allowed"
         )
 
-    ##### Threads for FGI and BTC pulse up-/downtrend check #####
+    # Enable trading according to FGI
     if attributes.get("fearandgreed", False):
 
         fgi_thread = Thread(
@@ -790,6 +774,7 @@ async def main():
         "Deal mode of actual DCA setting: '" + attributes.get("deal_mode") + "'", True
     )
 
+    # Enable trading according to btc pulse
     if attributes.get("btc_pulse", False):
         btcpulse_thread = Thread(
             target=signals.getbtcpulse,
@@ -802,6 +787,24 @@ async def main():
         )
         btcpulse_thread.start()
 
+    # Search and rename 3cqsbot if multipair mode is configured
+    if not attributes.get("single"):
+        if asyncState.multibot == {}:
+            bot = MultiBot(
+                [],
+                bot_data(),
+                asyncState.account_data,
+                0,
+                attributes,
+                p3cw,
+                logging,
+                asyncState,
+            )
+            bot.search_rename_3cqsbot()
+            asyncState.multibot = bot.asyncState.multibot
+            asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
+
+    # Enable bot if trading allowed
     if attributes.get("fearandgreed", False) or attributes.get("btc_pulse", False):
         bot_switch_thread = Thread(
             target=bot_switch,
