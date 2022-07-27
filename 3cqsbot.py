@@ -252,8 +252,6 @@ async def my_message(data):
                 # and not filters.denylist()
             ):
 
-                logging.info("TEST")
-
                 bot_output = bot_data()
 
                 pair_output = asyncState.pairData
