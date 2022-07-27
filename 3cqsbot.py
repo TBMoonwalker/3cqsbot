@@ -245,8 +245,8 @@ async def my_message(data):
 
             # Continue only if we can trade the right signal on the configured exchange
             if (
-                filters.exchange()
-                and filters.signal()
+                filters.signal()
+                and filters.exchange()
                 and filters.whitelist()
                 and filters.topcoin()
                 # and not filters.denylist()
