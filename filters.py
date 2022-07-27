@@ -174,6 +174,7 @@ class Filters:
                 ):
                     token_topcoin = True
                 else:
+                    token_topcoin = False
                     self.logging.info(
                         "Signal ignored because symbol "
                         + self.ws_data["symbol"]
@@ -185,6 +186,7 @@ class Filters:
                         + " USD"
                     )
             else:
+                token_topcoin = False
                 self.logging.info(
                     "Signal ignored because symbol "
                     + self.ws_data["symbol"]
