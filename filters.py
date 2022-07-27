@@ -45,19 +45,18 @@ class Filters:
 
     def denylist(self):
         # Filter: Check if symbol is in denylist
-        token_denylisted = True
+        token_denylisted = False
 
         if self.attributes.get("token_denylist", []):
             token_denylisted = self.ws_data["symbol"] in self.attributes.get(
                 "token_denylist", []
             )
-            self.logging.info(
-                "Signal ignored because symbol '"
-                + str(self.ws_data["symbol"])
-                + "' is on denylist"
-            )
-        else:
-            token_denylisted = False
+            if token_denylisted:
+                self.logging.info(
+                    "Signal ignored because symbol '"
+                    + str(self.ws_data["symbol"])
+                    + "' is on denylist"
+                )
 
         return token_denylisted
 
@@ -142,10 +141,6 @@ class Filters:
 
         if self.attributes.get("topcoin_filter", False):
 
-            volume = self.ws_data["volume_24h"][self.__get_exchange()][
-                self.attributes.get("market")
-            ]
-
             # Topcoin marketcap
             if self.ws_data["market_cap_rank"] <= self.attributes.get("topcoin_limit"):
                 token_topcoin = True
@@ -160,25 +155,48 @@ class Filters:
                 )
 
             # Topcoin volume
-            if self.__convert_volume(volume) >= self.__convert_volume(
-                self.attributes.get("topcoin_volume")
-            ):
-                token_topcoin = True
+            # Check if pair is traded on exchange
+            market = [
+                value
+                for key, value in self.ws_data["volume_24h"][
+                    self.__get_exchange()
+                ].items()
+                if self.attributes.get("market") in key
+            ]
+
+            if market:
+                volume = self.ws_data["volume_24h"][self.__get_exchange()][
+                    self.attributes.get("market")
+                ]
+
+                if self.__convert_volume(volume) >= self.__convert_volume(
+                    self.attributes.get("topcoin_volume")
+                ):
+                    token_topcoin = True
+                else:
+                    self.logging.info(
+                        "Signal ignored because symbol "
+                        + self.ws_data["symbol"]
+                        + " daily volume is "
+                        + volume
+                        + " USD"
+                        + " and under the configured value of "
+                        + self.attributes.get("topcoin_volume")
+                        + " USD"
+                    )
             else:
                 self.logging.info(
                     "Signal ignored because symbol "
                     + self.ws_data["symbol"]
-                    + " daily volume is "
-                    + volume
-                    + " USD"
-                    + " and under the configured value of "
-                    + self.attributes.get("topcoin_volume")
-                    + " USD"
+                    + " is not traded in "
+                    + self.attributes.get("market")
                 )
 
         # Topcoin filter not activated
         else:
             token_topcoin = True
+
+        return token_topcoin
 
     def __convert_volume(self, volume):
         volume_length = int(len(volume)) - 1

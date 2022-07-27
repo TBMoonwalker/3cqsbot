@@ -249,8 +249,10 @@ async def my_message(data):
                 and filters.signal()
                 and filters.whitelist()
                 and filters.topcoin()
-                and not filters.denylist()
+                # and not filters.denylist()
             ):
+
+                logging.info("TEST")
 
                 bot_output = bot_data()
 
