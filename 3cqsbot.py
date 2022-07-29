@@ -777,13 +777,13 @@ async def main():
     # Enable trading according to btc pulse
     if attributes.get("btc_pulse", False):
         btcpulse_thread = Thread(
-            target=signals.getbtcpulse,
+            target=signals.get_btcpulse,
             args=(
                 asyncState,
                 300,
             ),
             daemon=True,
-            name="Background signals.getbtcpulse",
+            name="Background signals.get_btcpulse",
         )
         btcpulse_thread.start()
 
@@ -817,6 +817,7 @@ async def main():
             time.sleep(1)
 
     ##### Wait for TG signals of 3C Quick Stats channel #####
+    time.sleep(2)
     logging.info("** Waiting for action **", True)
     notification.send_notification()
 

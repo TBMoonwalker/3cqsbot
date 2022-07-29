@@ -384,12 +384,10 @@ class Signals:
 
     # Credits goes to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts
-    def getbtcpulse(self, asyncState, interval_sec):
+    def get_btcpulse(self, asyncState, interval_sec):
 
-        if asyncState.fgi_allows_trading:
-            self.logging.info("Starting btc-pulse", True)
-
-        while asyncState.fgi_allows_trading:
+        self.logging.info("Starting btc-pulse", True)
+        while True:
             btcusdt = self.btctechnical("BTC-USD")
             # if EMA 50 > EMA9 or <-1% drop then the sleep mode is activated
             # else bool is false and while loop is broken
