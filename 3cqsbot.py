@@ -496,6 +496,10 @@ def get_btcpulse(interval_sec):
             or btcusdt.EMA50[-1] > btcusdt.EMA9[-1]
         ):
             # after 5mins getting the latest BTC data to see if it has had a sharp rise in previous 5 mins
+            logging.info(
+                "Next btc-pulse check in "
+                + format_timedelta(interval_sec, locale="en_US")
+            )
             sleep(interval_sec)
             btcusdt = btctechnical("BTC-USD")
 
@@ -793,12 +797,19 @@ async def my_event_handler(event):
 
         ##### if TG message with #START or #STOP
         if tg_output and not isinstance(tg_output, list):
+
             # track time from START signal to deal creation
             if tg_output["action"] == "START":
                 asyncState.latest_signal_time = datetime.utcnow()
 
             logging.info(
-                "New 3CQS signal '" + str(tg_output["signal"]) + "' incoming..."
+                "New '"
+                + tg_output["signal"]
+                + "' "
+                + tg_output["action"]
+                + " signal for "
+                + tg_output["pair"]
+                + " incoming..."
             )
             # Check if pair is in whitelist
             if attributes.get("token_whitelist", []):
@@ -812,7 +823,9 @@ async def my_event_handler(event):
             if not asyncState.bot_active and not attributes.get(
                 "continuous_update", False
             ):
-                logging.info("Signal not processed because bot is disabled")
+                logging.info(
+                    "Signal not processed because of BTC downtrend or not in FGI trading zone"
+                )
             # Check if it is the right signal
             elif (
                 tg_output["signal"] == attributes.get("symrank_signal")
@@ -864,10 +877,11 @@ async def my_event_handler(event):
                         <= attributes.get("symrank_limit_max", 100)
                     ) or tg_output["action"] == "STOP":
 
-                        # if multibot empty and dealmode == signal, first create/update and enable multibot before processing deals
+                        # for multibot: if dealmode == signal and multibot is empty create/update and enable multibot before processing deals
                         if (
-                            asyncState.multibot == {}
-                            and dealmode_signal
+                            dealmode_signal
+                            and asyncState.multibot == {}
+                            and not attributes.get("single")
                             and not tg_output["action"] == "STOP"
                         ):
                             bot.create()
@@ -879,21 +893,31 @@ async def my_event_handler(event):
                                 bot.asyncState.first_topcoin_call
                             )
 
+                        # for single and multibot: if STOP signal
                         if (
-                            asyncState.multibot == {}
-                            and dealmode_signal
+                            dealmode_signal
+                            and asyncState.multibot == {}
                             and tg_output["action"] == "STOP"
                         ):
                             logging.info(
-                                "STOP signal received and ignored, waiting for START signal to initialize 3cqsbot"
+                                "STOP signal ignored - not necessary when deal_mode = signal"
                             )
-                        # trigger deal
-                        if asyncState.multibot != {}:
+
+                        # for single and multibot: function trigger handles START and STOP signals
+                        if (
+                            asyncState.multibot != {}
+                            or attributes.get("single")
+                            and tg_output["action"] == "START"
+                        ):
                             bot.trigger()
-                            asyncState.multibot = bot.asyncState.multibot
-                            asyncState.bot_active = bot.asyncState.multibot[
-                                "is_enabled"
-                            ]
+
+                            if not attributes.get("single"):
+                                asyncState.multibot = bot.asyncState.multibot
+                                asyncState.bot_active = bot.asyncState.multibot[
+                                    "is_enabled"
+                                ]
+                            else:
+                                asyncState.bot_active = bot.asyncState.bot_active
 
                         notification.send_notification()
 
@@ -1040,7 +1064,7 @@ async def main():
             name="Background bot_switch",
         )
         bot_switch_thread.start()
-        sleep(2)
+        sleep(3)
 
     # Search and rename 3cqsbot if multipair is configured
     if asyncState.multibot == {} and not attributes.get("single"):
@@ -1059,7 +1083,7 @@ async def main():
         asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
 
     ##### Wait for TG signals of 3C Quick Stats channel #####
-    sleep(1)
+    sleep(3)
     logging.info("** Waiting for action **", True)
     asyncState.start_signals = True
     notification.send_notification()

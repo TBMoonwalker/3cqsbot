@@ -210,7 +210,7 @@ class Signals:
                         break
 
         if not pairlist:
-            self.logging.info(str(pairs) + " did not match the topcoin filter criteria")
+            self.logging.info(str(pairs) + " not matching the topcoin filter criteria")
         else:
             if isinstance(pairlist, str):
                 self.logging.info(str(pairlist) + " matching top coin filter criteria")

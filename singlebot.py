@@ -53,7 +53,7 @@ class SingleBot:
 
         return strategy
 
-    def deal_count(self):
+    def count_deals(self):
         account = self.account_data
         deals = 0
 
@@ -67,7 +67,7 @@ class SingleBot:
 
         return deals
 
-    def bot_count(self):
+    def count_enabled_bots(self):
 
         bots = []
 
@@ -79,7 +79,7 @@ class SingleBot:
 
         return len(bots), bots
 
-    def disabled_bot_active_deals_count(self):
+    def count_active_deals_disabled_bots(self):
 
         bots = []
 
@@ -149,7 +149,7 @@ class SingleBot:
 
     def report_deals(self):
 
-        running_bots, bots = self.bot_count()
+        running_bots, bots = self.count_enabled_bots()
 
         self.logging.info(
             "Single bots active: "
@@ -277,7 +277,7 @@ class SingleBot:
         if new_bot:
             if payload["disable_after_deals_count"] == 0:
                 self.logging.debug(
-                    "This is a new bot and deal_count set to 0, removing from payload"
+                    "This is a new bot and count_deals set to 0, removing from payload"
                 )
                 payload.pop("disable_after_deals_count")
 
@@ -318,7 +318,7 @@ class SingleBot:
         self.logging.info(
             "Enabling single bot with pair "
             + bot["pairs"][0]
-            + ". Applying following DCA settings:",
+            + ". Applying following DCA settings:",  # DCA settings are reported through trigger function
             True,
         )
 
@@ -344,7 +344,7 @@ class SingleBot:
                     break
                 i += 1
 
-    def disable(self, bot, allbots=False):
+    def disable(self, bots, allbots=False):
         botname = (
             self.attributes.get("prefix", "3CQSBOT", "dcabot")
             + "_"
@@ -359,24 +359,22 @@ class SingleBot:
         if allbots:
             self.asyncState.bot_active = False
             self.logging.info(
-                "Disabling all 3cqs single bots because btc-pulse is signaling downtrend.",
+                "Disabling all 3cqs single bots because btc-pulse is signaling downtrend",
                 True,
             )
 
-            for bots in bot:
-                if botname in bots["name"] and bot["is_enabled"]:
+            for bot in bots:
+                if botname in bot["name"] and bot["is_enabled"]:
 
                     self.logging.info(
-                        "Disabling single bot "
-                        + bots["name"]
-                        + " because of a STOP signal",
+                        "Disabling " + bot["name"],
                         True,
                     )
 
                     error, data = self.p3cw.request(
                         entity="bots",
                         action="disable",
-                        action_id=str(bots["id"]),
+                        action_id=str(bot["id"]),
                         additional_headers={
                             "Forced-Mode": self.attributes.get("trade_mode")
                         },
@@ -429,9 +427,7 @@ class SingleBot:
             self.enable(data)
 
     def delete(self, bot):
-        if bot["active_deals_count"] == 0 and self.attributes.get(
-            "delete_single_bots", False
-        ):
+        if bot["active_deals_count"] == 0:
             # Deletes a single bot with stop signal
             self.logging.info(
                 "Delete single bot with pair " + self.tg_data["pair"], True
@@ -456,15 +452,15 @@ class SingleBot:
             self.disable(bot, False)
         # No bot to delete or disable
         else:
-            self.logging.info("Bot not enabled, nothing to do!")
+            self.logging.info("Bot not enabled, nothing to do!", True)
 
     def trigger(self):
         # Triggers a single bot deal
         new_bot = True
         pair = self.tg_data["pair"]
-        running_bots, bots = self.bot_count()
-        running_deals = self.deal_count()
-        disabled_bot_deals = self.disabled_bot_active_deals_count()
+        running_bots, bots = self.count_enabled_bots()
+        running_deals = self.count_deals()
+        disabled_bot_deals = self.count_active_deals_disabled_bots()
         maxdeals = self.attributes.get("single_count")
 
         botname = (
@@ -507,7 +503,11 @@ class SingleBot:
                             if running_deals < self.attributes.get("single_count"):
                                 if (
                                     running_bots + disabled_bot_deals
-                                ) < self.attributes.get("single_count"):
+                                ) < self.attributes.get(
+                                    "single_count"
+                                ) or self.attributes.get(
+                                    "deal_mode"
+                                ) == "signal":
                                     self.create()
                                     self.report_funds_needed(maxdeals)
                                     self.report_deals()
@@ -524,11 +524,7 @@ class SingleBot:
                                     + " reached."
                                 )
                         else:
-                            self.logging.info(
-                                "Pair "
-                                + pair
-                                + " is not in the top coin list - not added!"
-                            )
+                            self.logging.info("Pair not added")
                     else:
                         self.logging.info(
                             "Maximum bots/deals of "
@@ -544,7 +540,7 @@ class SingleBot:
                         + pair
                         + " ignored."
                     )
-            else:
+            else:  # already created bot
                 self.logging.debug("Pair: " + pair)
                 self.logging.debug("Bot-Name: " + bot["name"])
 
@@ -554,7 +550,11 @@ class SingleBot:
                         if running_deals < self.attributes.get("single_count"):
                             if (
                                 running_bots + disabled_bot_deals
-                            ) < self.attributes.get("single_count"):
+                            ) < self.attributes.get(
+                                "single_count"
+                            ) or self.attributes.get(
+                                "deal_mode"
+                            ) == "signal":
                                 self.enable(bot)
                                 self.report_funds_needed(maxdeals)
                                 self.report_deals()
@@ -579,11 +579,15 @@ class SingleBot:
                             + pair
                             + " created/enabled."
                         )
-                else:
+                elif self.tg_data["action"] == "STOP" and self.attributes.get(
+                    "delete_single_bots", False
+                ):
                     self.delete(bot)
+                else:
+                    self.disable(bot, False)
 
         else:
-            self.logging.info("No single bots found", True)
+            self.logging.info("No single bots found - creating new ones", True)
             self.create()
             self.report_funds_needed(maxdeals)
             self.report_deals()
