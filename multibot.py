@@ -29,7 +29,7 @@ class MultiBot:
         self.p3cw = p3cw
         self.logging = logging
         self.asyncState = asyncState
-        self.signal = Signals(logging, asyncState)
+        self.signal = Signals(logging)
         self.config_botid = str(self.attributes.get("botid", "", "dcabot"))
         self.botname = (
             self.attributes.get(
