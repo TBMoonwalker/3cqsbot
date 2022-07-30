@@ -85,7 +85,6 @@ sio = socketio.AsyncClient(reconnection=True, reconnection_delay=10000)
 @sio.event
 async def connect():
     logging.debug("connection established")
-    await sio.emit("signal_history", {"max": 5})
 
 
 # Initialize global variables
@@ -96,6 +95,7 @@ asyncState.chatid = ""
 asyncState.fh = 0
 asyncState.accountData = {}
 asyncState.pairData = []
+asyncState.multiInit = "empty"
 
 ######################################################
 #                     Methods                        #
@@ -176,6 +176,11 @@ def account_data():
     return account
 
 
+def pair_data(data):
+    if data["symbol"] not in asyncState.pairData:
+        asyncState.pairData.append(data["symbol"])
+
+
 async def bot_switch():
 
     while True:
@@ -227,8 +232,6 @@ async def my_message(data):
 
     filters = Filters(data, attributes, asyncState.accountData, logging)
 
-    logging.debug("Websocket signal " + str(data))
-
     if (
         asyncState.btc_downtrend
         and attributes.get("btc_pulse", False)
@@ -243,49 +246,80 @@ async def my_message(data):
                 "New 3CQS signal '" + str(data["signal_name"]) + "' incoming..."
             )
 
-            # Continue only if we can trade the right signal on the configured exchange
-            if (
-                filters.signal()
-                and filters.exchange()
-                and filters.whitelist()
-                and filters.topcoin()
-                # and not filters.denylist()
-            ):
+            if filters.signal():
+                # Continue only if we can trade the right signal on the configured exchange
+                if (
+                    filters.exchange()
+                    and filters.whitelist()
+                    and filters.topcoin()
+                    and not filters.denylist()
+                ):
 
-                bot_output = bot_data()
+                    logging.debug("Websocket signal " + str(data))
 
-                pair_output = asyncState.pairData
-                pair = attributes.get("market") + "_" + data["symbol"]
+                    bot_output = bot_data()
 
-                # Choose multibot or singlebot
-                if attributes.get("single"):
-                    bot = SingleBot(
-                        data,
-                        bot_output,
-                        asyncState.accountData,
-                        attributes,
-                        p3cw,
-                        logging,
-                    )
-                else:
-                    bot = MultiBot(
-                        data,
-                        bot_output,
-                        asyncState.accountData,
-                        pair_output,
-                        attributes,
-                        p3cw,
-                        logging,
-                    )
-                    # Every signal triggers a new multibot deal
-                    bot.trigger(triggeronly=True)
+                    pair = attributes.get("market") + "_" + data["symbol"]
 
-                # Trigger bot if limits passed and pair is traded on the configured exchange
-                if (filters.volatility and filters.price and filters.symrank) or data[
-                    "signal"
-                ] == "BOT_STOP":
+                    # Choose multibot or singlebot
+                    if attributes.get("single"):
+                        bot = SingleBot(
+                            data,
+                            bot_output,
+                            asyncState.accountData,
+                            attributes,
+                            p3cw,
+                            logging,
+                        )
+                    else:
+                        # Create initial pairlist for multibot
+                        pair_output = [data["symbol"]]
 
-                    bot.trigger()
+                        if (
+                            asyncState.multiInit == "empty"
+                            and data["signal"] != "BOT_STOP"
+                        ):
+                            # Minimum of two pairs is needed - stop Initialization afterwards
+                            if (
+                                len(asyncState.pairData) < 2
+                                and data["signal"] != "BOT_STOP"
+                            ):
+                                logging.info(
+                                    "Still filling initial pairs for multibot ...."
+                                )
+                                pair_data(data)
+                            else:
+                                logging.info("Initial pairs for multibot filled.")
+                                asyncState.multiInit = "filled"
+                                pair_output = asyncState.pairData
+
+                        bot = MultiBot(
+                            data,
+                            bot_output,
+                            asyncState.accountData,
+                            pair_output,
+                            attributes,
+                            p3cw,
+                            logging,
+                        )
+
+                        if asyncState.multiInit == "filled":
+                            logging.debug("Bot create")
+                            logging.debug(str(pair_output))
+                            bot.create()
+                            asyncState.multiInit = "initialized"
+                        else:
+                            # Every signal triggers a new multibot deal
+                            bot.trigger(triggeronly=True)
+
+                    # Trigger bot if limits passed and pair is traded on the configured exchange
+                    if (
+                        filters.volatility and filters.price and filters.symrank
+                    ) or data["signal"] == "BOT_STOP":
+
+                        logging.debug("Trigger bot")
+
+                        bot.trigger()
 
 
 @sio.event
@@ -303,6 +337,7 @@ async def main():
             "api-key": attributes.get("api_key"),
             "user-agent": "3CQS Signal Client/" + attributes.get("api_version"),
         },
+        transports=["websocket", "polling"],
         socketio_path="/stream/v1/signals",
     )
 

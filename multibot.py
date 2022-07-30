@@ -5,9 +5,9 @@ from sys import prefix
 
 class MultiBot:
     def __init__(
-        self, tg_data, bot_data, account_data, pair_data, attributes, p3cw, logging
+        self, ws_data, bot_data, account_data, pair_data, attributes, p3cw, logging
     ):
-        self.tg_data = tg_data
+        self.ws_data = ws_data
         self.bot_data = bot_data
         self.account_data = account_data
         self.pair_data = pair_data
@@ -183,34 +183,9 @@ class MultiBot:
         self.logging.debug("Existing bot names: " + str(botnames))
 
         # Initial pairlist
-        pairlist = self.tg_data
-
-        for pair in pairlist:
-            pair = self.attributes.get("market") + "_" + pair
-            # Traded on our exchange?
-            if pair in self.pair_data:
-                self.logging.debug(pair + " added to the list")
-                pairs.append(pair)
-            else:
-                self.logging.info(
-                    pair
-                    + " removed because pair is blacklisted on 3commas or in config.ini or not tradable on '"
-                    + self.attributes.get("account_name")
-                    + "'"
-                )
-
-        # Run filters to adapt pair list
-        if self.attributes.get("limit_initial_pairs", False):
-            # Limit pairs to the maximal deals (mad)
-            if self.attributes.get("mad") == 1:
-                maxpairs = 2
-            elif self.attributes.get("mad") <= len(pairs):
-                maxpairs = self.attributes.get("mad")
-            else:
-                maxpairs = len(pairs)
-            pairs = pairs[0:maxpairs]
-
-            self.logging.debug("Pairs after limit initial pairs filter " + str(pairs))
+        for pair in self.pair_data:
+            pair = self.attributes.get("market") + "_" + self.ws_data["symbol"]
+            pairs.append(pair)
 
         # Adapt mad if pairs are under value
         mad = self.adjustmad(pairs, mad)
@@ -258,7 +233,7 @@ class MultiBot:
             if error:
                 self.logging.error(error["msg"])
             else:
-                self.logging.debug("Pairs: " + str(pairs))
+                self.logging.debug("Pairs: " + str(pair))
                 if not self.attributes.get("ext_botswitch", False):
                     self.enable(data)
                 else:
@@ -275,13 +250,13 @@ class MultiBot:
             if (self.prefix + "_" + self.subprefix + "_" + self.suffix) == bot["name"]:
 
                 if not triggeronly:
-                    pair = self.tg_data["pair"]
+                    pair = self.attributes.get("market") + "_" + self.ws_data["symbol"]
 
                     self.logging.info(
-                        "Got new 3cqs " + self.tg_data["action"] + " signal for " + pair
+                        "Got new 3cqs " + self.ws_data["signal"] + " signal for " + pair
                     )
 
-                    if self.tg_data["action"] == "START":
+                    if self.ws_data["signal"] == "BOT_START":
                         triggerpair = pair
 
                         if pair in bot["pairs"]:

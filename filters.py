@@ -94,6 +94,8 @@ class Filters:
                 + "' did not met "
             )
 
+        return token_symrank
+
     def price(self):
 
         # Filter: Check if volatility is within configured range
