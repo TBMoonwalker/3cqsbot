@@ -1040,7 +1040,7 @@ async def main():
             name="Background bot_switch",
         )
         bot_switch_thread.start()
-        sleep(3)
+        sleep(2)
 
     # Search and rename 3cqsbot if multipair is configured
     if asyncState.multibot == {} and not attributes.get("single"):
@@ -1059,7 +1059,7 @@ async def main():
         asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
 
     ##### Wait for TG signals of 3C Quick Stats channel #####
-    sleep(3)
+    sleep(1)
     logging.info("** Waiting for action **", True)
     asyncState.start_signals = True
     notification.send_notification()
