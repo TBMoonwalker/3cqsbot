@@ -10,6 +10,7 @@ from pathlib import Path
 from threading import Thread
 
 import portalocker
+from babel.dates import format_timedelta
 from numpy import true_divide
 from py3cw.request import Py3CW
 from telethon import TelegramClient, events
@@ -298,23 +299,99 @@ def pair_data(account, interval_sec):
                     pairs.append(pair)
 
         asyncState.pair_data = pairs
+        logging.info(
+            str(len(pairs))
+            + " tradeable market pairs for account '"
+            + account["id"]
+            + "' on '"
+            + account["market_code"]
+            + "' imported. Next update in "
+            + format_timedelta(interval_sec, locale="en_US"),
+            True,
+        )
         time.sleep(interval_sec)
 
 
-async def symrank():
+def fgi_dca_conf_change(interval_sec):
 
-    logging.info(
-        "Sending /symrank command to 3C Quick Stats on Telegram to get new pairs"
-    )
-    while not asyncState.symrank_success:
-        await client.send_message(asyncState.chatid, "/symrank")
-        await asyncio.sleep(5)
-        # prevent from calling the symrank command too much otherwise a timeout is caused
-        if not asyncState.symrank_success:
-            await asyncio.sleep(60)
+    while True:
+        if asyncState.fgi >= attributes.get(
+            "fgi_min", 0, "fgi_defensive"
+        ) and asyncState.fgi <= attributes.get("fgi_max", 30, "fgi_defensive"):
+            asyncState.dca_conf = "fgi_defensive"
+
+        if asyncState.fgi >= attributes.get(
+            "fgi_min", 31, "fgi_moderate"
+        ) and asyncState.fgi <= attributes.get("fgi_max", 60, "fgi_moderate"):
+            asyncState.dca_conf = "fgi_moderate"
+
+        if asyncState.fgi >= attributes.get(
+            "fgi_min", 61, "fgi_aggressive"
+        ) and asyncState.fgi <= attributes.get("fgi_max", 100, "fgi_aggressive"):
+            asyncState.dca_conf = "fgi_aggressive"
+
+        # Check if section fgi_defensive, fgi_moderate and fgi_aggressive are defined in config.ini, if not use standard settings of [dcabot]
+        if (
+            attributes.get("fgi_min", -1, "fgi_defensive") == -1
+            or attributes.get("fgi_min", -1, "fgi_moderate") == -1
+            or attributes.get("fgi_min", -1, "fgi_aggressive") == -1
+        ):
+            logging.info(
+                "DCA settings for [fgi_defensive], [fgi_moderate] or [fgi_aggressive] are not configured. Using standard settings of [dcabot] for all FGI values 0-100"
+            )
+            asyncState.dca_conf = "dcabot"
+
+        time.sleep(interval_sec)
 
 
 def bot_switch(interval_sec):
+
+    signals = Signals(logging, asyncState)
+
+    # Enable FGI dependent trading
+    if attributes.get("fearandgreed", False):
+
+        fgi_thread = Thread(
+            target=signals.get_fgi,
+            args=(
+                attributes.get("fgi_ema_fast", 9),
+                attributes.get("fgi_ema_slow", 50),
+            ),
+            daemon=True,
+            name="Background signals.get_fgi",
+        )
+        fgi_thread.start()
+        while asyncState.fgi == -1:
+            time.sleep(1)
+
+        fgi_dca_conf_change_thread = Thread(
+            target=fgi_dca_conf_change,
+            args=(asyncState.fgi_time_until_update + 30,),
+            daemon=True,
+            name="Background fgi_dca_conf_change",
+        )
+        fgi_dca_conf_change_thread.start()
+        while not asyncState.dca_conf in [
+            "fgi_defensive",
+            "fgi_moderate",
+            "fgi_aggressive",
+        ]:
+            time.sleep(1)
+
+    logging.info("DCA setting: '[" + asyncState.dca_conf + "]'", True)
+    logging.info(
+        "Deal mode of actual DCA setting: '" + attributes.get("deal_mode") + "'", True
+    )
+
+    # Enable btc_pulse dependent trading
+    if attributes.get("btc_pulse", False):
+        btcpulse_thread = Thread(
+            target=signals.get_btcpulse,
+            args=(300,),
+            daemon=True,
+            name="Background signals.get_btcpulse",
+        )
+        btcpulse_thread.start()
 
     while True:
 
@@ -440,38 +517,6 @@ def bot_switch(interval_sec):
         time.sleep(interval_sec)
 
 
-def fgi_dca_conf_change(interval_sec):
-
-    while True:
-        if asyncState.fgi >= attributes.get(
-            "fgi_min", 0, "fgi_defensive"
-        ) and asyncState.fgi <= attributes.get("fgi_max", 30, "fgi_defensive"):
-            asyncState.dca_conf = "fgi_defensive"
-
-        if asyncState.fgi >= attributes.get(
-            "fgi_min", 31, "fgi_moderate"
-        ) and asyncState.fgi <= attributes.get("fgi_max", 60, "fgi_moderate"):
-            asyncState.dca_conf = "fgi_moderate"
-
-        if asyncState.fgi >= attributes.get(
-            "fgi_min", 61, "fgi_aggressive"
-        ) and asyncState.fgi <= attributes.get("fgi_max", 100, "fgi_aggressive"):
-            asyncState.dca_conf = "fgi_aggressive"
-
-        # Check if section fgi_defensive, fgi_moderate and fgi_aggressive are defined in config.ini, if not use standard settings of [dcabot]
-        if (
-            attributes.get("fgi_min", -1, "fgi_defensive") == -1
-            or attributes.get("fgi_min", -1, "fgi_moderate") == -1
-            or attributes.get("fgi_min", -1, "fgi_aggressive") == -1
-        ):
-            logging.info(
-                "DCA settings for [fgi_defensive], [fgi_moderate] or [fgi_aggressive] are not configured. Using standard settings of [dcabot] for all FGI values 0-100"
-            )
-            asyncState.dca_conf = "dcabot"
-
-        time.sleep(interval_sec)
-
-
 def _handle_task_result(task: asyncio.Task) -> None:
 
     try:
@@ -483,6 +528,19 @@ def _handle_task_result(task: asyncio.Task) -> None:
             "Exception raised by task = %r",
             task,
         )
+
+
+async def symrank():
+
+    logging.info(
+        "Sending /symrank command to 3C Quick Stats on Telegram to get new pairs"
+    )
+    while not asyncState.symrank_success:
+        await client.send_message(asyncState.chatid, "/symrank")
+        await asyncio.sleep(5)
+        # prevent from calling the symrank command too much otherwise a timeout is caused
+        if not asyncState.symrank_success:
+            await asyncio.sleep(60)
 
 
 @client.on(events.NewMessage(chats=attributes.get("chatroom", "3C Quick Stats")))
@@ -673,7 +731,6 @@ async def my_event_handler(event):
 
 async def main():
 
-    signals = Signals(logging)
     asyncState.account_data = account_data()
 
     # Update available pair_data every 360 minutes for e.g. new blacklisted pairs or new tradable pairs
@@ -738,55 +795,6 @@ async def main():
             "Check config.ini: btc_pulse AND ext_botswitch both set to true - not allowed"
         )
 
-    # Enable trading according to FGI
-    if attributes.get("fearandgreed", False):
-
-        fgi_thread = Thread(
-            target=signals.get_fgi,
-            args=(
-                asyncState,
-                attributes.get("fgi_ema_fast", 9),
-                attributes.get("fgi_ema_slow", 50),
-            ),
-            daemon=True,
-            name="Background signals.get_fgi",
-        )
-        fgi_thread.start()
-        while asyncState.fgi == -1:
-            time.sleep(1)
-
-        fgi_dca_conf_change_thread = Thread(
-            target=fgi_dca_conf_change,
-            args=(asyncState.fgi_time_until_update + 30,),
-            daemon=True,
-            name="Background fgi_dca_conf_change",
-        )
-        fgi_dca_conf_change_thread.start()
-        while not asyncState.dca_conf in [
-            "fgi_defensive",
-            "fgi_moderate",
-            "fgi_aggressive",
-        ]:
-            time.sleep(1)
-
-    logging.info("DCA setting: '[" + asyncState.dca_conf + "]'", True)
-    logging.info(
-        "Deal mode of actual DCA setting: '" + attributes.get("deal_mode") + "'", True
-    )
-
-    # Enable trading according to btc pulse
-    if attributes.get("btc_pulse", False):
-        btcpulse_thread = Thread(
-            target=signals.get_btcpulse,
-            args=(
-                asyncState,
-                300,
-            ),
-            daemon=True,
-            name="Background signals.get_btcpulse",
-        )
-        btcpulse_thread.start()
-
     # Search and rename 3cqsbot if multipair mode is configured
     if not attributes.get("single"):
         if asyncState.multibot == {}:
@@ -817,7 +825,7 @@ async def main():
             time.sleep(1)
 
     ##### Wait for TG signals of 3C Quick Stats channel #####
-    time.sleep(2)
+    time.sleep(5)
     logging.info("** Waiting for action **", True)
     notification.send_notification()
 
