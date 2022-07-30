@@ -102,7 +102,7 @@ asyncState.account_data = {}
 asyncState.pair_data = []
 asyncState.symrank_success = False
 asyncState.multibot = {}
-asyncState.latest_signal_time = 0
+asyncState.start_signals = False
 
 ######################################################
 #                     Methods                        #
@@ -550,7 +550,7 @@ async def my_event_handler(event):
     logging.debug("TG msg: " + str(tg_output))
     dealmode_signal = attributes.get("deal_mode", "", asyncState.dca_conf) == "signal"
 
-    if tg_output and asyncState.fgi_allows_trading:
+    if tg_output and asyncState.fgi_allows_trading and asyncState.start_signals:
         account_output = asyncState.account_data
         pair_output = asyncState.pair_data
 
@@ -731,8 +731,15 @@ async def my_event_handler(event):
 
 async def main():
 
-    asyncState.account_data = account_data()
+    ##### Initial reporting #####
+    logging.info("*** 3CQS Bot started ***", True)
 
+    user = await client.get_participants("The3CQSBot")
+    asyncState.chatid = user[0].id
+
+    logging.info("** Configuration **", True)
+
+    asyncState.account_data = account_data()
     # Update available pair_data every 360 minutes for e.g. new blacklisted pairs or new tradable pairs
     pair_data_thread = Thread(
         target=pair_data,
@@ -747,14 +754,6 @@ async def main():
     while not asyncState.pair_data:
         time.sleep(1)
 
-    logging.debug("Refreshing cache...")
-
-    user = await client.get_participants("The3CQSBot")
-    asyncState.chatid = user[0].id
-
-    ##### Initial reporting #####
-    logging.info("*** 3CQS Bot started ***", True)
-    logging.info("** Configuration **", True)
     if attributes.get("single"):
         logging.info("Bot mode: 'Single Pair'", True)
     else:
@@ -827,6 +826,7 @@ async def main():
     ##### Wait for TG signals of 3C Quick Stats channel #####
     time.sleep(5)
     logging.info("** Waiting for action **", True)
+    asyncState.start_signals = True
     notification.send_notification()
 
     while attributes.get("deal_mode", "", asyncState.dca_conf) != "signal":
