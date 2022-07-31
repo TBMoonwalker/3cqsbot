@@ -108,14 +108,14 @@ asyncState.account_data = {}
 asyncState.pair_data = []
 asyncState.symrank_success = False
 asyncState.multibot = {}
-asyncState.start_signals = False
+asyncState.receive_signals = False
 
 ######################################################
 #                     Methods                        #
 ######################################################
 
 
-def run_once():
+def single_instance_check():
     asyncState.fh = open(os.path.realpath(__file__), "r")
     try:
         portalocker.lock(asyncState.fh, portalocker.LOCK_EX | portalocker.LOCK_NB)
@@ -123,10 +123,6 @@ def run_once():
         sys.exit(
             "Another 3CQSBot is already running in this directory - please use another one!"
         )
-
-
-# Check for single instance run
-run_once()
 
 
 def parse_tg(raw_text):
@@ -430,6 +426,7 @@ def get_fgi(ema_fast, ema_slow):
 
             asyncState.fgi_time_until_update = time_until_update
 
+        notification.send_notification()
         # request FGI once per day, because is is calculated only once per day
         sleep(time_until_update)
 
@@ -514,13 +511,13 @@ def get_btcpulse(interval_sec):
                     + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
                     + "   EMA9-5m: "
                     + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
-                    + "  >  EMA50-5m: "
+                    + "  greater than  EMA50-5m: "
                     + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US")
                     + " and BTC price 5 minutes before: "
                     + format_currency(btcusdt[-2])
                     + "   EMA9-5m: "
                     + format_currency(btcusdt.EMA9[-2], "USD", locale="en_US")
-                    + "  <  EMA50-5m: "
+                    + "  less than  EMA50-5m: "
                     + format_currency(btcusdt.EMA50[-2], "USD", locale="en_US"),
                     TG_inform,
                 )
@@ -531,7 +528,7 @@ def get_btcpulse(interval_sec):
                     + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
                     + "   EMA9-5m: "
                     + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
-                    + "  <  EMA50-5m: "
+                    + "  less than  EMA50-5m: "
                     + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US"),
                     TG_inform,
                 )
@@ -543,7 +540,7 @@ def get_btcpulse(interval_sec):
                 + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
                 + "   EMA9-5m: "
                 + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
-                + "  >  EMA50-5m: "
+                + "  greater than  EMA50-5m: "
                 + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US"),
                 TG_inform,
             )
@@ -552,6 +549,7 @@ def get_btcpulse(interval_sec):
         logging.info(
             "Next btc-pulse check in " + format_timedelta(interval_sec, locale="en_US")
         )
+        notification.send_notification()
         sleep(interval_sec)
 
 
@@ -699,8 +697,6 @@ def bot_switch(interval_sec):
                     )
                     asyncState.symrank_success = False
 
-                notification.send_notification()
-
         elif asyncState.bot_active and (
             asyncState.btc_downtrend or asyncState.fgi_downtrend
         ):
@@ -749,12 +745,12 @@ def bot_switch(interval_sec):
                     bot.disable()
                     asyncState.multibot = bot.asyncState.multibot
                     asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
-                notification.send_notification()
 
         else:
             logging.debug("Nothing do to")
             logging.debug("bot_active: " + str(asyncState.bot_active))
 
+        notification.send_notification()
         sleep(interval_sec)
 
 
@@ -791,7 +787,7 @@ async def my_event_handler(event):
     logging.debug("TG msg: " + str(tg_output))
     dealmode_signal = attributes.get("deal_mode", "", asyncState.dca_conf) == "signal"
 
-    if tg_output and asyncState.fgi_allows_trading and asyncState.start_signals:
+    if tg_output and asyncState.fgi_allows_trading and asyncState.receive_signals:
         account_output = asyncState.account_data
         pair_output = asyncState.pair_data
 
@@ -918,9 +914,6 @@ async def my_event_handler(event):
                                 ]
                             else:
                                 asyncState.bot_active = bot.asyncState.bot_active
-
-                        notification.send_notification()
-
                     else:
                         logging.info(
                             "Start signal for "
@@ -981,16 +974,20 @@ async def my_event_handler(event):
                 asyncState.multibot = bot.asyncState.multibot
                 asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
                 asyncState.first_topcoin_call = bot.asyncState.first_topcoin_call
-
-                notification.send_notification()
-
             else:
                 logging.debug(
                     "Ignoring /symrank call, because we're running in single mode!"
                 )
 
+    notification.send_notification()
+
 
 async def main():
+
+    # Check for single instance run
+    single_instance_check()
+
+    signals = Signals(logging)
 
     ##### Initial reporting #####
     logging.info("*** 3CQS Bot started ***", True)
@@ -1085,7 +1082,7 @@ async def main():
     ##### Wait for TG signals of 3C Quick Stats channel #####
     sleep(3)
     logging.info("** Waiting for action **", True)
-    asyncState.start_signals = True
+    asyncState.receive_signals = True
     notification.send_notification()
 
     while attributes.get("deal_mode", "", asyncState.dca_conf) != "signal":

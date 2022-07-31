@@ -820,10 +820,6 @@ class MultiBot:
                 and not self.asyncState.bot_active
             ):
                 self.logging.info("Continuous update active for disabled bot")
-            else:
-                self.logging.info(
-                    "Got new 3cqs " + self.tg_data["action"] + " signal for " + pair
-                )
 
             if self.tg_data["action"] == "START":
 
