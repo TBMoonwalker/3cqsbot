@@ -480,80 +480,85 @@ def get_btcpulse(interval_sec):
     logging.info("Starting btc-pulse", True)
     i = round(3600 / interval_sec, 0) - 1
     while True:
-        i += 1
-        ## inform every hour on TG
-        if i == round(3600 / interval_sec, 0):
-            TG_inform = True
-            i = 0
-        else:
-            TG_inform = False
+        try:
+            i += 1
+            ## inform every hour on TG
+            if i == round(3600 / interval_sec, 0):
+                TG_inform = True
+                i = 0
+            else:
+                TG_inform = False
 
-        btcusdt = btctechnical("BTC-USD")
-        # if EMA 50 > EMA9 or <-1% drop then the sleep mode is activated
-        # else bool is false and while loop is broken
-        if (
-            btcusdt.percentchange_15mins[-1] < -1
-            or btcusdt.EMA9[-1] < btcusdt.EMA50[-1]
-        ):
-            # after 5mins getting the latest BTC data to see if it has had a sharp rise in previous 5 mins
-            logging.info(
-                "BTC drop more than -1% within 15 min or 5min EMA9 < EMA50. Waiting for confirmation in "
-                + format_timedelta(interval_sec, locale="en_US")
-            )
-            sleep(interval_sec)
             btcusdt = btctechnical("BTC-USD")
-
-            # this is the golden cross check fast moving EMA
-            # cuts slow moving EMA from bottom, if that is true then bool=false and break while loop
+            # if EMA 50 > EMA9 or <-1% drop then the sleep mode is activated
+            # else bool is false and while loop is broken
             if (
-                btcusdt.EMA9[-1] > btcusdt.EMA50[-1]
-                and btcusdt.EMA9[-2] < btcusdt.EMA50[-2]
+                btcusdt.percentchange_15mins[-1] < -1
+                or btcusdt.EMA9[-1] < btcusdt.EMA50[-1]
             ):
+                # after 5mins getting the latest BTC data to see if it has had a sharp rise in previous 5 mins
                 logging.info(
-                    "btc-pulse signaling UPtrend (golden cross check) - actual BTC price: "
+                    "BTC drop more than -1% within 15 min or 5min EMA9 < EMA50. Waiting for confirmation in "
+                    + format_timedelta(interval_sec, locale="en_US")
+                )
+                sleep(interval_sec)
+                btcusdt = btctechnical("BTC-USD")
+
+                # this is the golden cross check fast moving EMA
+                # cuts slow moving EMA from bottom, if that is true then bool=false and break while loop
+                if (
+                    btcusdt.EMA9[-1] > btcusdt.EMA50[-1]
+                    and btcusdt.EMA9[-2] < btcusdt.EMA50[-2]
+                ):
+                    logging.info(
+                        "btc-pulse signaling UPtrend (golden cross check) - actual BTC price: "
+                        + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
+                        + "   EMA9-5m: "
+                        + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
+                        + "  greater than  EMA50-5m: "
+                        + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US")
+                        + " and BTC price 5 minutes before: "
+                        + format_currency(btcusdt[-2])
+                        + "   EMA9-5m: "
+                        + format_currency(btcusdt.EMA9[-2], "USD", locale="en_US")
+                        + "  less than  EMA50-5m: "
+                        + format_currency(btcusdt.EMA50[-2], "USD", locale="en_US"),
+                        TG_inform,
+                    )
+                    asyncState.btc_downtrend = False
+                else:
+                    logging.info(
+                        "btc-pulse signaling DOWNtrend - actual BTC price: "
+                        + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
+                        + "   EMA9-5m: "
+                        + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
+                        + "  less than  EMA50-5m: "
+                        + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US"),
+                        TG_inform,
+                    )
+                    asyncState.btc_downtrend = True
+
+            else:
+                logging.info(
+                    "btc-pulse signaling UPtrend - actual BTC price: "
                     + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
                     + "   EMA9-5m: "
                     + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
                     + "  greater than  EMA50-5m: "
-                    + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US")
-                    + " and BTC price 5 minutes before: "
-                    + format_currency(btcusdt[-2])
-                    + "   EMA9-5m: "
-                    + format_currency(btcusdt.EMA9[-2], "USD", locale="en_US")
-                    + "  less than  EMA50-5m: "
-                    + format_currency(btcusdt.EMA50[-2], "USD", locale="en_US"),
-                    TG_inform,
-                )
-                asyncState.btc_downtrend = False
-            else:
-                logging.info(
-                    "btc-pulse signaling DOWNtrend - actual BTC price: "
-                    + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
-                    + "   EMA9-5m: "
-                    + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
-                    + "  less than  EMA50-5m: "
                     + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US"),
                     TG_inform,
                 )
-                asyncState.btc_downtrend = True
+                asyncState.btc_downtrend = False
 
-        else:
             logging.info(
-                "btc-pulse signaling UPtrend - actual BTC price: "
-                + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
-                + "   EMA9-5m: "
-                + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
-                + "  greater than  EMA50-5m: "
-                + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US"),
-                TG_inform,
+                "Next btc-pulse check in "
+                + format_timedelta(interval_sec, locale="en_US")
             )
-            asyncState.btc_downtrend = False
-
-        logging.info(
-            "Next btc-pulse check in " + format_timedelta(interval_sec, locale="en_US")
-        )
-        notification.send_notification()
-        sleep(interval_sec)
+            notification.send_notification()
+            sleep(interval_sec)
+        except Exception as e:  # pylint: disable=broad-except
+            logging.error("Exception raised by get_btcpulse: " + e)
+            sleep(interval_sec)
 
 
 def fgi_dca_conf_change(interval_sec):
@@ -765,7 +770,7 @@ def _handle_task_result(task: asyncio.Task) -> None:
     except asyncio.CancelledError:
         pass  # Task cancellation should not be logged as an error.
     except Exception:  # pylint: disable=broad-except
-        logging.exception(
+        logging.error(
             "Exception raised by task = %r",
             task,
         )
