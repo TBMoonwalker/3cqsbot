@@ -556,7 +556,7 @@ def get_btcpulse(interval_sec):
             )
             notification.send_notification()
             sleep(interval_sec)
-        except Exception as e:  # pylint: disable=broad-except
+        except Exception as e:
             logging.error("Exception raised by get_btcpulse: " + e)
             sleep(interval_sec)
 
@@ -614,7 +614,7 @@ def bot_switch(interval_sec):
 
         fgi_dca_conf_change_thread = Thread(
             target=fgi_dca_conf_change,
-            args=(asyncState.fgi_time_until_update + 30,),  # check once per day
+            args=(3600,),  # check once per hour
             daemon=True,
             name="Background fgi_dca_conf_change",
         )
@@ -635,132 +635,146 @@ def bot_switch(interval_sec):
     if attributes.get("btc_pulse", False):
         btcpulse_thread = Thread(
             target=get_btcpulse,
-            args=(300,),  # check every 5 mins
+            args=(300,),  # check every 5 min
             daemon=True,
             name="Background get_btcpulse",
         )
         btcpulse_thread.start()
 
     while True:
+        try:
+            if (
+                not asyncState.bot_active
+                and not asyncState.btc_downtrend
+                and not asyncState.fgi_downtrend
+            ):
 
-        if (
-            not asyncState.bot_active
-            and not asyncState.btc_downtrend
-            and not asyncState.fgi_downtrend
-        ):
-
-            if not asyncState.btc_downtrend and attributes.get("btc_pulse", False):
-                logging.info("BTC uptrending", True)
-
-            if not asyncState.fgi_downtrend and attributes.get("fearandgreed", False):
-                if asyncState.fgi >= attributes.get(
-                    "fgi_trade_min", 0
-                ) and asyncState.fgi <= attributes.get("fgi_trade_max", 100):
-                    logging.info(
-                        "FGI inside allowed trading range ["
-                        + str(attributes.get("fgi_trade_min", 0))
-                        + ".."
-                        + str(attributes.get("fgi_trade_max", 100))
-                        + "]",
-                        True,
-                    )
-                    asyncState.fgi_allows_trading = True
-
-            if not asyncState.btc_downtrend or asyncState.fgi_allows_trading:
-                if attributes.get("single"):
-                    asyncState.bot_active = True
-                    logging.info(
-                        "Single bot mode activated - waiting for pair #start signals",
-                        True,
-                    )
-                elif attributes.get(
-                    "deal_mode", "", asyncState.dca_conf
-                ) == "signal" or attributes.get("continuous_update", False):
-                    # listen continuously to 3cqs msgs on TG, avoid symrank calls
-                    if asyncState.multibot == {}:
-                        bot = MultiBot(
-                            [], bot_data(), {}, 0, attributes, p3cw, logging, asyncState
+                if not asyncState.fgi_downtrend and attributes.get(
+                    "fearandgreed", False
+                ):
+                    if asyncState.fgi >= attributes.get(
+                        "fgi_trade_min", 0
+                    ) and asyncState.fgi <= attributes.get("fgi_trade_max", 100):
+                        logging.info(
+                            "FGI inside allowed trading range ["
+                            + str(attributes.get("fgi_trade_min", 0))
+                            + ".."
+                            + str(attributes.get("fgi_trade_max", 100))
+                            + "]",
+                            True,
                         )
+                        asyncState.fgi_allows_trading = True
+
+                if not asyncState.btc_downtrend or asyncState.fgi_allows_trading:
+                    if attributes.get("single"):
+                        asyncState.bot_active = True
+                        logging.info(
+                            "Single bot mode activated - waiting for pair #start signals",
+                            True,
+                        )
+                    elif attributes.get(
+                        "deal_mode", "", asyncState.dca_conf
+                    ) == "signal" or attributes.get("continuous_update", False):
+                        # listen continuously to 3cqs msgs on TG, avoid symrank calls
+                        if asyncState.multibot == {}:
+                            bot = MultiBot(
+                                [],
+                                bot_data(),
+                                {},
+                                0,
+                                attributes,
+                                p3cw,
+                                logging,
+                                asyncState,
+                            )
+                        else:
+                            bot = MultiBot(
+                                [],
+                                asyncState.multibot,
+                                {},
+                                0,
+                                attributes,
+                                p3cw,
+                                logging,
+                                asyncState,
+                            )
+                        bot.enable()
+                        asyncState.multibot = bot.asyncState.multibot
+                        asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
+                        logging.info(
+                            "Multi bot activated - waiting for pair #start signals",
+                            True,
+                        )
+                    # enabling bot only after sending symrank call to avoid messing up with old pairs
                     else:
-                        bot = MultiBot(
-                            [],
-                            asyncState.multibot,
-                            {},
-                            0,
-                            attributes,
-                            p3cw,
-                            logging,
-                            asyncState,
+                        logging.info(
+                            "Multi bot activated - using pairs from actual top30 symrank list",
+                            True,
                         )
-                    bot.enable()
-                    asyncState.multibot = bot.asyncState.multibot
-                    asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
-                    logging.info(
-                        "Multi bot activated - waiting for pair #start signals", True
-                    )
-                # enabling bot only after sending symrank call to avoid messing up with old pairs
-                else:
-                    logging.info(
-                        "Multi bot activated - using pairs from actual top30 symrank list",
-                        True,
-                    )
-                    asyncState.symrank_success = False
+                        asyncState.symrank_success = False
 
-        elif asyncState.bot_active and (
-            asyncState.btc_downtrend or asyncState.fgi_downtrend
-        ):
+            elif asyncState.bot_active and (
+                asyncState.btc_downtrend or asyncState.fgi_downtrend
+            ):
 
-            if asyncState.btc_downtrend and attributes.get("btc_pulse", False):
-                logging.info("BTC downtrending", True)
-
-            if asyncState.fgi_downtrend and attributes.get("fearandgreed", False):
-                if asyncState.fgi < attributes.get(
-                    "fgi_trade_min", 0
-                ) or asyncState.fgi > attributes.get("fgi_trade_max", 100):
-                    logging.info(
-                        "FGI downtrending or outside the allowed trading range ["
-                        + str(attributes.get("fgi_trade_min", 0))
-                        + ".."
-                        + str(attributes.get("fgi_trade_max", 100))
-                        + "]",
-                        True,
-                    )
-                    asyncState.fgi_allows_trading = False
-
-            if asyncState.btc_downtrend or not asyncState.fgi_allows_trading:
-                if attributes.get("single"):
-                    bot = SingleBot(
-                        [], bot_data(), {}, attributes, p3cw, logging, asyncState
-                    )
-                    # True = disable all single bots
-                    bot.disable(bot_data(), True)
-                    asyncState.bot_active = bot.asyncState.bot_active
-                else:
-                    if asyncState.multibot == {}:
-                        bot = MultiBot(
-                            [], bot_data(), {}, 0, attributes, p3cw, logging, asyncState
+                if asyncState.fgi_downtrend and attributes.get("fearandgreed", False):
+                    if asyncState.fgi < attributes.get(
+                        "fgi_trade_min", 0
+                    ) or asyncState.fgi > attributes.get("fgi_trade_max", 100):
+                        logging.info(
+                            "FGI downtrending or outside the allowed trading range ["
+                            + str(attributes.get("fgi_trade_min", 0))
+                            + ".."
+                            + str(attributes.get("fgi_trade_max", 100))
+                            + "]",
+                            True,
                         )
+                        asyncState.fgi_allows_trading = False
+
+                if asyncState.btc_downtrend or not asyncState.fgi_allows_trading:
+                    if attributes.get("single"):
+                        bot = SingleBot(
+                            [], bot_data(), {}, attributes, p3cw, logging, asyncState
+                        )
+                        # True = disable all single bots
+                        bot.disable(bot_data(), True)
+                        asyncState.bot_active = bot.asyncState.bot_active
                     else:
-                        bot = MultiBot(
-                            [],
-                            asyncState.multibot,
-                            {},
-                            0,
-                            attributes,
-                            p3cw,
-                            logging,
-                            asyncState,
-                        )
-                    bot.disable()
-                    asyncState.multibot = bot.asyncState.multibot
-                    asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
+                        if asyncState.multibot == {}:
+                            bot = MultiBot(
+                                [],
+                                bot_data(),
+                                {},
+                                0,
+                                attributes,
+                                p3cw,
+                                logging,
+                                asyncState,
+                            )
+                        else:
+                            bot = MultiBot(
+                                [],
+                                asyncState.multibot,
+                                {},
+                                0,
+                                attributes,
+                                p3cw,
+                                logging,
+                                asyncState,
+                            )
+                        bot.disable()
+                        asyncState.multibot = bot.asyncState.multibot
+                        asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
 
-        else:
-            logging.debug("Nothing do to")
-            logging.debug("bot_active: " + str(asyncState.bot_active))
+            else:
+                logging.debug("Nothing do to")
+                logging.debug("bot_active: " + str(asyncState.bot_active))
 
-        notification.send_notification()
-        sleep(interval_sec)
+            notification.send_notification()
+            sleep(interval_sec)
+        except Exception as e:
+            logging.error("Exception raised by bot_switch: " + e)
+            sleep(interval_sec)
 
 
 def _handle_task_result(task: asyncio.Task) -> None:
@@ -845,9 +859,7 @@ async def my_event_handler(event):
             if not asyncState.bot_active and not attributes.get(
                 "continuous_update", False
             ):
-                logging.info(
-                    "Signal not processed because of BTC downtrend or not in FGI trading zone"
-                )
+                logging.info("Signal not processed because 3cqsbot is disabled")
                 return
 
             # Check if pair is tradeable
