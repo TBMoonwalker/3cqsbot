@@ -311,6 +311,7 @@ def pair_data(account, interval_sec):
             + format_timedelta(interval_sec, locale="en_US"),
             True,
         )
+        notification.send_notification()
         sleep(interval_sec)
 
 
@@ -578,10 +579,11 @@ def fgi_dca_conf_change(interval_sec):
             or attributes.get("fgi_min", -1, "fgi_aggressive") == -1
         ):
             logging.info(
-                "DCA settings for [fgi_defensive], [fgi_moderate] or [fgi_aggressive] are not configured. Using standard settings of [dcabot] for all FGI values 0-100"
+                "DCA settings for [fgi_defensive], [fgi_moderate] or [fgi_aggressive] are not configured. Using standard settings of [dcabot] for all FGI values 0-100",
+                True,
             )
             asyncState.dca_conf = "dcabot"
-
+        notification.send_notification()
         sleep(interval_sec)
 
 
@@ -799,11 +801,11 @@ async def my_event_handler(event):
                 asyncState.latest_signal_time = datetime.utcnow()
 
             logging.info(
-                "New '"
+                tg_output["action"]
+                + " signal "
+                + " '"
                 + tg_output["signal"]
-                + "' "
-                + tg_output["action"]
-                + " signal for "
+                + "' for "
                 + tg_output["pair"]
                 + " incoming..."
             )
