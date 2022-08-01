@@ -48,7 +48,7 @@ else:
 
 # Handle timezone
 if hasattr(time, "tzset"):
-    os.environ["TZ"] = attributes.get("timezone", "Europe/Amsterdam")
+    os.environ["TZ"] = attributes.get("timezone", "Europe/Berlin")
     time.tzset()
 
 # Init notification handler
@@ -303,7 +303,9 @@ def pair_data(account, interval_sec):
         asyncState.pair_data = pairs
         logging.info(
             str(len(pairs))
-            + " tradeable market pairs for account '"
+            + " tradeable and non-blacklisted "
+            + attributes.get("market")
+            + " pairs for account '"
             + account["id"]
             + "' on '"
             + account["market_code"]
@@ -796,19 +798,20 @@ async def my_event_handler(event):
         ##### if TG message with #START or #STOP
         if tg_output and not isinstance(tg_output, list):
 
+            logging.info(
+                "'"
+                + tg_output["signal"]
+                + "': "
+                + tg_output["action"]
+                + " signal for "
+                + tg_output["pair"]
+                + " incoming..."
+            )
+
             # track time from START signal to deal creation
             if tg_output["action"] == "START":
                 asyncState.latest_signal_time = datetime.utcnow()
 
-            logging.info(
-                tg_output["action"]
-                + " signal "
-                + " '"
-                + tg_output["signal"]
-                + "' for "
-                + tg_output["pair"]
-                + " incoming..."
-            )
             # Check if pair is in whitelist
             if attributes.get("token_whitelist", []):
                 token_whitelisted = tg_output["pair"] in attributes.get(
@@ -817,137 +820,125 @@ async def my_event_handler(event):
                 logging.info(tg_output["pair"] + " in whitelist, processing signal.")
             else:
                 token_whitelisted = True
+            if not token_whitelisted:
+                logging.info("Signal ignored because pair is not whitelisted")
+                return
 
+            # Check if it is the correct symrank_signal
+            if not (
+                tg_output["signal"] == attributes.get("symrank_signal")
+                or attributes.get("symrank_signal") == "all"
+            ):
+                logging.info(
+                    "Signal ignored because '"
+                    + attributes.get("symrank_signal")
+                    + "' is configured"
+                )
+                return
+
+            # Check if bot is active
             if not asyncState.bot_active and not attributes.get(
                 "continuous_update", False
             ):
                 logging.info(
                     "Signal not processed because of BTC downtrend or not in FGI trading zone"
                 )
-            # Check if it is the right signal
-            elif (
-                tg_output["signal"] == attributes.get("symrank_signal")
-                or attributes.get("symrank_signal") == "all"
-            ) and token_whitelisted:
+                return
 
-                if attributes.get("single") or asyncState.multibot == {}:
-                    bot_output = bot_data()
-                else:
-                    bot_output = asyncState.multibot
+            # Check if pair is tradeable
+            if not tg_output["pair"] in pair_output:
+                logging.info(
+                    str(tg_output["pair"])
+                    + " is not traded on '"
+                    + attributes.get("account_name")
+                    + "'"
+                )
+                return
 
-                # Choose multibot or singlebot
-                if attributes.get("single"):
-                    bot = SingleBot(
-                        tg_output,
-                        bot_output,
-                        account_output,
-                        attributes,
-                        p3cw,
-                        logging,
-                        asyncState,
-                    )
-                else:
-                    bot = MultiBot(
-                        tg_output,
-                        bot_output,
-                        account_output,
-                        pair_output,
-                        attributes,
-                        p3cw,
-                        logging,
-                        asyncState,
-                    )
-
-                # Trigger bot if limits passed
-                if tg_output["volatility"] != 0 and tg_output["pair"] in pair_output:
-                    if (
-                        tg_output["volatility"]
-                        >= attributes.get("volatility_limit_min", 0.1)
-                        and tg_output["volatility"]
-                        <= attributes.get("volatility_limit_max", 100)
-                        and tg_output["price_action"]
-                        >= attributes.get("price_action_limit_min", 0.1)
-                        and tg_output["price_action"]
-                        <= attributes.get("price_action_limit_max", 100)
-                        and tg_output["symrank"]
-                        >= attributes.get("symrank_limit_min", 1)
-                        and tg_output["symrank"]
-                        <= attributes.get("symrank_limit_max", 100)
-                    ) or tg_output["action"] == "STOP":
-
-                        # for multibot: if dealmode == signal and multibot is empty create/update and enable multibot before processing deals
-                        if (
-                            dealmode_signal
-                            and asyncState.multibot == {}
-                            and not attributes.get("single")
-                            and not tg_output["action"] == "STOP"
-                        ):
-                            bot.create()
-                            asyncState.multibot = bot.asyncState.multibot
-                            asyncState.bot_active = bot.asyncState.multibot[
-                                "is_enabled"
-                            ]
-                            asyncState.first_topcoin_call = (
-                                bot.asyncState.first_topcoin_call
-                            )
-
-                        # for single and multibot: if STOP signal
-                        if (
-                            dealmode_signal
-                            and asyncState.multibot == {}
-                            and tg_output["action"] == "STOP"
-                        ):
-                            logging.info(
-                                "STOP signal ignored - not necessary when deal_mode = signal"
-                            )
-
-                        # for single and multibot: function trigger handles START and STOP signals
-                        if (
-                            asyncState.multibot != {}
-                            or attributes.get("single")
-                            and tg_output["action"] == "START"
-                        ):
-                            bot.trigger()
-
-                            if not attributes.get("single"):
-                                asyncState.multibot = bot.asyncState.multibot
-                                asyncState.bot_active = bot.asyncState.multibot[
-                                    "is_enabled"
-                                ]
-                            else:
-                                asyncState.bot_active = bot.asyncState.bot_active
-                    else:
-                        logging.info(
-                            "Start signal for "
-                            + str(tg_output["pair"])
-                            + " with symrank: "
-                            + str(tg_output["symrank"])
-                            + ", volatility: "
-                            + str(tg_output["volatility"])
-                            + " and price action: "
-                            + str(tg_output["price_action"])
-                            + " not meeting config filter limits - signal ignored"
-                        )
-                else:
+            # Check if 3cqs START signal passes optional symrank criteria
+            if tg_output["volatility"] != 0 and tg_output["action"] == "START":
+                if not (
+                    tg_output["volatility"]
+                    >= attributes.get("volatility_limit_min", 0.1)
+                    and tg_output["volatility"]
+                    <= attributes.get("volatility_limit_max", 100)
+                    and tg_output["price_action"]
+                    >= attributes.get("price_action_limit_min", 0.1)
+                    and tg_output["price_action"]
+                    <= attributes.get("price_action_limit_max", 100)
+                    and tg_output["symrank"] >= attributes.get("symrank_limit_min", 1)
+                    and tg_output["symrank"] <= attributes.get("symrank_limit_max", 100)
+                ):
                     logging.info(
-                        str(tg_output["pair"])
-                        + " is not traded on '"
-                        + attributes.get("account_name")
-                        + "'"
+                        "Start signal for "
+                        + str(tg_output["pair"])
+                        + " with symrank: "
+                        + str(tg_output["symrank"])
+                        + ", volatility: "
+                        + str(tg_output["volatility"])
+                        + " and price action: "
+                        + str(tg_output["price_action"])
+                        + " not meeting config filter limits - signal ignored"
                     )
+                    return
+
+            # for single and multibot: if dealmode == signal and STOP signal is sent than ignore
+            if tg_output["action"] == "STOP" and dealmode_signal:
+                logging.info(
+                    "STOP signal ignored - not necessary when deal_mode = signal"
+                )
+                return
+
+            # Attribute variables either to single or multi bot
+            if attributes.get("single") or asyncState.multibot == {}:
+                bot_output = bot_data()
             else:
-                if tg_output["signal"] == attributes.get(
-                    "symrank_signal"
-                ) and attributes.get("token_whitelist", []):
-                    logging.info("Signal ignored because pair is not whitelisted")
-                else:
-                    logging.info(
-                        "Signal ignored because '"
-                        + attributes.get("symrank_signal")
-                        + "' is configured"
-                    )
+                bot_output = asyncState.multibot
+            if attributes.get("single"):
+                bot = SingleBot(
+                    tg_output,
+                    bot_output,
+                    account_output,
+                    attributes,
+                    p3cw,
+                    logging,
+                    asyncState,
+                )
+            else:
+                bot = MultiBot(
+                    tg_output,
+                    bot_output,
+                    account_output,
+                    pair_output,
+                    attributes,
+                    p3cw,
+                    logging,
+                    asyncState,
+                )
 
-        # if TG message with symrank list
+            # for multibot: if dealmode == signal and multibot is empty create/update and enable multibot before processing deals
+            if (
+                dealmode_signal
+                and asyncState.multibot == {}
+                and not attributes.get("single")
+                and not tg_output["action"] == "STOP"
+            ):
+                bot.create()
+                asyncState.multibot = bot.asyncState.multibot
+                asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
+                asyncState.first_topcoin_call = bot.asyncState.first_topcoin_call
+
+            # for single and multibot: function bot.trigger() handles START and STOP signals
+            if asyncState.multibot != {} or attributes.get("single"):
+
+                bot.trigger()
+                if not attributes.get("single"):
+                    asyncState.multibot = bot.asyncState.multibot
+                    asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
+                else:
+                    asyncState.bot_active = bot.asyncState.bot_active
+
+        ##### if TG message is symrank list
         elif tg_output and isinstance(tg_output, list):
             if (
                 not attributes.get("single")
@@ -1096,6 +1087,7 @@ async def main():
             await symrank()
 
 
-client.start()
-client.loop.run_until_complete(main())
-client.run_until_disconnected()
+while True:
+    client.start()
+    client.loop.run_until_complete(main())
+    client.run_until_disconnected()
