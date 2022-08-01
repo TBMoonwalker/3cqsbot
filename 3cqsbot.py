@@ -493,11 +493,11 @@ def get_btcpulse(interval_sec):
         # else bool is false and while loop is broken
         if (
             btcusdt.percentchange_15mins[-1] < -1
-            or btcusdt.EMA50[-1] > btcusdt.EMA9[-1]
+            or btcusdt.EMA9[-1] < btcusdt.EMA50[-1]
         ):
             # after 5mins getting the latest BTC data to see if it has had a sharp rise in previous 5 mins
             logging.info(
-                "Next btc-pulse check in "
+                "BTC drop more than -1% within 15 min or 5min EMA9 < EMA50. Waiting for confirmation in "
                 + format_timedelta(interval_sec, locale="en_US")
             )
             sleep(interval_sec)
