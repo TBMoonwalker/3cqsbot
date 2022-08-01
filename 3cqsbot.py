@@ -498,7 +498,7 @@ def get_btcpulse(interval_sec):
             ):
                 # after 5mins getting the latest BTC data to see if it has had a sharp rise in previous 5 mins
                 logging.info(
-                    "BTC drop more than -1% within 15 min or 5min EMA9 < EMA50. Waiting for confirmation in "
+                    "BTC drop more than -1% within 15 min  or  5min EMA9  less than  EMA50. Waiting for confirmation in "
                     + format_timedelta(interval_sec, locale="en_US")
                 )
                 sleep(interval_sec)
