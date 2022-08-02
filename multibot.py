@@ -317,14 +317,13 @@ class MultiBot:
         bot_by_id = False
         bot_by_name = False
 
-        # Check for existing multibot id
+        # Search 3cqsbot by given botid in config
         if self.config_botid != "":
-            botnames = []
+
             self.logging.info(
                 "Searching for 3cqsbot with botid: " + self.config_botid, True
             )
             for bot in self.bot_data:
-                botnames.append(bot["name"])
 
                 if self.config_botid == str(bot["id"]):
                     bot_by_id = True
@@ -370,41 +369,40 @@ class MultiBot:
                     else:
                         self.asyncState.multibot = data
 
-                    break
+                    return
 
-        # Check for existing name
-        if not bot_by_id:
-            if self.attributes.get("fearandgreed", False) and self.config_botid == "":
-                self.logging.error(
-                    "Please add 'botid = xxxxxxx' to [dcabot] for using FGI. FGI guided DCA settings will only applied "
-                    + "to existent 3cqsbot. \n Script will be aborted if no botid is found by botname"
-                )
-
-            botnames = []
-            if self.config_botid != "":
-                self.logging.info(
-                    "3cqsbot not found with botid: " + self.config_botid, True
-                )
-
-            self.logging.info(
-                "Searching for 3cqsbot with name '" + self.botname + "' to get botid",
-                True,
+        # If botid given and 3cqsbot not found exit
+        if self.config_botid != "" and not bot_by_id:
+            self.logging.error(
+                "3cqsbot not found with botid: " + self.config_botid, True
             )
-            for bot in self.bot_data:
-                botnames.append(bot["name"])
+            sys.exit("Aborting script. Please check for correct botid in config.ini!")
 
-                if self.botname == bot["name"]:
-                    bot_by_name = True
-                    self.logging.info(
-                        "3cqsbot '"
-                        + bot["name"]
-                        + "' with botid "
-                        + str(bot["id"])
-                        + " found. Enabled: '"
-                        + str(bot["is_enabled"])
-                        + "'",
-                        True,
-                    )
+        # If no botid given and fearandgreed is set to true, then exit
+        if self.config_botid == "" and self.attributes.get("fearandgreed", False):
+            self.logging.error(
+                "Please add 'botid = xxxxxxx' to [dcabot] for using FGI. FGI guided DCA settings will only applied "
+                + "to existent 3cqsbot. \n Script will be aborted if no 3cqsbot is found by botname"
+            )
+
+        self.logging.info(
+            "Searching for 3cqsbot with name '" + self.botname + "' to get botid",
+            True,
+        )
+        for bot in self.bot_data:
+
+            if self.botname == bot["name"]:
+                bot_by_name = True
+                self.logging.info(
+                    "3cqsbot '"
+                    + bot["name"]
+                    + "' with botid "
+                    + str(bot["id"])
+                    + " found. Enabled: '"
+                    + str(bot["is_enabled"])
+                    + "'",
+                    True,
+                )
 
                 mad = self.attributes.get("mad")
                 mad = self.adjust_mad(bot["pairs"], mad)
@@ -423,34 +421,31 @@ class MultiBot:
                     self.logging.error(error["msg"])
                 else:
                     self.asyncState.multibot = data
-                break
 
-            if not bot_by_name:
-                self.logging.info("3cqsbot not found with this name", True)
-                bot["name"] = ""
+                return
 
-        self.logging.debug(
-            "Checked bot ids/names till config id/name found: " + str(botnames)
-        )
+        if not bot_by_name:
+            self.logging.info("3cqsbot not found with this name", True)
+            bot["name"] = ""
 
-        # If FGI is used and botid is not set in [dcabot], which is mandatory to prevent creating new bots with different botids,
-        # abort program for security reasons
-        if self.attributes.get("fearandgreed", False) and self.config_botid == "":
-            self.logging.error(
-                "No botid set in [dcabot] and no 3cqsbot '"
-                + self.botname
-                + "' found on 3commas"
-            )
-            self.logging.error(
-                "Please get botid on 3commas for an existent 3cqsbot and add 'botid = <botid of 3cqsbot>' under [dcabot] in config.ini"
-            )
-            self.logging.error(
-                "If first time run of this script with enabled FGI and no 3cqsbot has been created so far,"
-            )
-            self.logging.error(
-                "create manually one on 3commas, get botid and leave the bot disabled"
-            )
-            sys.exit("Aborting script!")
+            # If FGI is used and botid is not set in [dcabot], which is mandatory to prevent creating new bots with different botids,
+            # abort program for security reasons
+            if self.config_botid == "" and self.attributes.get("fearandgreed", False):
+                self.logging.error(
+                    "No botid set in [dcabot] and no 3cqsbot '"
+                    + self.botname
+                    + "' found on 3commas"
+                )
+                self.logging.error(
+                    "Please get botid on 3commas for an existent 3cqsbot and add 'botid = <botid of 3cqsbot>' under [dcabot] in config.ini"
+                )
+                self.logging.error(
+                    "If first time run of this script with enabled FGI and no 3cqsbot has been created so far,"
+                )
+                self.logging.error(
+                    "create manually one on 3commas, get botid and leave the bot disabled"
+                )
+                sys.exit("Aborting script!")
 
     def enable(self):
         # search for 3cqsbot by id or by name if bot not given

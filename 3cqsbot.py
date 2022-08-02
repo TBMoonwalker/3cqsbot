@@ -488,6 +488,14 @@ def get_btcpulse(interval_sec):
                 i = 0
             else:
                 TG_inform = False
+            logging.debug(
+                "btc-pulse: counter i (3600/ interval_sec): "
+                + str(i)
+                + "   TG_inform: "
+                + str(TG_inform)
+                + "   interval_sec: "
+                + str(interval_sec)
+            )
 
             btcusdt = btctechnical("BTC-USD")
             # if EMA 50 > EMA9 or <-1% drop then the sleep mode is activated
@@ -556,8 +564,9 @@ def get_btcpulse(interval_sec):
             )
             notification.send_notification()
             sleep(interval_sec)
-        except Exception as e:
-            logging.error("Exception raised by get_btcpulse: " + e)
+        except Exception as err:
+            logging.error("Exception raised by thread get_btcpulse: {}".format(err))
+            logging.error("get_btcpulse: Sleeping for " + str(interval_sec))
             sleep(interval_sec)
 
 
@@ -608,6 +617,7 @@ def bot_switch(interval_sec):
             daemon=True,
             name="Background get_fgi",
         )
+        logging.debug("bot_switch: Creating get_fgi thread")
         fgi_thread.start()
         while asyncState.fgi == -1:
             sleep(1)
@@ -618,6 +628,7 @@ def bot_switch(interval_sec):
             daemon=True,
             name="Background fgi_dca_conf_change",
         )
+        logging.debug("bot_switch: Creating fgi_dca_conf_change thread")
         fgi_dca_conf_change_thread.start()
         while not asyncState.dca_conf in [
             "fgi_defensive",
@@ -639,10 +650,22 @@ def bot_switch(interval_sec):
             daemon=True,
             name="Background get_btcpulse",
         )
+        logging.debug("bot_switch: Creating get_btcpulse thread")
         btcpulse_thread.start()
 
     while True:
         try:
+            logging.debug("bot_switch: begin of while loop")
+            if attributes.get("fearandgreed", False):
+                logging.debug("Is alive get_fgi thread: " + str(fgi_thread.is_alive()))
+                logging.debug(
+                    "Is alive fgi_dca_conf_change thread: "
+                    + str(fgi_dca_conf_change_thread.is_alive())
+                )
+            if attributes.get("btc_pulse", False):
+                logging.debug(
+                    "Is alive get_btcpulse thread: " + str(btcpulse_thread.is_alive())
+                )
             if (
                 not asyncState.bot_active
                 and not asyncState.btc_downtrend
@@ -767,13 +790,13 @@ def bot_switch(interval_sec):
                         asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
 
             else:
-                logging.debug("Nothing do to")
-                logging.debug("bot_active: " + str(asyncState.bot_active))
+                logging.debug("bot_switch: Nothing do to")
 
             notification.send_notification()
             sleep(interval_sec)
-        except Exception as e:
-            logging.error("Exception raised by bot_switch: " + e)
+        except Exception as err:
+            logging.error("Exception raised by thread bot_switch: {}".format(err))
+            logging.error("bot_switch: Sleeping for " + str(interval_sec))
             sleep(interval_sec)
 
 
@@ -836,7 +859,7 @@ async def my_event_handler(event):
                 token_whitelisted = tg_output["pair"] in attributes.get(
                     "token_whitelist", []
                 )
-                logging.info(tg_output["pair"] + " in whitelist, processing signal.")
+                logging.info(tg_output["pair"] + " in whitelist, processing signal")
             else:
                 token_whitelisted = True
             if not token_whitelisted:
@@ -1018,6 +1041,7 @@ async def main():
         daemon=True,
         name="Background update pair_data",
     )
+    logging.debug("Creating pair_data thread")
     pair_data_thread.start()
     while not asyncState.pair_data:
         sleep(1)
@@ -1070,6 +1094,7 @@ async def main():
             daemon=True,
             name="Background bot_switch",
         )
+        logging.debug("Creating bot_switch thread")
         bot_switch_thread.start()
         sleep(3)
 
@@ -1087,7 +1112,10 @@ async def main():
         )
         bot.search_rename_3cqsbot()
         asyncState.multibot = bot.asyncState.multibot
-        asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
+        if asyncState.multibot:
+            asyncState.bot_active = bot.asyncState.multibot["is_enabled"]
+        else:
+            asyncState.bot_active = False
 
     ##### Wait for TG signals of 3C Quick Stats channel #####
     sleep(3)
