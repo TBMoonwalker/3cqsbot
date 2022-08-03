@@ -518,6 +518,9 @@ def get_btcpulse(interval_sec):
                     btcusdt.EMA9[-1] > btcusdt.EMA50[-1]
                     and btcusdt.EMA9[-2] < btcusdt.EMA50[-2]
                 ):
+                    # Inform about BTC trend changes
+                    if asyncState.btc_downtrend:
+                        TG_inform = True
                     logging.info(
                         "btc-pulse signaling UPtrend (golden cross check) - actual BTC price: "
                         + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
@@ -534,7 +537,11 @@ def get_btcpulse(interval_sec):
                         TG_inform,
                     )
                     asyncState.btc_downtrend = False
+                    TG_inform = False
                 else:
+                    # Inform about BTC trend changes
+                    if not asyncState.btc_downtrend:
+                        TG_inform = True
                     logging.info(
                         "btc-pulse signaling DOWNtrend - actual BTC price: "
                         + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
@@ -545,8 +552,11 @@ def get_btcpulse(interval_sec):
                         TG_inform,
                     )
                     asyncState.btc_downtrend = True
-
+                    TG_inform = False
             else:
+                # Inform about BTC trend changes
+                if asyncState.btc_downtrend:
+                    TG_inform = True
                 logging.info(
                     "btc-pulse signaling UPtrend - actual BTC price: "
                     + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
@@ -557,6 +567,7 @@ def get_btcpulse(interval_sec):
                     TG_inform,
                 )
                 asyncState.btc_downtrend = False
+                TG_inform = False
 
             logging.info(
                 "Next btc-pulse check in "
