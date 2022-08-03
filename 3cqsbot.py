@@ -478,18 +478,17 @@ def btctechnical(symbol):
 def get_btcpulse(interval_sec):
 
     logging.info("Starting btc-pulse", True)
-    i = round(3600 / interval_sec, 0) - 1
+    i = round(3600 / interval_sec, 0)
     while True:
         try:
-            i += 1
-            ## inform every hour on TG
+            ## inform every hour on TG and after first start
             if i == round(3600 / interval_sec, 0):
                 TG_inform = True
                 i = 0
             else:
                 TG_inform = False
             logging.debug(
-                "btc-pulse: counter i (3600/ interval_sec): "
+                "btc-pulse: counter i (3600/ sleep interval_sec): "
                 + str(i)
                 + "   TG_inform: "
                 + str(TG_inform)
@@ -510,6 +509,7 @@ def get_btcpulse(interval_sec):
                     + format_timedelta(interval_sec, locale="en_US")
                 )
                 sleep(interval_sec)
+                i += 1
                 btcusdt = btctechnical("BTC-USD")
 
                 # this is the golden cross check fast moving EMA
@@ -564,10 +564,11 @@ def get_btcpulse(interval_sec):
             )
             notification.send_notification()
             sleep(interval_sec)
+            i += 1
         except Exception as err:
             logging.error("Exception raised by thread get_btcpulse: {}".format(err))
-            logging.error("get_btcpulse: Sleeping for " + str(interval_sec))
             sleep(interval_sec)
+            i += 1
 
 
 def fgi_dca_conf_change(interval_sec):
