@@ -494,7 +494,7 @@ def get_btcpulse(interval_sec):
     while True:
         try:
             ## inform every hour on TG and after first start
-            if i == round(3600 / interval_sec, 0):
+            if i >= round(3600 / interval_sec, 0):
                 TG_inform = True
                 i = 0
             else:
