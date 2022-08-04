@@ -9,12 +9,13 @@ echo "[general]" > config.ini
 [ $LOGFILESIZE ] && echo "log_file_size = $LOGFILESIZE" >> config.ini
 [ $LOGFILECOUNT ] && echo "log_file_count = $LOGFILECOUNT" >> config.ini
 
-# Telegram settings
-echo "[telegram]" >> config.ini
-[ $TG_ID ] && echo "api_id = $TG_ID" >> config.ini
-[ $TG_HASH ] && echo "api_hash = $TG_HASH" >> config.ini
-[ $TG_SESSIONFILE ] && echo "sessionfile = $TG_SESSIONFILE" >> config.ini
-[ $CHATROOM ] && echo "chatroom = $CHATROOM" >> config.ini
+# Websocket settings
+echo "[websocket]" >> config.ini
+[ $WEBSOCKET_VERSION ] && echo "api_version = $WEBSOCKET_VERSION" >> config.ini
+[ $WEBSOCKET_KEY ] && echo "api_key = $WEBSOCKET_KEY" >> config.ini
+[ $WEBSOCKET_URL ] && echo "api_url = $WEBSOCKET_URL" >> config.ini
+[ $WEBSOCKET_RECONNECT_TIMEOUT ] && echo "reconnection_delay = $WEBSOCKET_RECONNECT_TIMEOUT" >> config.ini
+[ $WEBSOCKET_RECONNECT_ATTEMPTS ] && echo "reconnection_attempts = $WEBSOCKET_RECONNECT_ATTEMPTS" >> config.ini
 
 # 3Commas settings
 echo "[commas]" >> config.ini
@@ -58,7 +59,7 @@ echo "[trading]" >> config.ini
 
 # Filter settings
 echo "[filter]" >> config.ini
-[ $SYMRANK_SIGNAL ] && echo "symrank_signal = $SYMRANK_SIGNAL" >> config.ini
+[ "${SYMRANK_SIGNAL}" ] && echo "symrank_signal = ${SYMRANK_SIGNAL}" >> config.ini
 [ $SYMRANK_LIMIT_MIN ] && echo "symrank_limit_min = $SYMRANK_LIMIT_MIN" >> config.ini
 [ $SYMRANK_LIMIT_MAX ] && echo "symrank_limit_max = $SYMRANK_LIMIT_MAX" >> config.ini
 [ $VOLATILITY_LIMIT_MIN ] && echo "volatility_limit_min = $VOLATILITY_LIMIT_MIN" >> config.ini
@@ -67,12 +68,17 @@ echo "[filter]" >> config.ini
 [ $PRICE_ACTION_LIMIT_MAX ] && echo "price_action_limit_max =$PRICE_ACTION_LIMIT_MAX" >> config.ini
 [ $TOPCOIN_LIMIT ] && echo "topcoin_limit = $TOPCOIN_LIMIT" >> config.ini
 [ $TOPCOIN_VOLUME ] && echo "topcoin_volume = $TOPCOIN_VOLUME" >> config.ini
-[ $TOPCOIN_EXCHANGE ] && echo "topcoin_exchange = $TOPCOIN_EXCHANGE" >> config.ini
 [ "$DEAL_MODE" ] && echo "deal_mode = ${DEAL_MODE}"  >> config.ini
 [ $LIMIT_INIT_PAIRS ] && echo "limit_init_pairs = $LIMIT_INIT_PAIRS" >> config.ini
 [ $RANDOM_PAIR ] && echo "random_pair = $RANDOM_PAIR" >> config.ini
 [ $BTC_PULSE ] && echo "btc_pulse = $BTC_PULSE" >> config.ini
 [ $EXT_BOTSWITCH ] && echo "ext_botswitch = $EXT_BOTSWITCH" >> config.ini
 [ "$DENYLIST" ] && echo "token_denylist = $DENYLIST" >> config.ini
+
+# Plugins settings
+echo "[plugins]" >> config.ini
+[ "$SIGNAL_PLUGINS" ] && echo "signal_plugins = $SIGNAL_PLUGINS" >> config.ini
+
+
 
 python3 -u 3cqsbot.py

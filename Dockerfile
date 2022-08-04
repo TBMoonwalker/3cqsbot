@@ -1,7 +1,8 @@
-FROM python:3.9.10-slim
+FROM python:3.9.13-slim
 
 COPY . /App/
-RUN pip install -r /App/requirements.txt
+RUN python -m pip install --upgrade pip \
+    && pip install -r /App/requirements.txt
 
 WORKDIR /App
 

@@ -79,7 +79,11 @@ p3cw = Py3CW(
 )
 
 # Initialize socket.io async client
-sio = socketio.AsyncClient(reconnection=True, reconnection_delay=10000)
+sio = socketio.AsyncClient(
+    reconnection=True,
+    reconnection_delay=attributes.get("reconnection_delay", 10000),
+    reconnection_attempts=attributes.get("reconnection_attempts", 5),
+)
 
 
 @sio.event
