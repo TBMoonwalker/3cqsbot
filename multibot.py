@@ -148,7 +148,8 @@ class MultiBot:
                 )
             self.logging.info(
                 "Total bought volume of all deals: "
-                + format_currency(total_bought_volume, "USD", locale="en_US")
+                + format_currency(total_bought_volume, "USD", locale="en_US"),
+                True,
             )
         return
 
