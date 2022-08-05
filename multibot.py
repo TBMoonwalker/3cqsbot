@@ -95,6 +95,7 @@ class MultiBot:
             self.logging.error(error["msg"])
         else:
             i = 1
+            total_bought_volume = 0
             for deals in data:
 
                 if i == 1 and report_latency:
@@ -117,11 +118,12 @@ class MultiBot:
                     bought_volume = format_currency(
                         deals["base_order_volume"], "USD", locale="en_US"
                     )
+                    total_bought_volume += float(deals["base_order_volume"])
                 else:
                     bought_volume = format_currency(
                         deals["bought_volume"], "USD", locale="en_US"
                     )
-
+                    total_bought_volume += float(deals["bought_volume"])
                 self.logging.info(
                     "Deal "
                     + deals["pair"]
@@ -144,7 +146,10 @@ class MultiBot:
                     + str(deals["deal_has_error"]),
                     True,
                 )
-
+            self.logging.info(
+                "Total bought volume of all deals: "
+                + format_currency(total_bought_volume, "USD", locale="en_US")
+            )
         return
 
     def report_funds_needed(self, maxdeals):

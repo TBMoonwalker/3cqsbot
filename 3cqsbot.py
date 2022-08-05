@@ -154,9 +154,9 @@ def tg_data(text_lines):
 
         if signal == "SymRank Top 100 Triple Tracker":
             signal = "triple100"
-        elif signal == "SymRank Top 100 Quadruple Tracker (BETA)":
+        elif signal == "SymRank Top 100 Quadruple Tracker":
             signal = "quadruple100"
-        elif signal == "SymRank Top 250 Quadruple Tracker (BETA)":
+        elif signal == "SymRank Top 250 Quadruple Tracker":
             signal = "quadruple250"
         elif signal == "SymRank Top 30":
             signal = "top30"
