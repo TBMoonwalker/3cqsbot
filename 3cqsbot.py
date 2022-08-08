@@ -139,9 +139,9 @@ def tg_data(text_lines):
             signal = "top30"
         elif signal == "SymRank Top 100 Triple Tracker":
             signal = "triple100"
-        elif signal == "SymRank Top 100 Quadruple Tracker (BETA)":
+        elif signal == "SymRank Top 100 Quadruple Tracker":
             signal = "quad100"
-        elif signal == "SymRank Top 250 Quadruple Tracker (BETA)":
+        elif signal == "SymRank Top 250 Quadruple Tracker":
             signal = "quad250"
         elif signal == "Super Volatility":
             signal = "svol"
