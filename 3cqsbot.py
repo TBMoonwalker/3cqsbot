@@ -1162,9 +1162,9 @@ async def main():
             await symrank()
 
 
+client.start()
 while True:
     try:
-        client.start()
         client.loop.run_until_complete(main())
         client.run_until_disconnected()
     except Exception as err:
