@@ -180,7 +180,7 @@ class SingleBot:
                 payload={"limit": 100, "bot_id": bot["id"], "scope": "active"},
             )
             if error:
-                self.logging.error(error["msg"])
+                self.logging.error("Py3CW: " + error["msg"])
             else:
                 for deals in data:
                     if (
@@ -311,7 +311,7 @@ class SingleBot:
         )
 
         if error:
-            self.logging.error(error["msg"])
+            self.logging.error("Py3CW: " + error["msg"])
 
     def enable(self, bot):
 
@@ -334,7 +334,7 @@ class SingleBot:
         )
 
         if error:
-            self.logging.error(error["msg"])
+            self.logging.error("Py3CW: " + error["msg"])
         else:
             self.asyncState.bot_active = True
             i = 0
@@ -381,7 +381,7 @@ class SingleBot:
                     )
 
                     if error:
-                        self.logging.error(error["msg"])
+                        self.logging.error("Py3CW: " + error["msg"])
         else:
             # Disables an existing bot
             self.logging.info(
@@ -397,7 +397,7 @@ class SingleBot:
             )
 
             if error:
-                self.logging.error(error["msg"])
+                self.logging.error("Py3CW: " + error["msg"])
 
     def create(self):
         # Creates a single bot with start signal
@@ -418,7 +418,7 @@ class SingleBot:
         )
 
         if error:
-            self.logging.error(error["msg"])
+            self.logging.error("Py3CW: " + error["msg"])
         else:
             # Insert new bot at the begin of all bot data
             self.bot_data.insert(0, data)
@@ -440,7 +440,7 @@ class SingleBot:
             )
 
             if error:
-                self.logging.error(error["msg"])
+                self.logging.error("Py3CW: " + error["msg"])
         # Only perform the disable request if necessary
         elif bot["is_enabled"]:
             self.logging.info(

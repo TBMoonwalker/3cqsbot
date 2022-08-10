@@ -225,7 +225,7 @@ def bot_data():
         )
 
         if error:
-            sys.exit(error["msg"])
+            sys.exit("Py3CW: " + error["msg"])
         else:
             if data:
                 bots += data
@@ -247,7 +247,7 @@ def account_data():
     )
 
     if error:
-        logging.error(error["msg"])
+        logging.error("Py3CW: " + error["msg"])
         sys.tracebacklimit = 0
         sys.exit("Problem fetching account data from 3commas api - stopping!")
     else:
@@ -280,7 +280,7 @@ def pair_data(account, interval_sec):
             )
 
             if error:
-                logging.error(error["msg"])
+                logging.error("Py3CW: " + error["msg"])
                 sys.tracebacklimit = 0
                 sys.exit("Problem fetching pair data from 3commas api - stopping!")
 
@@ -289,7 +289,7 @@ def pair_data(account, interval_sec):
             )
 
             if error:
-                logging.error(error["msg"])
+                logging.error("Py3CW: " + error["msg"])
                 sys.tracebacklimit = 0
                 sys.exit(
                     "Problem fetching pairs blacklist data from 3commas api - stopping!"
@@ -319,7 +319,7 @@ def pair_data(account, interval_sec):
             notification.send_notification()
             sleep(interval_sec)
         except Exception as err:
-            logging.error("Exception raised by thread pair_data: {}".format(err))
+            logging.error(f"Exception raised by thread pair_data: {err}")
             sleep(interval_sec)
 
 
@@ -363,7 +363,7 @@ def get_fgi(ema_fast, ema_slow):
                 time_until_update = 10
             elif time_until_update > 10:
                 logging.info(
-                    "Current FGI: {:d}".format(fgi_values[-1])
+                    f"Current FGI: {fgi_values[-1]}"
                     + " - time till next update: "
                     + format_timedelta(time_until_update, locale="en_US"),
                     True,
@@ -425,16 +425,25 @@ def get_fgi(ema_fast, ema_slow):
                     (fgi_values[-3] - fgi_values[-1]) >= 15
                 ):
                     asyncState.fgi_downtrend = True
+                    asyncState.fgi_drop = True
                     logging.info(
-                        "FGI actual/yesterday/before yesterday: {:d}/{:d}/{:d}".format(
-                            fgi_values[-1], fgi_values[-2], fgi_values[-3]
-                        ),
+                        f"FGI actual/yesterday/before yesterday: {fgi_values[-1]}/{fgi_values[-2]}/{fgi_values[-3]}",
                         True,
                     )
                     logging.info(
-                        "Drop > 10 between actual vs. yesterday or drop > 15 between actual vs. before yesterday",
+                        "Drop > 10 between actual vs. yesterday or drop > 15 between actual vs. before yesterday. Drop to large, disabling trading for today!",
                         True,
                     )
+                else:
+                    asyncState.fgi_drop = False
+
+                logging.debug(
+                    "FGI downtrending: '" + str(asyncState.fgi_downtrend) + "'"
+                )
+                logging.debug("FGI drop: '" + str(asyncState.fgi_drop) + "'")
+                logging.debug(
+                    "FGI allows trading: '" + str(asyncState.fgi_allows_trading) + "'"
+                )
 
                 asyncState.fgi_time_until_update = time_until_update
 
@@ -442,7 +451,7 @@ def get_fgi(ema_fast, ema_slow):
             # request FGI once per day, because is is calculated only once per day
             sleep(time_until_update)
         except Exception as err:
-            logging.error("Exception raised by thread get_fgi: {}".format(err))
+            logging.error(f"Exception raised by thread get_fgi: {err}")
             sleep(3600)
 
 
@@ -589,7 +598,7 @@ def get_btcpulse(interval_sec):
             sleep(interval_sec)
             i += 1
         except Exception as err:
-            logging.error("Exception raised by thread get_btcpulse: {}".format(err))
+            logging.error(f"Exception raised by thread get_btcpulse: {err}")
             sleep(interval_sec)
             i += 1
 
@@ -627,9 +636,7 @@ def fgi_dca_conf_change(interval_sec):
             notification.send_notification()
             sleep(interval_sec)
         except Exception as err:
-            logging.error(
-                "Exception raised by thread fgi_dca_conf_change: {}".format(err)
-            )
+            logging.error(f"Exception raised by thread fgi_dca_conf_change: {err}")
             sleep(interval_sec)
 
 
@@ -767,7 +774,9 @@ def bot_switch(interval_sec):
                         asyncState.symrank_success = False
 
             elif asyncState.bot_active and (
-                asyncState.btc_downtrend or asyncState.fgi_downtrend
+                asyncState.btc_downtrend
+                or asyncState.fgi_downtrend
+                or asyncState.fgi_drop
             ):
 
                 if asyncState.fgi_downtrend and attributes.get("fearandgreed", False):
@@ -783,6 +792,8 @@ def bot_switch(interval_sec):
                             True,
                         )
                         asyncState.fgi_allows_trading = False
+                elif asyncState.fgi_drop and attributes.get("fearandgreed", False):
+                    asyncState.fgi_allows_trading = False
 
                 if asyncState.btc_downtrend or not asyncState.fgi_allows_trading:
                     if attributes.get("single"):
@@ -825,8 +836,8 @@ def bot_switch(interval_sec):
             notification.send_notification()
             sleep(interval_sec)
         except Exception as err:
-            logging.error("Exception raised by thread bot_switch: {}".format(err))
-            logging.error("bot_switch: Sleeping for " + str(interval_sec))
+            logging.error(f"Exception raised by thread bot_switch: {err}")
+            logging.error(f"bot_switch: Sleeping for {interval_sec}sec")
             sleep(interval_sec)
 
 
@@ -1163,9 +1174,16 @@ async def main():
 
 
 client.start()
+client.loop.run_until_complete(main())
 while True:
     try:
-        client.loop.run_until_complete(main())
         client.run_until_disconnected()
     except Exception as err:
-        logging.error("Exception raised by main programm: {}".format(err))
+        logging.error(f"Exception raised by Telegram client: {err}")
+        client.stop()
+        client = TelegramClient(
+            attributes.get("sessionfile", "tgsesssion"),
+            attributes.get("api_id"),
+            attributes.get("api_hash"),
+        )
+        client.start()

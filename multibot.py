@@ -92,7 +92,7 @@ class MultiBot:
             },
         )
         if error:
-            self.logging.error(error["msg"])
+            self.logging.error("Py3CW: " + error["msg"])
         else:
             i = 1
             total_bought_volume = 0
@@ -371,7 +371,7 @@ class MultiBot:
                     )
 
                     if error:
-                        self.logging.error(error["msg"])
+                        self.logging.error("Py3CW: " + error["msg"])
                     else:
                         self.asyncState.multibot = data
 
@@ -424,7 +424,7 @@ class MultiBot:
                 )
 
                 if error:
-                    self.logging.error(error["msg"])
+                    self.logging.error("Py3CW: " + error["msg"])
                 else:
                     self.asyncState.multibot = data
 
@@ -455,7 +455,7 @@ class MultiBot:
 
     def enable(self):
         # search for 3cqsbot by id or by name if bot not given
-        if not isinstance(self.bot_data, dict):
+        if not isinstance(self.bot_data, dict) and self.asyncState.multibot == {}:
             self.search_rename_3cqsbot()
 
         if not self.asyncState.multibot["is_enabled"]:
@@ -476,7 +476,7 @@ class MultiBot:
             )
 
             if error:
-                self.logging.error(error["msg"])
+                self.logging.error("Py3CW: " + error["msg"])
             else:
                 self.asyncState.multibot = data
                 self.logging.info("Enabling successful", True)
@@ -504,7 +504,7 @@ class MultiBot:
 
     def disable(self):
         # search for 3cqsbot by id or by name if bot not given
-        if not isinstance(self.bot_data, dict):
+        if not isinstance(self.bot_data, dict) and self.asyncState.multibot == {}:
             self.search_rename_3cqsbot()
 
         if self.asyncState.multibot["is_enabled"]:
@@ -525,7 +525,7 @@ class MultiBot:
             )
 
             if error:
-                self.logging.error(error["msg"])
+                self.logging.error("Py3CW: " + error["msg"])
             else:
                 self.asyncState.multibot = data
                 self.logging.info("Disabling successful", True)
@@ -588,7 +588,9 @@ class MultiBot:
                 else:
                     # modified output because this will be the most common error
                     self.logging.error(
-                        "No deal triggered: " + error["msg"].split(":")[1].split(" ")[1]
+                        "No deal triggered: "
+                        + "Py3CW: "
+                        + error["msg"].split(":")[1].split(" ")[1]
                     )
                 return False
             else:
@@ -600,7 +602,7 @@ class MultiBot:
 
     def create(self):
         # Check if data of 3cqsbot is given (dict format), else search for existing one in the list before creating a new one
-        if not isinstance(self.bot_data, dict):
+        if not isinstance(self.bot_data, dict) and self.asyncState.multibot == {}:
             self.search_rename_3cqsbot()
         # if 3cqsbot was found use bot's pair list
         if self.asyncState.multibot:
@@ -728,8 +730,8 @@ class MultiBot:
             )
 
             if error:
-                self.logging.error(error["msg"])
-                if error["msg"].find("Read timed out") > -1:
+                self.logging.error("Py3CW: " + error["msg"])
+                if "Py3CW: " + error["msg"].find("Read timed out") > -1:
                     self.logging.error(
                         "HTTPS connection problems to 3commas - exiting program - retry later",
                         True,
@@ -776,7 +778,7 @@ class MultiBot:
             )
 
             if error:
-                self.logging.error(error["msg"])
+                self.logging.error("Py3CW: " + error["msg"])
             else:
                 self.asyncState.multibot = data
                 self.logging.debug("Pairs: " + str(pairs))
@@ -807,7 +809,7 @@ class MultiBot:
         )
 
         # Check if data of 3cqsbot is given (dict format), else search for existing one in the list before creating a new one
-        if not isinstance(self.bot_data, dict):
+        if not isinstance(self.bot_data, dict) and self.asyncState.multibot == {}:
             self.search_rename_3cqsbot()
 
         if not random_only and (
@@ -881,7 +883,7 @@ class MultiBot:
             )
 
             if error:
-                self.logging.error(error["msg"])
+                self.logging.error("Py3CW: " + error["msg"])
             else:
                 self.asyncState.multibot = data
 
