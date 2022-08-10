@@ -7,8 +7,7 @@ import re
 import sys
 from datetime import datetime
 from pathlib import Path
-from threading import Thread
-from time import sleep, time
+from time import time
 
 import numpy as np
 import portalocker
@@ -99,6 +98,7 @@ asyncState.bot_active = True
 asyncState.first_topcoin_call = True
 asyncState.fgi = -1
 asyncState.fgi_downtrend = False
+asyncState.fgi_drop = False
 asyncState.fgi_allows_trading = True
 asyncState.fgi_time_until_update = 1
 asyncState.dca_conf = "dcabot"
@@ -265,7 +265,7 @@ def account_data():
     return account
 
 
-def pair_data(account, interval_sec):
+async def pair_data(account, interval_sec):
 
     while True:
         try:
@@ -317,10 +317,10 @@ def pair_data(account, interval_sec):
                 True,
             )
             notification.send_notification()
-            sleep(interval_sec)
+            await asyncio.sleep(interval_sec)
         except Exception as err:
-            logging.error(f"Exception raised by thread pair_data: {err}")
-            sleep(interval_sec)
+            logging.error(f"Exception raised by async pair_data: {err}")
+            await asyncio.sleep(interval_sec)
 
 
 # Credits go to @M1ch43l
@@ -337,7 +337,7 @@ def requests_call(method, url, timeout):
     return response
 
 
-def get_fgi(ema_fast, ema_slow):
+async def get_fgi(ema_fast, ema_slow):
 
     logging.info(
         "Using crypto fear and greed index (FGI) from alternative.me for changing 3cqsbot DCA settings to defensive, moderate or aggressive",
@@ -424,7 +424,6 @@ def get_fgi(ema_fast, ema_slow):
                 if ((fgi_values[-2] - fgi_values[-1]) >= 10) or (
                     (fgi_values[-3] - fgi_values[-1]) >= 15
                 ):
-                    asyncState.fgi_downtrend = True
                     asyncState.fgi_drop = True
                     logging.info(
                         f"FGI actual/yesterday/before yesterday: {fgi_values[-1]}/{fgi_values[-2]}/{fgi_values[-3]}",
@@ -449,10 +448,10 @@ def get_fgi(ema_fast, ema_slow):
 
             notification.send_notification()
             # request FGI once per day, because is is calculated only once per day
-            sleep(time_until_update)
+            await asyncio.sleep(time_until_update)
         except Exception as err:
-            logging.error(f"Exception raised by thread get_fgi: {err}")
-            sleep(3600)
+            logging.error(f"Exception raised by async get_fgi: {err}")
+            await asyncio.sleep(3600)
 
 
 # Credits goes to @IamtheOnewhoKnocks from
@@ -496,7 +495,7 @@ def btctechnical(symbol):
 
 # Credits goes to @IamtheOnewhoKnocks from
 # https://discord.gg/tradealts
-def get_btcpulse(interval_sec):
+async def get_btcpulse(interval_sec):
 
     logging.info("Starting btc-pulse", True)
     i = round(3600 / interval_sec, 0)
@@ -529,7 +528,7 @@ def get_btcpulse(interval_sec):
                     "BTC drop more than -1% within 15 min  or  5min EMA9  less than  EMA50. Waiting for confirmation in "
                     + format_timedelta(interval_sec, locale="en_US")
                 )
-                sleep(interval_sec)
+                await asyncio.sleep(interval_sec)
                 i += 1
                 btcusdt = btctechnical("BTC-USD")
 
@@ -595,15 +594,15 @@ def get_btcpulse(interval_sec):
                 + format_timedelta(interval_sec, locale="en_US")
             )
             notification.send_notification()
-            sleep(interval_sec)
+            await asyncio.sleep(interval_sec)
             i += 1
         except Exception as err:
-            logging.error(f"Exception raised by thread get_btcpulse: {err}")
-            sleep(interval_sec)
+            logging.error(f"Exception raised by async get_btcpulse: {err}")
+            await asyncio.sleep(interval_sec)
             i += 1
 
 
-def fgi_dca_conf_change(interval_sec):
+async def fgi_dca_conf_change(interval_sec):
 
     while True:
         try:
@@ -634,79 +633,23 @@ def fgi_dca_conf_change(interval_sec):
                 )
                 asyncState.dca_conf = "dcabot"
             notification.send_notification()
-            sleep(interval_sec)
+            await asyncio.sleep(interval_sec)
         except Exception as err:
-            logging.error(f"Exception raised by thread fgi_dca_conf_change: {err}")
-            sleep(interval_sec)
+            logging.error(f"Exception raised by async fgi_dca_conf_change: {err}")
+            await asyncio.sleep(interval_sec)
 
 
-def bot_switch(interval_sec):
-
-    # Enable FGI dependent trading
-    if attributes.get("fearandgreed", False):
-
-        fgi_thread = Thread(
-            target=get_fgi,
-            args=(
-                attributes.get("fgi_ema_fast", 9),
-                attributes.get("fgi_ema_slow", 50),
-            ),
-            daemon=True,
-            name="Background get_fgi",
-        )
-        logging.debug("bot_switch: Creating get_fgi thread")
-        fgi_thread.start()
-        while asyncState.fgi == -1:
-            sleep(1)
-
-        fgi_dca_conf_change_thread = Thread(
-            target=fgi_dca_conf_change,
-            args=(3600,),  # check once per hour
-            daemon=True,
-            name="Background fgi_dca_conf_change",
-        )
-        logging.debug("bot_switch: Creating fgi_dca_conf_change thread")
-        fgi_dca_conf_change_thread.start()
-        while not asyncState.dca_conf in [
-            "fgi_defensive",
-            "fgi_moderate",
-            "fgi_aggressive",
-        ]:
-            sleep(1)
-
-    logging.info("DCA setting: '[" + asyncState.dca_conf + "]'", True)
-    logging.info(
-        "Deal mode of actual DCA setting: '" + attributes.get("deal_mode") + "'", True
-    )
-
-    # Enable btc_pulse dependent trading
-    if attributes.get("btc_pulse", False):
-        btcpulse_thread = Thread(
-            target=get_btcpulse,
-            args=(300,),  # check every 5 min
-            daemon=True,
-            name="Background get_btcpulse",
-        )
-        logging.debug("bot_switch: Creating get_btcpulse thread")
-        btcpulse_thread.start()
+async def bot_switch(interval_sec):
 
     while True:
         try:
             logging.debug("bot_switch: begin of while loop")
-            if attributes.get("fearandgreed", False):
-                logging.debug("Is alive get_fgi thread: " + str(fgi_thread.is_alive()))
-                logging.debug(
-                    "Is alive fgi_dca_conf_change thread: "
-                    + str(fgi_dca_conf_change_thread.is_alive())
-                )
-            if attributes.get("btc_pulse", False):
-                logging.debug(
-                    "Is alive get_btcpulse thread: " + str(btcpulse_thread.is_alive())
-                )
+
             if (
                 not asyncState.bot_active
                 and not asyncState.btc_downtrend
                 and not asyncState.fgi_downtrend
+                and not asyncState.fgi_drop
             ):
 
                 if not asyncState.fgi_downtrend and attributes.get(
@@ -724,6 +667,8 @@ def bot_switch(interval_sec):
                             True,
                         )
                         asyncState.fgi_allows_trading = True
+                elif not asyncState.fgi_drop and attributes.get("fearandgreed", False):
+                    asyncState.fgi_allows_trading = True
 
                 if not asyncState.btc_downtrend or asyncState.fgi_allows_trading:
                     if attributes.get("single"):
@@ -834,11 +779,11 @@ def bot_switch(interval_sec):
                 logging.debug("bot_switch: Nothing do to")
 
             notification.send_notification()
-            sleep(interval_sec)
+            await asyncio.sleep(interval_sec)
         except Exception as err:
-            logging.error(f"Exception raised by thread bot_switch: {err}")
+            logging.error(f"Exception raised by async bot_switch: {err}")
             logging.error(f"bot_switch: Sleeping for {interval_sec}sec")
-            sleep(interval_sec)
+            await asyncio.sleep(interval_sec)
 
 
 def _handle_task_result(task: asyncio.Task) -> None:
@@ -1073,24 +1018,16 @@ async def main():
 
     asyncState.account_data = account_data()
     # Update available pair_data every 360 minutes for e.g. new blacklisted pairs or new tradable pairs
-    pair_data_thread = Thread(
-        target=pair_data,
-        args=(
-            asyncState.account_data,
-            3600 * 6,
-        ),
-        daemon=True,
-        name="Background update pair_data",
+    pair_data_task = client.loop.create_task(
+        pair_data(asyncState.account_data, 3600 * 6)
     )
-    logging.debug("Creating pair_data thread")
-    pair_data_thread.start()
-    while not asyncState.pair_data:
-        sleep(1)
+    pair_data_task.add_done_callback(_handle_task_result)
+    await asyncio.sleep(3)
 
     if attributes.get("single"):
-        logging.info("Bot mode: 'Single Pair'", True)
+        logging.info("Bot mode: 'single pair'", True)
     else:
-        logging.info("Bot Mode: 'Multi Pair'", True)
+        logging.info("Bot mode: 'multi pair'", True)
 
     logging.info(
         "Listening to 3cqs signals: '" + str(attributes.get("symrank_signal")) + "'",
@@ -1099,9 +1036,9 @@ async def main():
     logging.info(
         "Topcoin filter: '" + str(attributes.get("topcoin_filter", False)) + "'", True
     )
-    logging.info("BTC Pulse: '" + str(attributes.get("btc_pulse", False)) + "'", True)
+    logging.info("BTC pulse: '" + str(attributes.get("btc_pulse", False)) + "'", True)
     logging.info(
-        "FGI Trading: '" + str(attributes.get("fearandgreed", False)) + "'", True
+        "FGI trading: '" + str(attributes.get("fearandgreed", False)) + "'", True
     )
     logging.info(
         "Continuous pair update for multibot with other deal_mode than 'signal': '"
@@ -1127,17 +1064,37 @@ async def main():
             "Check config.ini: btc_pulse AND ext_botswitch both set to true - not allowed"
         )
 
+    # Enable FGI dependent trading
+    if attributes.get("fearandgreed", False):
+        get_fgi_task = client.loop.create_task(
+            get_fgi(
+                attributes.get("fgi_ema_fast", 9), attributes.get("fgi_ema_slow", 50)
+            )
+        )
+        get_fgi_task.add_done_callback(_handle_task_result)
+        await asyncio.sleep(3)
+
+        fgi_dca_conf_change_task = client.loop.create_task(
+            fgi_dca_conf_change(3600)
+        )  # check once per hour
+        fgi_dca_conf_change_task.add_done_callback(_handle_task_result)
+        await asyncio.sleep(1)
+
+        logging.info("DCA setting: '[" + asyncState.dca_conf + "]'", True)
+        logging.info(
+            "Deal mode of actual DCA setting: '" + attributes.get("deal_mode") + "'",
+            True,
+        )
+
+    # Enable btc_pulse dependent trading
+    if attributes.get("btc_pulse", False):
+        btcpulse_task = client.loop.create_task(get_btcpulse(300))  # check every 5 min
+        btcpulse_task.add_done_callback(_handle_task_result)
+
     # Central Bot Switching module for btc_pulse and FGI
     if attributes.get("btc_pulse", False) or attributes.get("fearandgreed", False):
-        bot_switch_thread = Thread(
-            target=bot_switch,
-            args=(60,),  # check every 60 secs
-            daemon=True,
-            name="Background bot_switch",
-        )
-        logging.debug("Creating bot_switch thread")
-        bot_switch_thread.start()
-        sleep(3)
+        bot_switch_task = client.loop.create_task(bot_switch(60))
+        bot_switch_task.add_done_callback(_handle_task_result)
 
     # Search and rename 3cqsbot if multipair is configured
     if asyncState.multibot == {} and not attributes.get("single"):
@@ -1159,7 +1116,6 @@ async def main():
             asyncState.bot_active = False
 
     ##### Wait for TG signals of 3C Quick Stats channel #####
-    sleep(3)
     logging.info("** Waiting for action **", True)
     asyncState.receive_signals = True
     notification.send_notification()
@@ -1175,15 +1131,17 @@ async def main():
 
 client.start()
 client.loop.run_until_complete(main())
-while True:
-    try:
-        client.run_until_disconnected()
-    except Exception as err:
-        logging.error(f"Exception raised by Telegram client: {err}")
-        client.stop()
-        client = TelegramClient(
-            attributes.get("sessionfile", "tgsesssion"),
-            attributes.get("api_id"),
-            attributes.get("api_hash"),
-        )
-        client.start()
+client.run_until_disconnected()
+
+# while True:
+#    try:
+#        client.run_until_disconnected()
+#    except Exception as err:
+#        logging.error(f"Exception raised by Telegram client: {err}")
+#        client.stop()
+#        client = TelegramClient(
+#            attributes.get("sessionfile", "tgsesssion"),
+#            attributes.get("api_id"),
+#            attributes.get("api_hash"),
+#        )
+#        client.start()
