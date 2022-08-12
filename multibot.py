@@ -92,7 +92,7 @@ class MultiBot:
             },
         )
         if error:
-            self.logging.error("Py3CW: " + error["msg"])
+            self.logging.error("report_deals: " + error["msg"])
         else:
             i = 1
             total_bought_volume = 0
@@ -371,7 +371,7 @@ class MultiBot:
                     )
 
                     if error:
-                        self.logging.error("Py3CW: " + error["msg"])
+                        self.logging.error("search_rename_3cqsbot: " + error["msg"])
                     else:
                         self.asyncState.multibot = data
 
@@ -424,7 +424,7 @@ class MultiBot:
                 )
 
                 if error:
-                    self.logging.error("Py3CW: " + error["msg"])
+                    self.logging.error("search_rename_3cqsbot: " + error["msg"])
                 else:
                     self.asyncState.multibot = data
 
@@ -476,7 +476,7 @@ class MultiBot:
             )
 
             if error:
-                self.logging.error("Py3CW: " + error["msg"])
+                self.logging.error("enable: " + error["msg"])
             else:
                 self.asyncState.multibot = data
                 self.logging.info("Enabling successful", True)
@@ -525,7 +525,7 @@ class MultiBot:
             )
 
             if error:
-                self.logging.error("Py3CW: " + error["msg"])
+                self.logging.error("disable: " + error["msg"])
             else:
                 self.asyncState.multibot = data
                 self.logging.info("Disabling successful", True)
@@ -573,7 +573,12 @@ class MultiBot:
 
             if error:
                 self.logging.info(
-                    "Triggering new deal for pair " + pair + " - unsuccessful", True
+                    "Triggering new deal for pair "
+                    + pair
+                    + " with strategy: '"
+                    + self.strategy()[0]["strategy"]
+                    + "' - unsuccessful",
+                    True,
                 )
                 if (
                     self.asyncState.multibot["active_deals_count"]
@@ -589,13 +594,18 @@ class MultiBot:
                     # modified output because this will be the most common error
                     self.logging.error(
                         "No deal triggered: "
-                        + "Py3CW: "
+                        + "new_deal: "
                         + error["msg"].split(":")[1].split(" ")[1]
                     )
                 return False
             else:
                 self.logging.info(
-                    "Triggering new deal for pair " + pair + " - successful", True
+                    "Triggering new deal for pair "
+                    + pair
+                    + " with strategy: '"
+                    + self.strategy()[0]["strategy"]
+                    + "' - successful",
+                    True,
                 )
                 self.asyncState.multibot["active_deals_count"] += 1
                 return True
@@ -730,10 +740,10 @@ class MultiBot:
             )
 
             if error:
-                self.logging.error("Py3CW: " + error["msg"])
-                if "Py3CW: " + error["msg"].find("Read timed out") > -1:
+                self.logging.error("create: " + error["msg"])
+                if error["msg"].find("Read timed out") > -1:
                     self.logging.error(
-                        "HTTPS connection problems to 3commas - exiting program - retry later",
+                        "HTTPS connection problems to 3commas - exiting program - please retry later",
                         True,
                     )
                     sys.exit(-1)
@@ -778,7 +788,7 @@ class MultiBot:
             )
 
             if error:
-                self.logging.error("Py3CW: " + error["msg"])
+                self.logging.error("create: " + error["msg"])
             else:
                 self.asyncState.multibot = data
                 self.logging.debug("Pairs: " + str(pairs))
@@ -883,7 +893,7 @@ class MultiBot:
             )
 
             if error:
-                self.logging.error("Py3CW: " + error["msg"])
+                self.logging.error("trigger: " + error["msg"])
             else:
                 self.asyncState.multibot = data
 
@@ -912,7 +922,7 @@ class MultiBot:
                     "mad", "", self.asyncState.dca_conf
                 ):
                     self.logging.info(
-                        "Max active deals of reached, not triggering a new one.",
+                        "Max active deals reached, not triggering a new one.",
                         True,
                     )
                 else:

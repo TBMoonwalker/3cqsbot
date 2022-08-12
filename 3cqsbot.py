@@ -225,7 +225,7 @@ def bot_data():
         )
 
         if error:
-            sys.exit("Py3CW: " + error["msg"])
+            sys.exit("bot_data: " + error["msg"])
         else:
             if data:
                 bots += data
@@ -247,7 +247,7 @@ def account_data():
     )
 
     if error:
-        logging.error("Py3CW: " + error["msg"])
+        logging.error("account_data: " + error["msg"])
         sys.tracebacklimit = 0
         sys.exit("Problem fetching account data from 3commas api - stopping!")
     else:
@@ -289,7 +289,7 @@ async def pair_data(account, interval_sec):
             )
 
             if error:
-                logging.error("Py3CW: " + error["msg"])
+                logging.error("pair_data: " + error["msg"])
                 sys.tracebacklimit = 0
                 sys.exit(
                     "Problem fetching pairs blacklist data from 3commas api - stopping!"
@@ -588,7 +588,10 @@ async def get_btcpulse(interval_sec):
                 )
                 asyncState.btc_downtrend = False
                 TG_inform = False
-
+            logging.info(
+                "3cqsbot enabled: '" + str(asyncState.multibot["is_enabled"]) + "'",
+                True,
+            )
             logging.info(
                 "Next btc-pulse check in "
                 + format_timedelta(interval_sec, locale="en_US")

@@ -36,36 +36,38 @@ class SingleBot:
             + self.suffix
         )
 
-    def strategy(self):
-        if self.attributes.get("deal_mode", "", self.asyncState.dca_conf) == "signal":
-            strategy = [{"strategy": "nonstop"}]
-        else:
-            try:
-                strategy = json.loads(
-                    self.attributes.get("deal_mode", "", self.asyncState.dca_conf)
-                )
-            except ValueError:
-                self.logging.error(
-                    "Either missing ["
-                    + self.asyncState.dca_conf
-                    + "] section with DCA settings or decoding JSON string of deal_mode failed. Please check https://jsonformatter.curiousconcept.com/ for correct format"
-                )
-
-        return strategy
-
-    def count_deals(self):
-        account = self.account_data
+    def count_active_deals(self):
+        #        account = self.account_data
         deals = 0
+        bots = []
 
         for bot in self.bot_data:
             if re.search(self.bot_name, bot["name"]):
                 deals += int(bot["active_deals_count"])
+                if int(bot["active_deals_count"]) > 0:
+                    bots.append(bot)
 
         self.logging.debug(
             "Active deals of single bots (enabled and disabled): " + str(deals)
         )
 
-        return deals
+        return deals, bots
+
+    def count_active_deals_disabled_bots(self):
+
+        bots = []
+
+        for bot in self.bot_data:
+            if (
+                re.search(self.bot_name, bot["name"])
+                and not bot["is_enabled"]
+                and bot["active_deals_count"] > 0
+            ):
+                bots.append(bot)
+
+        self.logging.debug("Disabled single bots with active deals: " + str(len(bots)))
+
+        return len(bots), bots
 
     def count_enabled_bots(self):
 
@@ -79,21 +81,17 @@ class SingleBot:
 
         return len(bots), bots
 
-    def count_active_deals_disabled_bots(self):
+    def count_all_bots(self):
 
         bots = []
 
         for bot in self.bot_data:
-            if (
-                re.search(self.bot_name, bot["name"])
-                and not bot["is_enabled"]
-                and bot["active_deals_count"] > 0
-            ):
-                bots.append(bot["name"])
+            if re.search(self.bot_name, bot["name"]):
+                bots.append(bot)
 
-        self.logging.debug("Disabled single bots with active deals: " + str(len(bots)))
+        self.logging.debug("All single bots: " + str(len(bots)))
 
-        return len(bots)
+        return len(bots), bots
 
     def report_funds_needed(self, maxdeals):
 
@@ -149,38 +147,50 @@ class SingleBot:
 
     def report_deals(self):
 
-        running_bots, bots = self.count_enabled_bots()
+        counted_active_deals, bots_with_active_deals = self.count_active_deals()
+        counted_all_bots, all_bots = self.count_all_bots()
 
         self.logging.info(
-            "Single bots active: "
-            + str(running_bots)
+            "Active deals running: "
+            + str(counted_active_deals)
             + "/"
             + str(self.attributes.get("single_count")),
             True,
         )
 
-        for bot in bots:
-            self.logging.info(
-                "Bot "
-                + bot["pairs"][0]
-                + " with "
-                + str(bot["finished_deals_count"])
-                + " finished deals. Total profit: "
-                + format_currency(
-                    bot["finished_deals_profit_usd"], "USD", locale="en_US"
-                ),
-                True,
-            )
+        total_profit = 0
+        for bot in all_bots:
+            total_profit += float(bot["finished_deals_profit_usd"])
+        self.logging.info(
+            "Total profit of "
+            + str(counted_all_bots)
+            + " single bots with finished deals: "
+            + format_currency(total_profit, "USD", locale="en_US")
+        )
 
+        #        for bot in bots:
+        #            self.logging.info(
+        #                "Bot "
+        #                + bot["pairs"][0]
+        #                + " with "
+        #                + str(bot["finished_deals_count"])
+        #                + " finished deals. Total profit: "
+        #                + format_currency(
+        #                    bot["finished_deals_profit_usd"], "USD", locale="en_US"
+        #                ),
+        #                True,
+        #            )
+
+        for bot in bots_with_active_deals:
             error, data = self.p3cw.request(
                 entity="deals",
                 action="",
                 action_id="",
                 additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-                payload={"limit": 100, "bot_id": bot["id"], "scope": "active"},
+                payload={"limit": 100, "bot_id": bot["id"]},
             )
             if error:
-                self.logging.error("Py3CW: " + error["msg"])
+                self.logging.error("report_deals: " + error["msg"])
             else:
                 for deals in data:
                     if (
@@ -220,6 +230,23 @@ class SingleBot:
                     )
 
         return
+
+    def strategy(self):
+        if self.attributes.get("deal_mode", "", self.asyncState.dca_conf) == "signal":
+            strategy = [{"strategy": "nonstop"}]
+        else:
+            try:
+                strategy = json.loads(
+                    self.attributes.get("deal_mode", "", self.asyncState.dca_conf)
+                )
+            except ValueError:
+                self.logging.error(
+                    "Either missing ["
+                    + self.asyncState.dca_conf
+                    + "] section with DCA settings or decoding JSON string of deal_mode failed. Please check https://jsonformatter.curiousconcept.com/ for correct format"
+                )
+
+        return strategy
 
     def payload(self, pair, new_bot):
         payload = {
@@ -277,7 +304,7 @@ class SingleBot:
         if new_bot:
             if payload["disable_after_deals_count"] == 0:
                 self.logging.debug(
-                    "This is a new bot and count_deals set to 0, removing from payload"
+                    "This is a new bot and count_active_deals set to 0, removing from payload"
                 )
                 payload.pop("disable_after_deals_count")
 
@@ -311,14 +338,16 @@ class SingleBot:
         )
 
         if error:
-            self.logging.error("Py3CW: " + error["msg"])
+            self.logging.error("update: " + error["msg"])
 
     def enable(self, bot):
 
         self.logging.info(
             "Enabling single bot with pair "
             + bot["pairs"][0]
-            + ". Applying following DCA settings:",  # DCA settings are reported through trigger function
+            + " and strategy: '"
+            + str(self.strategy()[0]["strategy"])
+            + "'. Applying following DCA settings:",  # DCA settings are reported through trigger function
             True,
         )
 
@@ -334,7 +363,7 @@ class SingleBot:
         )
 
         if error:
-            self.logging.error("Py3CW: " + error["msg"])
+            self.logging.error("enable: " + error["msg"])
         else:
             self.asyncState.bot_active = True
             i = 0
@@ -381,7 +410,7 @@ class SingleBot:
                     )
 
                     if error:
-                        self.logging.error("Py3CW: " + error["msg"])
+                        self.logging.error("disable: " + error["msg"])
         else:
             # Disables an existing bot
             self.logging.info(
@@ -397,7 +426,7 @@ class SingleBot:
             )
 
             if error:
-                self.logging.error("Py3CW: " + error["msg"])
+                self.logging.error("disable: " + error["msg"])
 
     def create(self):
         # Creates a single bot with start signal
@@ -418,7 +447,7 @@ class SingleBot:
         )
 
         if error:
-            self.logging.error("Py3CW: " + error["msg"])
+            self.logging.error("create: " + error["msg"])
         else:
             # Insert new bot at the begin of all bot data
             self.bot_data.insert(0, data)
@@ -440,7 +469,7 @@ class SingleBot:
             )
 
             if error:
-                self.logging.error("Py3CW: " + error["msg"])
+                self.logging.error("delete: " + error["msg"])
         # Only perform the disable request if necessary
         elif bot["is_enabled"]:
             self.logging.info(
@@ -458,9 +487,12 @@ class SingleBot:
         # Triggers a single bot deal
         new_bot = True
         pair = self.tg_data["pair"]
-        running_bots, bots = self.count_enabled_bots()
-        running_deals = self.count_deals()
-        disabled_bot_deals = self.count_active_deals_disabled_bots()
+        enabled_bots_counted, bots_enabled = self.count_enabled_bots()
+        active_deals_counted, bots_with_active_deals = self.count_active_deals()
+        (
+            disabled_bot_deals_counted,
+            bots_disabled_with_active_deals,
+        ) = self.count_active_deals_disabled_bots()
         maxdeals = self.attributes.get("single_count")
 
         botname = (
@@ -481,7 +513,7 @@ class SingleBot:
 
             if new_bot:
                 if self.tg_data["action"] == "START":
-                    if running_bots < self.attributes.get("single_count"):
+                    if enabled_bots_counted < self.attributes.get("single_count"):
 
                         if self.attributes.get("topcoin_filter", False):
                             pair = self.signal.topcoin(
@@ -500,9 +532,11 @@ class SingleBot:
 
                         if pair:
                             # avoid deals over limit
-                            if running_deals < self.attributes.get("single_count"):
+                            if active_deals_counted < self.attributes.get(
+                                "single_count"
+                            ):
                                 if (
-                                    running_bots + disabled_bot_deals
+                                    enabled_bots_counted + disabled_bot_deals_counted
                                 ) < self.attributes.get(
                                     "single_count"
                                 ) or self.attributes.get(
@@ -545,11 +579,24 @@ class SingleBot:
                 self.logging.debug("Bot-Name: " + bot["name"])
 
                 if self.tg_data["action"] == "START":
-                    if running_bots < self.attributes.get("single_count"):
+                    if enabled_bots_counted < self.attributes.get("single_count"):
+                        # check if bot reached already max active deals
+                        if (bot["active_deals_count"] > 0) and (
+                            bot["active_deals_count"] >= bot["max_active_deals"]
+                        ):
+                            self.logging.info(
+                                bot["name"]
+                                + " already reached maximum active deals "
+                                + str(bot["active_deals_count"])
+                                + "/"
+                                + str(bot["max_active_deals"])
+                                + ". No deal triggered"
+                            )
+                            return
                         # avoid deals over limit
-                        if running_deals < self.attributes.get("single_count"):
+                        if active_deals_counted < self.attributes.get("single_count"):
                             if (
-                                running_bots + disabled_bot_deals
+                                enabled_bots_counted + disabled_bot_deals_counted
                             ) < self.attributes.get(
                                 "single_count"
                             ) or self.attributes.get(
