@@ -556,6 +556,13 @@ async def get_btcpulse(interval_sec):
                         + format_currency(btcusdt.EMA50[-2], "USD", locale="en_US"),
                         TG_inform,
                     )
+                    if not attributes.get("single"):
+                        logging.info(
+                            "3cqsbot enabled: '"
+                            + str(asyncState.multibot["is_enabled"])
+                            + "'",
+                            TG_inform,
+                        )
                     asyncState.btc_downtrend = False
                     TG_inform = False
                 else:
@@ -571,6 +578,13 @@ async def get_btcpulse(interval_sec):
                         + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US"),
                         TG_inform,
                     )
+                    if not attributes.get("single"):
+                        logging.info(
+                            "3cqsbot enabled: '"
+                            + str(asyncState.multibot["is_enabled"])
+                            + "'",
+                            TG_inform,
+                        )
                     asyncState.btc_downtrend = True
                     TG_inform = False
             else:
@@ -586,12 +600,16 @@ async def get_btcpulse(interval_sec):
                     + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US"),
                     TG_inform,
                 )
+                if not attributes.get("single"):
+                    logging.info(
+                        "3cqsbot enabled: '"
+                        + str(asyncState.multibot["is_enabled"])
+                        + "'",
+                        TG_inform,
+                    )
                 asyncState.btc_downtrend = False
                 TG_inform = False
-            logging.info(
-                "3cqsbot enabled: '" + str(asyncState.multibot["is_enabled"]) + "'",
-                True,
-            )
+
             logging.info(
                 "Next btc-pulse check in "
                 + format_timedelta(interval_sec, locale="en_US")
