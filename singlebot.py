@@ -154,7 +154,7 @@ class SingleBot:
             "Active deals running: "
             + str(counted_active_deals)
             + "/"
-            + str(self.attributes.get("single_count")),
+            + str(self.attributes.get("single_count", "", self.asyncState.dca_conf)),
             True,
         )
 
@@ -351,8 +351,7 @@ class SingleBot:
             True,
         )
 
-        if self.attributes.get("singlebot_update", "True"):
-            self.update(bot)
+        self.update(bot)
 
         # Enables an existing bot
         error, data = self.p3cw.request(
@@ -490,10 +489,10 @@ class SingleBot:
         enabled_bots_counted, bots_enabled = self.count_enabled_bots()
         active_deals_counted, bots_with_active_deals = self.count_active_deals()
         (
-            disabled_bot_deals_counted,
+            active_deals_of_disabled_bots_counted,
             bots_disabled_with_active_deals,
         ) = self.count_active_deals_disabled_bots()
-        maxdeals = self.attributes.get("single_count")
+        maxdeals = self.attributes.get("single_count", "", self.asyncState.dca_conf)
 
         botname = (
             self.attributes.get("prefix", "3CQSBOT", "dcabot")
@@ -513,7 +512,9 @@ class SingleBot:
 
             if new_bot:
                 if self.tg_data["action"] == "START":
-                    if enabled_bots_counted < self.attributes.get("single_count"):
+                    if enabled_bots_counted < self.attributes.get(
+                        "single_count", "", self.asyncState.dca_conf
+                    ):
 
                         if self.attributes.get("topcoin_filter", False):
                             pair = self.signal.topcoin(
@@ -533,16 +534,15 @@ class SingleBot:
                         if pair:
                             # avoid deals over limit
                             if active_deals_counted < self.attributes.get(
-                                "single_count"
+                                "single_count", "", self.asyncState.dca_conf
                             ):
                                 if (
-                                    enabled_bots_counted + disabled_bot_deals_counted
+                                    enabled_bots_counted
+                                    + active_deals_of_disabled_bots_counted
                                 ) < self.attributes.get(
-                                    "single_count"
-                                ) or self.attributes.get(
-                                    "deal_mode"
-                                ) == "signal":
-                                    self.create()
+                                    "single_count", "", self.asyncState.dca_conf
+                                ):
+                                    self.create()  # create and enable bot
                                     self.report_funds_needed(maxdeals)
                                     self.report_deals()
                                 else:
@@ -579,7 +579,9 @@ class SingleBot:
                 self.logging.debug("Bot-Name: " + bot["name"])
 
                 if self.tg_data["action"] == "START":
-                    if enabled_bots_counted < self.attributes.get("single_count"):
+                    if enabled_bots_counted < self.attributes.get(
+                        "single_count", "", self.asyncState.dca_conf
+                    ):
                         # check if bot reached already max active deals
                         if (bot["active_deals_count"] > 0) and (
                             bot["active_deals_count"] >= bot["max_active_deals"]
@@ -594,14 +596,15 @@ class SingleBot:
                             )
                             return
                         # avoid deals over limit
-                        if active_deals_counted < self.attributes.get("single_count"):
+                        if active_deals_counted < self.attributes.get(
+                            "single_count", "", self.asyncState.dca_conf
+                        ):
                             if (
-                                enabled_bots_counted + disabled_bot_deals_counted
+                                enabled_bots_counted
+                                + active_deals_of_disabled_bots_counted
                             ) < self.attributes.get(
-                                "single_count"
-                            ) or self.attributes.get(
-                                "deal_mode"
-                            ) == "signal":
+                                "single_count", "", self.asyncState.dca_conf
+                            ):
                                 self.enable(bot)
                                 self.report_funds_needed(maxdeals)
                                 self.report_deals()
