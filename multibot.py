@@ -92,7 +92,7 @@ class MultiBot:
             },
         )
         if error:
-            self.logging.error("report_deals: " + error["msg"])
+            self.logging.error("function report_deals: " + error["msg"])
         else:
             i = 1
             total_bought_volume = 0
@@ -371,7 +371,9 @@ class MultiBot:
                     )
 
                     if error:
-                        self.logging.error("search_rename_3cqsbot: " + error["msg"])
+                        self.logging.error(
+                            "function search_rename_3cqsbot: " + error["msg"]
+                        )
                     else:
                         self.asyncState.multibot = data
 
@@ -424,7 +426,9 @@ class MultiBot:
                 )
 
                 if error:
-                    self.logging.error("search_rename_3cqsbot: " + error["msg"])
+                    self.logging.error(
+                        "function search_rename_3cqsbot: " + error["msg"]
+                    )
                 else:
                     self.asyncState.multibot = data
 
@@ -476,7 +480,7 @@ class MultiBot:
             )
 
             if error:
-                self.logging.error("enable: " + error["msg"])
+                self.logging.error("function enable: " + error["msg"])
             else:
                 self.asyncState.multibot = data
                 self.logging.info("Enabling successful", True)
@@ -525,7 +529,7 @@ class MultiBot:
             )
 
             if error:
-                self.logging.error("disable: " + error["msg"])
+                self.logging.error("function disable: " + error["msg"])
             else:
                 self.asyncState.multibot = data
                 self.logging.info("Disabling successful", True)
@@ -594,7 +598,7 @@ class MultiBot:
                     # modified output because this will be the most common error
                     self.logging.error(
                         "No deal triggered: "
-                        + "new_deal: "
+                        + "function new_deal: "
                         + error["msg"].split(":")[1].split(" ")[1]
                     )
                 return False
@@ -611,28 +615,34 @@ class MultiBot:
                 return True
 
     def create(self):
+        # if dealmode is signal (aka strategy == manual for multibot),
+        # preserve pair list of bot. 3cqs START signal triggers deal
+        dealmode_is_signal = (
+            self.attributes.get("deal_mode", "", self.asyncState.dca_conf) == "signal"
+        )
+
         # Check if data of 3cqsbot is given (dict format), else search for existing one in the list before creating a new one
         if not isinstance(self.bot_data, dict) and self.asyncState.multibot == {}:
             self.search_rename_3cqsbot()
-        # if 3cqsbot was found use bot's pair list
-        if self.asyncState.multibot:
+
+        # if 3cqsbot was found use bot's pair list if dealmode_is_signal
+        if self.asyncState.multibot and dealmode_is_signal:
             pairs = self.asyncState.multibot["pairs"]
         else:
             pairs = []
 
         mad = self.attributes.get("mad")
         maxdeals = mad
-        dealmode_signal = (
-            self.attributes.get("deal_mode", "", self.asyncState.dca_conf) == "signal"
-        )
-        # if dealmode_signal use signal pair to create/update bot, else check the 30 symrank pairs obtained by symrank call
-        if dealmode_signal:
-            pairlist = self.tg_data["pair"]
+        # if dealmode_is_signal use signal pair to create/update bot, else check the 30 symrank pairs obtained by symrank call
+        if dealmode_is_signal:
+            pairlist = self.tg_data[
+                "pair"
+            ]  # pair of START signal passed to pairlist for topcoin filter check
         else:
-            # Initial pair list
+            # initial pair list obtained by symrank call
             pairlist = self.tg_data
 
-        # Filter topcoins (if set)
+        # Filter topcoins if set
         # if first_topcoin_call == true then CG API requests are processed with latency of 2.2sec to avoid API timeout erros
         if self.attributes.get("topcoin_filter", False):
             pairlist = self.signal.topcoin(
@@ -653,7 +663,7 @@ class MultiBot:
             self.logging.info("No pair(s) left after topcoin filter")
             return
 
-        if pairlist and dealmode_signal:
+        if pairlist and dealmode_is_signal:
             pair = pairlist
             if self.asyncState.multibot:
                 if pair in self.asyncState.multibot["pairs"]:
@@ -701,7 +711,7 @@ class MultiBot:
 
         # Adapt mad if pairs are under value
         mad = self.adjust_mad(pairs, mad)
-        if not dealmode_signal:
+        if not dealmode_is_signal:
             self.logging.info(
                 str(len(pairs))
                 + " out of 30 symrank pairs selected "
@@ -740,7 +750,7 @@ class MultiBot:
             )
 
             if error:
-                self.logging.error("create: " + error["msg"])
+                self.logging.error("function create: " + error["msg"])
                 if error["msg"].find("Read timed out") > -1:
                     self.logging.error(
                         "HTTPS connection problems to 3commas - exiting program - please retry later",
@@ -762,7 +772,7 @@ class MultiBot:
                         True,
                     )
 
-                if dealmode_signal:
+                if dealmode_is_signal:
                     successful_deal = self.new_deal(pair)
                 elif self.attributes.get("random_pair", "False"):
                     successful_deal = self.new_deal(triggerpair="")
@@ -788,7 +798,7 @@ class MultiBot:
             )
 
             if error:
-                self.logging.error("create: " + error["msg"])
+                self.logging.error("function create: " + error["msg"])
             else:
                 self.asyncState.multibot = data
                 self.logging.debug("Pairs: " + str(pairs))
@@ -814,7 +824,7 @@ class MultiBot:
         # Updates multi bot with new pairs
         pair = ""
         mad = self.attributes.get("mad")
-        dealmode_signal = (
+        dealmode_is_signal = (
             self.attributes.get("deal_mode", "", self.asyncState.dca_conf) == "signal"
         )
 
@@ -865,7 +875,7 @@ class MultiBot:
             # do not remove pairs when deal_mode == "signal" to trigger deals faster when next START signal is received
             elif self.tg_data["action"] == "STOP":
 
-                if not dealmode_signal:
+                if not dealmode_is_signal:
                     if pair in self.asyncState.multibot["pairs"]:
                         self.logging.info("Removing " + pair, True)
                         self.asyncState.multibot["pairs"].remove(pair)
@@ -893,7 +903,7 @@ class MultiBot:
             )
 
             if error:
-                self.logging.error("trigger: " + error["msg"])
+                self.logging.error("function trigger: " + error["msg"])
             else:
                 self.asyncState.multibot = data
 
@@ -907,7 +917,7 @@ class MultiBot:
         # btc_downtrend always set to false if btc_pulse not used
         if (
             (random_only or pair)
-            and dealmode_signal
+            and dealmode_is_signal
             and self.asyncState.multibot
             and self.asyncState.bot_active
         ):

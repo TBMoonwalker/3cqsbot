@@ -93,7 +93,7 @@ client = TelegramClient(
 
 # Initialize global variables
 asyncState = type("", (), {})()
-asyncState.btc_downtrend = False
+asyncState.btc_downtrend = True  # should be True, disables 3cqsbot(s) initially until btc-pulse is aquired 5 min after start
 asyncState.bot_active = True
 asyncState.first_topcoin_call = True
 asyncState.fgi = -1
@@ -225,7 +225,7 @@ def bot_data():
         )
 
         if error:
-            sys.exit("bot_data: " + error["msg"])
+            sys.exit("function bot_data: " + error["msg"])
         else:
             if data:
                 bots += data
@@ -247,7 +247,7 @@ def account_data():
     )
 
     if error:
-        logging.error("account_data: " + error["msg"])
+        logging.error("function account_data: " + error["msg"])
         sys.tracebacklimit = 0
         sys.exit("Problem fetching account data from 3commas api - stopping!")
     else:
@@ -280,7 +280,7 @@ async def pair_data(account, interval_sec):
             )
 
             if error:
-                logging.error("Py3CW: " + error["msg"])
+                logging.error("function pair_data: " + error["msg"])
                 sys.tracebacklimit = 0
                 sys.exit("Problem fetching pair data from 3commas api - stopping!")
 
@@ -289,7 +289,7 @@ async def pair_data(account, interval_sec):
             )
 
             if error:
-                logging.error("pair_data: " + error["msg"])
+                logging.error("function pair_data: " + error["msg"])
                 sys.tracebacklimit = 0
                 sys.exit(
                     "Problem fetching pairs blacklist data from 3commas api - stopping!"
@@ -1152,17 +1152,18 @@ async def main():
 
 client.start()
 client.loop.run_until_complete(main())
-client.run_until_disconnected()
+# client.run_until_disconnected()
 
-# while True:
-#    try:
-#        client.run_until_disconnected()
-#    except Exception as err:
-#        logging.error(f"Exception raised by Telegram client: {err}")
-#        client.stop()
-#        client = TelegramClient(
-#            attributes.get("sessionfile", "tgsesssion"),
-#            attributes.get("api_id"),
-#            attributes.get("api_hash"),
-#        )
-#        client.start()
+while True:
+    try:
+        client.run_until_disconnected()
+    except Exception as err:
+        logging.error(f"Exception raised by Telegram client: {err}")
+        client.disconnect()
+
+        client = TelegramClient(
+            attributes.get("sessionfile", "tgsesssion"),
+            attributes.get("api_id"),
+            attributes.get("api_hash"),
+        )
+        client.start()

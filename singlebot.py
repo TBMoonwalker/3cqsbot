@@ -190,7 +190,7 @@ class SingleBot:
                 payload={"limit": 100, "bot_id": bot["id"]},
             )
             if error:
-                self.logging.error("report_deals: " + error["msg"])
+                self.logging.error("function report_deals: " + error["msg"])
             else:
                 for deals in data:
                     if (
@@ -338,7 +338,7 @@ class SingleBot:
         )
 
         if error:
-            self.logging.error("update: " + error["msg"])
+            self.logging.error("function update: " + error["msg"])
 
     def enable(self, bot):
 
@@ -362,7 +362,7 @@ class SingleBot:
         )
 
         if error:
-            self.logging.error("enable: " + error["msg"])
+            self.logging.error("function enable: " + error["msg"])
         else:
             self.asyncState.bot_active = True
             i = 0
@@ -409,7 +409,7 @@ class SingleBot:
                     )
 
                     if error:
-                        self.logging.error("disable: " + error["msg"])
+                        self.logging.error("function disable: " + error["msg"])
         else:
             # Disables an existing bot
             self.logging.info(
@@ -425,7 +425,7 @@ class SingleBot:
             )
 
             if error:
-                self.logging.error("disable: " + error["msg"])
+                self.logging.error("function disable: " + error["msg"])
 
     def create(self):
         # Creates a single bot with start signal
@@ -446,7 +446,7 @@ class SingleBot:
         )
 
         if error:
-            self.logging.error("create: " + error["msg"])
+            self.logging.error("function create: " + error["msg"])
         else:
             # Insert new bot at the begin of all bot data
             self.bot_data.insert(0, data)
@@ -468,7 +468,7 @@ class SingleBot:
             )
 
             if error:
-                self.logging.error("delete: " + error["msg"])
+                self.logging.error("function delete: " + error["msg"])
         # Only perform the disable request if necessary
         elif bot["is_enabled"]:
             self.logging.info(
