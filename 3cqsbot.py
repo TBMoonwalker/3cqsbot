@@ -1150,20 +1150,9 @@ async def main():
             await symrank()
 
 
-client.start()
-client.loop.run_until_complete(main())
-# client.run_until_disconnected()
-
-while True:
-    try:
-        client.run_until_disconnected()
-    except Exception as err:
-        logging.error(f"Exception raised by Telegram client: {err}")
-        client.disconnect()
-
-        client = TelegramClient(
-            attributes.get("sessionfile", "tgsesssion"),
-            attributes.get("api_id"),
-            attributes.get("api_hash"),
-        )
-        client.start()
+try:
+    client.start()
+    client.loop.run_until_complete(main())
+    client.run_until_disconnected()
+except Exception as err:
+    logging.error(f"Exception raised by Telegram client: {err}")
