@@ -93,7 +93,6 @@ client = TelegramClient(
 
 # Initialize global variables
 asyncState = type("", (), {})()
-asyncState.btc_downtrend = True  # should be True, disables 3cqsbot(s) initially until btc-pulse is aquired 5 min after start
 asyncState.bot_active = True
 asyncState.first_topcoin_call = True
 asyncState.fgi = -1
@@ -1057,6 +1056,13 @@ async def main():
     logging.info(
         "Topcoin filter: '" + str(attributes.get("topcoin_filter", False)) + "'", True
     )
+    if attributes.get("topcoin_filter", False):
+        logging.info(
+            "Marketcap Top "
+            + str(attributes.get("topcoin_limit", 3500))
+            + " - Min. daily BTC trading volume: "
+            + str(attributes.get("topcoin_volume", 0))
+        )
     logging.info("BTC pulse: '" + str(attributes.get("btc_pulse", False)) + "'", True)
     logging.info(
         "FGI trading: '" + str(attributes.get("fearandgreed", False)) + "'", True
@@ -1103,14 +1109,19 @@ async def main():
 
         logging.info("DCA setting: '[" + asyncState.dca_conf + "]'", True)
         logging.info(
-            "Deal mode of actual DCA setting: '" + attributes.get("deal_mode") + "'",
+            "Deal mode of actual DCA setting: '"
+            + attributes.get("deal_mode", "", asyncState.dca_conf)
+            + "'",
             True,
         )
 
     # Enable btc_pulse dependent trading
     if attributes.get("btc_pulse", False):
+        asyncState.btc_downtrend = True
         btcpulse_task = client.loop.create_task(get_btcpulse(300))  # check every 5 min
         btcpulse_task.add_done_callback(_handle_task_result)
+    else:
+        asyncState.btc_downtrend = False
 
     # Central Bot Switching module for btc_pulse and FGI
     if attributes.get("btc_pulse", False) or attributes.get("fearandgreed", False):
@@ -1141,7 +1152,7 @@ async def main():
     asyncState.receive_signals = True
     notification.send_notification()
 
-    while attributes.get("deal_mode", "", asyncState.dca_conf) != "signal":
+    if attributes.get("deal_mode", "", asyncState.dca_conf) != "signal":
         while (
             asyncState.fgi_allows_trading
             and not asyncState.symrank_success
