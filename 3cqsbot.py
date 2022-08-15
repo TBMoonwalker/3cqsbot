@@ -1067,6 +1067,13 @@ async def main():
     logging.info(
         "FGI trading: '" + str(attributes.get("fearandgreed", False)) + "'", True
     )
+    if attributes.get("fearandgreed", False):
+        logging.info(
+            "FGI trading range: "
+            + str(attributes.get("fgi_trade_min"))
+            + "-"
+            + str(attributes.get("fgi_trade_max"))
+        )
     logging.info(
         "Continuous pair update for multibot with other deal_mode than 'signal': '"
         + str(attributes.get("continuous_update", False))
