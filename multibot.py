@@ -615,6 +615,7 @@ class MultiBot:
                 return True
 
     def create(self):
+        tg_inform = True
         # if dealmode is signal (aka strategy == manual for multibot),
         # preserve pair list of bot. 3cqs START signal triggers deal
         dealmode_is_signal = (
@@ -656,18 +657,22 @@ class MultiBot:
             if isinstance(pairlist, list):
                 self.asyncState.first_topcoin_call = False
         else:
-            self.logging.info("Topcoin filter disabled, not filtering pairs!")
+            self.logging.info(
+                "Topcoin filter disabled, not filtering pairs!", tg_inform
+            )
 
         # if no filtered coins left exit
         if not pairlist:
-            self.logging.info("No pair(s) left after topcoin filter")
+            self.logging.info("No pair(s) left after topcoin filter", True)
             return
 
         if pairlist and dealmode_is_signal:
             pair = pairlist
             if self.asyncState.multibot:
                 if pair in self.asyncState.multibot["pairs"]:
-                    self.logging.info(pair + " is already included in the pair list")
+                    self.logging.info(
+                        pair + " is already included in the pair list", tg_inform
+                    )
             elif pair in self.pair_data:
                 self.logging.debug(pair + " added to the pair list")
                 pairs.append(pair)
@@ -677,7 +682,8 @@ class MultiBot:
                     + " not included because pair is blacklisted on 3commas or in token_denylist "
                     + "or not tradable on '"
                     + self.attributes.get("account_name")
-                    + "'"
+                    + "'",
+                    tg_inform,
                 )
         elif pairlist:
             for pair in pairlist:
@@ -692,13 +698,14 @@ class MultiBot:
                         + " not included because pair is blacklisted on 3commas or in token_denylist "
                         + "or not tradable on '"
                         + self.attributes.get("account_name")
-                        + "'"
+                        + "'",
+                        tg_inform,
                     )
 
         self.logging.debug("Pairs after topcoin filter " + str(pairs))
 
         # Run filters to adapt mad according to pair list - multibot creation with mad=1 possible
-        if self.attributes.get("limit_initial_pairs", False):
+        if self.attributes.get("limit_initial_pairs_to_mad", False):
             # Limit pairs to the maximal deals (mad)
             if self.attributes.get("mad") == 1:
                 maxpairs = 1
@@ -707,7 +714,9 @@ class MultiBot:
             else:
                 maxpairs = len(pairs)
             pairs = pairs[0:maxpairs]
-            self.logging.debug("Pairs after limit initial pairs filter " + str(pairs))
+            self.logging.debug(
+                "Pair list after limiting initial pairs " + str(pairs), tg_inform
+            )
 
         # Adapt mad if pairs are under value
         mad = self.adjust_mad(pairs, mad)
@@ -871,7 +880,10 @@ class MultiBot:
                     else:
                         if self.attributes.get("topcoin_filter", False):
                             self.logging.info(
-                                "Adding " + pair + " after passing topcoin filter", True
+                                "Adding "
+                                + pair
+                                + " to pair list - topcoin filter criteria passed",
+                                True,
                             )
                         else:
                             self.logging.info("Adding " + pair, True)
