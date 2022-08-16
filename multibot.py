@@ -821,6 +821,7 @@ class MultiBot:
             self.disable()
 
     def trigger(self, random_only=False):
+        tg_inform = True
         # Updates multi bot with new pairs
         pair = ""
         mad = self.attributes.get("mad")
@@ -842,7 +843,9 @@ class MultiBot:
                 self.attributes.get("continuous_update", False)
                 and not self.asyncState.bot_active
             ):
-                self.logging.info("Continuous update active for disabled bot")
+                self.logging.info(
+                    "Continuous update active for disabled bot", tg_inform
+                )
 
             if self.tg_data["action"] == "START":
 
@@ -857,11 +860,13 @@ class MultiBot:
                         self.asyncState.first_topcoin_call,
                     )
                 else:
-                    self.logging.info("Topcoin filter disabled, not filtering pairs!")
+                    self.logging.info(
+                        "Topcoin filter disabled, not filtering pairs!", tg_inform
+                    )
                 if pair:
                     if pair in self.asyncState.multibot["pairs"]:
                         self.logging.info(
-                            pair + " is already included in the pair list"
+                            pair + " is already included in the pair list", tg_inform
                         )
                     else:
                         if self.attributes.get("topcoin_filter", False):
@@ -887,10 +892,13 @@ class MultiBot:
                         self.asyncState.multibot["pairs"].remove(pair)
                     else:
                         self.logging.info(
-                            pair + " not removed because it was not in the pair list"
+                            pair + " not removed because it was not in the pair list",
+                            tg_inform,
                         )
                 else:
-                    self.logging.info(pair + " ignored because deal_mode is 'signal'")
+                    self.logging.info(
+                        pair + " ignored because deal_mode is 'signal'", tg_inform
+                    )
 
             mad_before = mad
             mad = self.adjust_mad(self.asyncState.multibot["pairs"], mad_before)
@@ -938,10 +946,11 @@ class MultiBot:
                 ):
                     self.logging.info(
                         "Max active deals reached, not triggering a new one.",
-                        True,
+                        tg_inform,
                     )
                 else:
                     self.logging.info(
-                        "Deal with this pair already active, not triggering a new one."
+                        "Deal with this pair already active, not triggering a new one.",
+                        tg_inform,
                     )
             self.report_deals(successful_deal)

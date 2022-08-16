@@ -838,7 +838,7 @@ async def symrank():
 
 @client.on(events.NewMessage(chats=attributes.get("chatroom", "3C Quick Stats")))
 async def my_event_handler(event):
-
+    tg_inform = True
     tg_output = tg_data(parse_tg(event.raw_text))
     logging.debug("TG msg: " + str(tg_output))
     dealmode_signal = attributes.get("deal_mode", "", asyncState.dca_conf) == "signal"
@@ -870,11 +870,15 @@ async def my_event_handler(event):
                 token_whitelisted = tg_output["pair"] in attributes.get(
                     "token_whitelist", []
                 )
-                logging.info(tg_output["pair"] + " in whitelist, processing signal")
+                logging.info(
+                    tg_output["pair"] + " in whitelist, processing signal", tg_inform
+                )
             else:
                 token_whitelisted = True
             if not token_whitelisted:
-                logging.info("Signal ignored because pair is not whitelisted")
+                logging.info(
+                    "Signal ignored because pair is not whitelisted", tg_inform
+                )
                 return
 
             # Check if it is the correct symrank_signal
@@ -885,7 +889,8 @@ async def my_event_handler(event):
                 logging.info(
                     "Signal ignored because '"
                     + attributes.get("symrank_signal")
-                    + "' is configured"
+                    + "' is configured",
+                    tg_inform,
                 )
                 return
 
@@ -893,7 +898,9 @@ async def my_event_handler(event):
             if not asyncState.bot_active and not attributes.get(
                 "continuous_update", False
             ):
-                logging.info("Signal not processed because 3cqsbot is disabled")
+                logging.info(
+                    "Signal not processed because 3cqsbot is disabled", tg_inform
+                )
                 return
 
             # Check if pair is tradeable
@@ -902,7 +909,8 @@ async def my_event_handler(event):
                     str(tg_output["pair"])
                     + " is not traded on '"
                     + attributes.get("account_name")
-                    + "'"
+                    + "'",
+                    tg_inform,
                 )
                 return
 
@@ -929,14 +937,16 @@ async def my_event_handler(event):
                         + str(tg_output["volatility"])
                         + " and price action: "
                         + str(tg_output["price_action"])
-                        + " not meeting config filter limits - signal ignored"
+                        + " not meeting config filter limits - signal ignored",
+                        tg_inform,
                     )
                     return
 
             # for single and multibot: if dealmode == signal and STOP signal is sent than ignore
             if tg_output["action"] == "STOP" and dealmode_signal:
                 logging.info(
-                    "STOP signal ignored - not necessary when deal_mode = signal"
+                    "STOP signal ignored - not necessary when deal_mode = signal",
+                    tg_inform,
                 )
                 return
 
