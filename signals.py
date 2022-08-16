@@ -79,8 +79,6 @@ class Signals:
 
     def topvolume(self, id, volume, exchange, market):
         # Check if topcoin has enough volume
-        volume_target = True
-
         if volume > 0:
 
             exchange = self.cgexchanges(exchange, id)
@@ -118,7 +116,10 @@ class Signals:
                         + str(volume)
                         + " BTC ("
                         + configured_usd
-                        + ")"
+                        + ") for "
+                        + str(target["target"])
+                        + " on "
+                        + exchange["name"]
                     )
                     break
                 elif (
@@ -136,11 +137,18 @@ class Signals:
                         + str(volume)
                         + " BTC ("
                         + configured_usd
-                        + ")"
+                        + ") for "
+                        + str(target["target"])
+                        + " on "
+                        + exchange["name"]
                     )
                     break
                 else:
                     volume_target = False
+            if not volume_target:
+                self.logging.info(
+                    market + " quote pair not traded on " + exchange["name"]
+                )
         else:
             volume_target = True
 
