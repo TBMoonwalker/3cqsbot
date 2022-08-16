@@ -110,7 +110,7 @@ class Signals:
                     volume_target = True
                     self.logging.info(
                         str(target["base"])
-                        + " daily volume is "
+                        + " daily trading volume is "
                         + converted_btc
                         + " BTC ("
                         + converted_usd
@@ -128,7 +128,7 @@ class Signals:
                     volume_target = False
                     self.logging.info(
                         str(target["base"])
-                        + " daily volume is "
+                        + " daily trading volume is "
                         + converted_btc
                         + " BTC ("
                         + converted_usd

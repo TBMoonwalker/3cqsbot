@@ -870,6 +870,7 @@ class MultiBot:
                             )
                         else:
                             self.logging.info("Adding " + pair, True)
+
                         self.asyncState.multibot["pairs"].append(pair)
 
             # do not remove pairs when deal_mode == "signal" to trigger deals faster when next START signal is received
@@ -877,7 +878,12 @@ class MultiBot:
 
                 if not dealmode_is_signal:
                     if pair in self.asyncState.multibot["pairs"]:
-                        self.logging.info("Removing " + pair, True)
+                        self.logging.info(
+                            "STOP signal for "
+                            + pair
+                            + " received - removing from pair list",
+                            True,
+                        )
                         self.asyncState.multibot["pairs"].remove(pair)
                     else:
                         self.logging.info(
@@ -914,7 +920,6 @@ class MultiBot:
         # if random_only == true and deal_mode == "signal" then
         # initiate deal with a random coin (random_pair=true) from the filtered symrank pair list
         # if pair not empty and deal_mode == "signal" then initiate new deal
-        # btc_downtrend always set to false if btc_pulse not used
         if (
             (random_only or pair)
             and dealmode_is_signal
