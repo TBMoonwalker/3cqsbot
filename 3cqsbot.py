@@ -1065,7 +1065,8 @@ async def main():
             "Marketcap Top "
             + str(attributes.get("topcoin_limit", 3500))
             + " - Min. daily BTC trading volume: "
-            + str(attributes.get("topcoin_volume", 0))
+            + str(attributes.get("topcoin_volume", 0)),
+            True,
         )
     logging.info("BTC pulse: '" + str(attributes.get("btc_pulse", False)) + "'", True)
     logging.info(
@@ -1076,7 +1077,8 @@ async def main():
             "FGI trading range: "
             + str(attributes.get("fgi_trade_min"))
             + "-"
-            + str(attributes.get("fgi_trade_max"))
+            + str(attributes.get("fgi_trade_max")),
+            True,
         )
     logging.info(
         "Continuous pair update for multibot with other deal_mode than 'signal': '"
