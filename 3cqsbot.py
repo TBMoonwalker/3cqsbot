@@ -672,12 +672,14 @@ async def bot_switch(interval_sec):
                 and not asyncState.fgi_drop
             ):
 
-                if not asyncState.fgi_downtrend and attributes.get(
+                if not asyncState.fgi_allows_trading and attributes.get(
                     "fearandgreed", False
                 ):
-                    if asyncState.fgi >= attributes.get(
-                        "fgi_trade_min", 0
-                    ) and asyncState.fgi <= attributes.get("fgi_trade_max", 100):
+                    if (
+                        not asyncState.fgi_downtrend
+                        and asyncState.fgi >= attributes.get("fgi_trade_min", 0)
+                        and asyncState.fgi <= attributes.get("fgi_trade_max", 100)
+                    ):
                         logging.info(
                             "FGI inside allowed trading range ["
                             + str(attributes.get("fgi_trade_min", 0))
@@ -687,8 +689,8 @@ async def bot_switch(interval_sec):
                             True,
                         )
                         asyncState.fgi_allows_trading = True
-                elif not asyncState.fgi_drop and attributes.get("fearandgreed", False):
-                    asyncState.fgi_allows_trading = True
+                    elif not asyncState.fgi_drop:
+                        asyncState.fgi_allows_trading = True
 
                 if not asyncState.btc_downtrend or asyncState.fgi_allows_trading:
                     if attributes.get("single"):
@@ -730,13 +732,15 @@ async def bot_switch(interval_sec):
                             "Multi bot activated - waiting for pair #start signals",
                             True,
                         )
-                    # enabling bot only after sending symrank call to avoid messing up with old pairs
+                    # enables 3cqsbot only after sending symrank call to avoid messing up with old pairs
                     else:
                         logging.info(
                             "Multi bot activated - using pairs from actual top30 symrank list",
                             True,
                         )
                         asyncState.symrank_success = False
+                        while not asyncState.symrank_success:
+                            await symrank()
 
             elif asyncState.bot_active and (
                 asyncState.btc_downtrend
