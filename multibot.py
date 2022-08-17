@@ -705,7 +705,7 @@ class MultiBot:
         self.logging.debug("Pairs after topcoin filter " + str(pairs))
 
         # Run filters to adapt mad according to pair list - multibot creation with mad=1 possible
-        if self.attributes.get("limit_initial_pairs_to_mad", False):
+        if self.attributes.get("limit_symrank_pairs_to_mad", False):
             # Limit pairs to the maximal deals (mad)
             if self.attributes.get("mad") == 1:
                 maxpairs = 1
