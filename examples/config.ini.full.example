@@ -97,7 +97,7 @@ symrank_signal = triple100
 #topcoin_limit = 3500
 #topcoin_exchange = binance
 #continuous_update = true
-#limit_initial_pairs = false
+#limit_symrank_pairs_to_mad = false
 #random_pair = true
 # Use different DCA settings according to FGI, define DCA settings under [fgi_aggressive], [fgi_moderate] and [fgi_defensive]
 #fearandgreed = false

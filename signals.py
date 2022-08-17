@@ -84,7 +84,7 @@ class Signals:
             exchange = self.cgexchanges(exchange, id)
 
             self.logging.debug(self.cgexchanges.cache_info())
-
+            volume_target = False
             for target in exchange["tickers"]:
                 converted_btc = format_currency(
                     target["converted_volume"]["btc"], "", locale="en_US"

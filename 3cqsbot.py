@@ -735,7 +735,7 @@ async def bot_switch(interval_sec):
                     # enables 3cqsbot only after sending symrank call to avoid messing up with old pairs
                     else:
                         logging.info(
-                            "Multi bot activated - using pairs from actual top30 symrank list",
+                            "Multi bot will be activated after processing top30 symrank list",
                             True,
                         )
                         asyncState.symrank_success = False
