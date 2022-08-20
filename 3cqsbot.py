@@ -378,7 +378,7 @@ async def get_fgi(ema_fast, ema_slow):
                     )
                     if round(fgi_ema_fast[-1], 1) < round(fgi_ema_fast[-2], 1):
                         logging.info(
-                            "FGI in the downtrend zone - "
+                            "FGI in the downtrend zone ↘️ - "
                             + output_str
                             + " - Fast EMA falling compared to yesterday"
                             + " ("
@@ -388,7 +388,7 @@ async def get_fgi(ema_fast, ema_slow):
                         )
                     else:
                         logging.info(
-                            "FGI in the downtrend zone - "
+                            "FGI in the downtrend zone ↘️ - "
                             + output_str
                             + " - Fast EMA equal or rising compared to yesterday"
                             " (" + str(round(fgi_ema_fast[-2], 1)) + ")",
@@ -403,7 +403,7 @@ async def get_fgi(ema_fast, ema_slow):
                     )
                     if round(fgi_ema_fast[-1], 1) < round(fgi_ema_fast[-2], 1):
                         logging.info(
-                            "FGI in the uptrend zone - "
+                            "FGI in the uptrend zone ↗️ - "
                             + output_str
                             + "  - Fast EMA falling compared to yesterday"
                             " (" + str(round(fgi_ema_fast[-2], 1)) + ")",
@@ -541,7 +541,7 @@ async def get_btcpulse(interval_sec):
                     if asyncState.btc_downtrend:
                         TG_inform = True
                     logging.info(
-                        "btc-pulse signaling **UP**trend (golden cross check) - actual BTC price: "
+                        "btc-pulse signaling <b>UPTREND</> ↗️ (golden cross check) - actual BTC price: "
                         + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
                         + "   EMA9-5m: "
                         + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
@@ -569,7 +569,7 @@ async def get_btcpulse(interval_sec):
                     if not asyncState.btc_downtrend:
                         TG_inform = True
                     logging.info(
-                        "btc-pulse signaling **DOWN**trend - actual BTC price: "
+                        "btc-pulse signaling <b>DOWNTREND</b> ↘️ - actual BTC price: "
                         + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
                         + "   EMA9-5m: "
                         + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
@@ -591,7 +591,7 @@ async def get_btcpulse(interval_sec):
                 if asyncState.btc_downtrend:
                     TG_inform = True
                 logging.info(
-                    "btc-pulse signaling **UP**trend - actual BTC price: "
+                    "btc-pulse signaling <b>UPTREND</b> ↗️ - actual BTC price: "
                     + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
                     + "   EMA9-5m: "
                     + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
