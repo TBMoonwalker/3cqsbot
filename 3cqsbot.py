@@ -380,7 +380,7 @@ async def get_fgi(ema_fast, ema_slow):
                         logging.info(
                             "FGI in the downtrend zone ↘️ - "
                             + output_str
-                            + " - Fast EMA falling compared to yesterday"
+                            + " - Fast EMA falling ↘️ compared to yesterday"
                             + " ("
                             + str(round(fgi_ema_fast[-2], 1))
                             + ")",
@@ -390,7 +390,7 @@ async def get_fgi(ema_fast, ema_slow):
                         logging.info(
                             "FGI in the downtrend zone ↘️ - "
                             + output_str
-                            + " - Fast EMA equal or rising compared to yesterday"
+                            + " - Fast EMA equal or rising ↗️ compared to yesterday"
                             " (" + str(round(fgi_ema_fast[-2], 1)) + ")",
                             True,
                         )
@@ -405,15 +405,15 @@ async def get_fgi(ema_fast, ema_slow):
                         logging.info(
                             "FGI in the uptrend zone ↗️ - "
                             + output_str
-                            + "  - Fast EMA falling compared to yesterday"
+                            + "  - Fast EMA falling ↘️ compared to yesterday"
                             " (" + str(round(fgi_ema_fast[-2], 1)) + ")",
                             True,
                         )
                     else:
                         logging.info(
-                            "FGI in the uptrend zone - "
+                            "FGI in the uptrend zone ↗️ - "
                             + output_str
-                            + "  - Fast EMA equal or rising compared to yesterday"
+                            + "  - Fast EMA equal or rising ↗️ compared to yesterday"
                             " (" + str(round(fgi_ema_fast[-2], 1)) + ")",
                             True,
                         )
@@ -429,7 +429,7 @@ async def get_fgi(ema_fast, ema_slow):
                         True,
                     )
                     logging.info(
-                        "Drop > 10 between actual vs. yesterday or drop > 15 between actual vs. before yesterday. Drop to large, disabling trading for today!",
+                        "⬇️ Drop > 10 between actual vs. yesterday or drop > 15 between actual vs. before yesterday. Drop to large, disabling trading for today! ⬇️",
                         True,
                     )
                 else:
