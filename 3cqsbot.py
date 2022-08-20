@@ -866,7 +866,7 @@ async def my_event_handler(event):
                 + " signal for "
                 + tg_output["pair"]
                 + " incoming...",
-                True,
+                more_inform,
             )
 
             # track time from START signal to deal creation
