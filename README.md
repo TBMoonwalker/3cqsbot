@@ -68,7 +68,8 @@ api_id | string | YES |   | Telegram API ID
 api_hash | string | YES |   | Telegram API Hash
 sessionfile | string | NO | (tgsession) | Telegram sessionfile location
 chatroom | string | NO | ("3C Quick Stats") | Telegram channel to receive the 3cqs signals
-notifications | string | NO | (false), true | set to true to enable notifications - code from Cyberjunky
+notifications | boolean | NO | (false), true | set to true to enable notifications - code from Cyberjunky
+extensive_notifications | boolean | NO | (false), true | every START/STOP signal is reported
 notify-urls | string | NO |   | one or a list of apprise notify urls, each in " " seperated with commas. See [Apprise website](https://github.com/caronc/apprise) for more information.
 
 **!!! ATTENTION - Do not share your sessionfile with other 3cqsbot instances - this will lead to problems and misfunctional bots. For each instance you have to create a new sessionfile !!!**
@@ -93,6 +94,7 @@ botid | integer | NO | (1234567) | Applies only to multi bot and in combination 
 prefix | string | YES | (3CQSBOT)  | The name prefix of the created bot
 subprefix | string | YES | (MULTI) | Subprefix of the bot (Best would be SINGLE or MULTI)
 suffix | string | YES | (TA_SAFE) | Suffix in the bot name - could be the used DCA setting of the TA community
+single_count | integer | YES | (3) | Maximum single bots - only have to be configured if single bot mode is used
 mad | integer | YES | (3) | Max active deals for a bot
 deal_mode | string | NO | ([{"options": {"time": "3m", "points": "100", "time_period": "7", "trigger_condition": "less"}, "strategy": "rsi"}]) signal | Method how the script is starting new deals in single / multi pair mode - for more see the "Deal START signal/strategy examples" section
 tp | number | YES | (1.5)  | Take profit in percent
@@ -166,9 +168,11 @@ Everything is the same as with the other multi mode, but the deals are started d
 
 `deal_mode = signal`
 
-- for **single bot**: 3CQS #START signal creates the single bot and deal is started ASAP (deal start condition is set to "open new trade ASAP" by the algo)
+- for **single bot**: 3CQS #START signal creates the single bot and deal is started **ASAP** (deal start condition is set to "open new trade ASAP" by the algo). After finishing the deal, a new one is started as long as the single bot is enabled.
 
-- for **multi bot**: 3CQS #START signal adds the pair    and deal is started ASAP (deal start condition is set to "manual strategy" by the algo because "open new trade ASAP" is generally not implemented for multi bot because of security reasons - imagine you have a list of 100 pairs and all pairs are opened simultanousely with ASAP)
+- for **multi bot**: 3CQS #START signal adds the pair and deal is started **manually** by the program, only once after adding. After the deal is closed, the deal is **not** started again in contrast to ASAP for **single bot**.  
+If you want the same behaviour as for **single bot** you have to use a strategy for deal_mode (see below), which can be configured almost as ASAP.
+Deal start condition is set to "manual strategy" by the algo because "open new trade ASAP" is generally not implemented for multi bots because of security reasons - imagine you have a list of 100 pairs and all are opened simultaneously with ASAP
 
 `deal_mode = [{json coded 3commas strategy}}`
 
@@ -178,11 +182,11 @@ Everything is the same as with the other multi mode, but the deals are started d
 - for **multi bot**: If filtered symrank pairs should be started as soon as possible (ASAP) up to maximum active deals (mad) use the deal start condition such as  
 `[{"options":{"time_period":"7","time":"3m","trigger_condition":"less","points":"100"},"strategy":"rsi"}]`  
 or  
-`[{"options": {"time": "1m", "type": "buy_or_strong_buy"}, "strategy": "trading_view"}]`
+`[{"options": {"time": "1m", "type": "buy_or_strong_buy"}, "strategy": "trading_view"}]`  
   You can also use a combination of different indicators/filters:  
 `[{"options": {"time": "1m", "type": "buy_or_strong_buy"}, "strategy": "trading_view"},{"options": {"time": "5m", "type": "buy_or_strong_buy"}, "strategy": "trading_view"},{"options": {"time": "15m", "type": "buy_or_strong_buy"}, "strategy": "trading_view"},{"options":{"length":14,"time":"15m","points":55},"strategy":"rsi"},{"options":{"length":14,"time":"4h","points":70},"strategy":"rsi"}]`
 
-- **NOTE** Not all exchanges support all deal mode strategies. Example, as of April 2022 Kucoin does NOT support the RSI strategy and will result in no deals starting. Ensure you verify the desired strategy is supported on your exchange before setting it in the config.
+- **NOTE** Not all exchanges support all deal mode strategies. Example, as of April 2022 Kucoin does NOT support the RSI strategy and will result in no deals starting. Ensure that your desired strategy is supported on your exchange before setting it in the config.
 
 A whole list of deal start signals can be found on <https://discord.com/channels/720875074806349874/835100061583015947/965743501570609172> in json coded format, alternatively get deal start with the API call `GET /ver1/bots/strategy_list`. More details can be found under: <https://github.com/3commas-io/3commas-official-api-docs/blob/master/bots_api.md>
 
@@ -194,7 +198,6 @@ market | string | YES | (USDT)  | Trading market (Example: BUSD, USDT, USDC)
 trade_mode | string | YES | (paper), real   | Real or Paper trading mode
 account_name | string | YES | (Paper trading 123456)  | Account name for trading. Can be found unter "My Exchanges".
 single | boolean | YES | (false), true | Type of not creation (False for multi pair DCA Bots / True for single pair DCA Bots)
-single_count | integer | YES | (3) | Maximum single bots - only have to be configured for singlebots
 delete_single_bots | boolean | NO | (false), true | If set to true, bots without an active deal will be deleted in single bot configuration
 singlebot_update | boolean | NO | (true), false | If set to true, singlebots settings will be updated when enabled again (new settings only work after restart of the script)
 trade_future | boolean | NO | (false), true | Enable futures trading

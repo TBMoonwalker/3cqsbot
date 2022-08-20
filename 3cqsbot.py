@@ -846,7 +846,7 @@ async def symrank():
 
 @client.on(events.NewMessage(chats=attributes.get("chatroom", "3C Quick Stats")))
 async def my_event_handler(event):
-    more_inform = attributes.get("extensive_notification", False)
+    more_inform = attributes.get("extensive_notifications", False)
     tg_output = tg_data(parse_tg(event.raw_text))
     logging.debug("TG msg: " + str(tg_output))
     dealmode_signal = attributes.get("deal_mode", "", asyncState.dca_conf) == "signal"

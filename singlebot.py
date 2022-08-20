@@ -485,7 +485,7 @@ class SingleBot:
 
     def trigger(self):
         # Triggers a single bot deal
-        more_inform = self.attributes.get("extensive_notification", False)
+        more_inform = self.attributes.get("extensive_notifications", False)
         new_bot = True
         pair = self.tg_data["pair"]
         enabled_bots_counted, bots_enabled = self.count_enabled_bots()

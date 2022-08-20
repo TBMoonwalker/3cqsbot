@@ -615,7 +615,7 @@ class MultiBot:
                 return True
 
     def create(self):
-        more_inform = self.attributes.get("extensive_notification", False)
+        more_inform = self.attributes.get("extensive_notifications", False)
         # if dealmode is signal (aka strategy == manual for multibot),
         # preserve pair list of bot. 3cqs START signal triggers deal
         dealmode_is_signal = (
@@ -832,7 +832,7 @@ class MultiBot:
             self.disable()
 
     def trigger(self, random_only=False):
-        more_inform = self.attributes.get("extensive_notification", False)
+        more_inform = self.attributes.get("extensive_notifications", False)
         # Updates multi bot with new pairs
         pair = ""
         mad = self.attributes.get("mad")
