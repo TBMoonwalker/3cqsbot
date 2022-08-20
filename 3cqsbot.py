@@ -107,6 +107,7 @@ asyncState.account_data = {}
 asyncState.pair_data = []
 asyncState.symrank_success = False
 asyncState.multibot = {}
+asyncState.pairs_volume = []
 asyncState.receive_signals = False
 
 ######################################################
@@ -524,7 +525,7 @@ async def get_btcpulse(interval_sec):
             ):
                 # after 5mins getting the latest BTC data to see if it has had a sharp rise in previous 5 mins
                 logging.info(
-                    "BTC drop more than -1% within 15 min  or  5min EMA9  less than  EMA50. Waiting for confirmation in "
+                    "BTC drop more than -1% within 15 min  or  5min EMA9 < EMA50. Waiting for confirmation in "
                     + format_timedelta(interval_sec, locale="en_US")
                 )
                 await asyncio.sleep(interval_sec)
@@ -541,17 +542,17 @@ async def get_btcpulse(interval_sec):
                     if asyncState.btc_downtrend:
                         TG_inform = True
                     logging.info(
-                        "btc-pulse signaling <b>UPTREND</> ↗️ (golden cross check) - actual BTC price: "
+                        "btc-pulse signaling UPTREND ↗️ (golden cross check) - actual BTC price: "
                         + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
                         + "   EMA9-5m: "
                         + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
-                        + "  greater than  EMA50-5m: "
+                        + " > EMA50-5m: "
                         + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US")
                         + " and BTC price 5 minutes before: "
                         + format_currency(btcusdt[-2])
                         + "   EMA9-5m: "
                         + format_currency(btcusdt.EMA9[-2], "USD", locale="en_US")
-                        + "  less than  EMA50-5m: "
+                        + " < EMA50-5m: "
                         + format_currency(btcusdt.EMA50[-2], "USD", locale="en_US"),
                         TG_inform,
                     )
@@ -569,11 +570,11 @@ async def get_btcpulse(interval_sec):
                     if not asyncState.btc_downtrend:
                         TG_inform = True
                     logging.info(
-                        "btc-pulse signaling <b>DOWNTREND</b> ↘️ - actual BTC price: "
+                        "btc-pulse signaling DOWNTREND ↘️ - actual BTC price: "
                         + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
                         + "   EMA9-5m: "
                         + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
-                        + "  less than  EMA50-5m: "
+                        + " < EMA50-5m: "
                         + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US"),
                         TG_inform,
                     )
@@ -591,11 +592,11 @@ async def get_btcpulse(interval_sec):
                 if asyncState.btc_downtrend:
                     TG_inform = True
                 logging.info(
-                    "btc-pulse signaling <b>UPTREND</b> ↗️ - actual BTC price: "
+                    "btc-pulse signaling UPTREND ↗️ - actual BTC price: "
                     + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
                     + "   EMA9-5m: "
                     + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
-                    + "  greater than  EMA50-5m: "
+                    + " > EMA50-5m: "
                     + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US"),
                     TG_inform,
                 )

@@ -79,16 +79,16 @@ class Signals:
 
     def topvolume(self, id, volume, exchange, market):
         # Check if topcoin has enough volume
+
+        volume_btc = 0
         if volume > 0:
             volume_target = False
-            volume_btc = 0
 
             exchange = self.cgexchanges(exchange, id)
 
             self.logging.debug(self.cgexchanges.cache_info())
 
             for target in exchange["tickers"]:
-                volume_btc = target["converted_volume"]["btc"]
 
                 converted_btc = format_currency(
                     target["converted_volume"]["btc"], "", locale="en_US"
@@ -111,8 +111,11 @@ class Signals:
                     and target["converted_volume"]["btc"] >= volume
                 ):
                     volume_target = True
+                    volume_btc = target["converted_volume"]["btc"]
                     self.logging.info(
-                        str(target["base"])
+                        market
+                        + "_"
+                        + str(target["base"])
                         + " daily trading volume is "
                         + converted_btc
                         + " BTC ("
@@ -121,9 +124,7 @@ class Signals:
                         + str(volume)
                         + " BTC ("
                         + configured_usd
-                        + ") for "
-                        + str(target["target"])
-                        + " on "
+                        + ") on "
                         + exchange["name"]
                     )
                     break
@@ -132,8 +133,11 @@ class Signals:
                     and target["converted_volume"]["btc"] < volume
                 ):
                     volume_target = False
+                    volume_btc = target["converted_volume"]["btc"]
                     self.logging.info(
-                        str(target["base"])
+                        market
+                        + "_"
+                        + str(target["base"])
                         + " daily trading volume is "
                         + converted_btc
                         + " BTC ("
@@ -142,17 +146,25 @@ class Signals:
                         + str(volume)
                         + " BTC ("
                         + configured_usd
-                        + ") for "
-                        + str(target["target"])
-                        + " on "
+                        + ") on "
                         + exchange["name"]
                     )
                     break
                 else:
                     volume_target = False
+                    volume_btc = 0
+
+            if volume_btc == 0:
+                if exchange["tickers"]:
                     self.logging.info(
-                        market + " quote pair not traded on " + exchange["name"]
+                        market
+                        + "_"
+                        + target["base"]
+                        + " is not traded on "
+                        + exchange["name"]
                     )
+                else:
+                    self.logging.info("Pair is not traded on " + exchange["name"])
         else:
             volume_target = True
 
@@ -224,26 +236,29 @@ class Signals:
                         symbol["id"], volume, exchange, trademarket
                     )
                     if enough_volume:
-                        pairlist = pairs
+                        pairlist = tuple([coin, volume_btc])
                         break
 
+        pairtuple_sorted = []
         if not pairlist:
             self.logging.info(str(pairs) + " not matching the topcoin filter criteria")
         else:
-            if isinstance(pairlist, str):
+            if isinstance(pairlist, tuple):
+                pairtuple_sorted = pairlist
+                pairlist = trademarket + "_" + pairlist[0]
                 self.logging.info(str(pairlist) + " matching top coin filter criteria")
             else:
-                pairlist_sorted = sorted(pairlist, key=lambda x: x[1], reverse=True)
+                pairtuple_sorted = sorted(pairlist, key=lambda x: x[1], reverse=True)
                 self.logging.info(
-                    str(len(pairlist_sorted))
+                    str(len(pairtuple_sorted))
                     + " BTC volume sorted "
                     + trademarket
                     + " symrank pair(s) AFTER top coin filter: "
-                    + str(pairlist_sorted)
+                    + str(pairtuple_sorted)
                 )
 
                 pairlist = []
-                for i in range(len(pairlist_sorted)):
-                    pairlist.append(pairlist_sorted[i][0])
+                for i in range(len(pairtuple_sorted)):
+                    pairlist.append(pairtuple_sorted[i][0])
 
-        return pairlist
+        return pairlist, pairtuple_sorted

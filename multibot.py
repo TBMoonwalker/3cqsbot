@@ -636,17 +636,16 @@ class MultiBot:
         maxdeals = mad
         # if dealmode_is_signal use signal pair to create/update bot, else check the 30 symrank pairs obtained by symrank call
         if dealmode_is_signal:
-            pairlist = self.tg_data[
-                "pair"
-            ]  # pair of START signal passed to pairlist for topcoin filter check
+            # single pair from START signal with quote currency passed to pairlist for topcoin filter check
+            pairlist = self.tg_data["pair"]
         else:
-            # initial pair list obtained by symrank call
+            # initial pair list obtained by symrank call without quote currencies passed
             pairlist = self.tg_data
 
         # Filter topcoins if set
         # if first_topcoin_call == true then CG API requests are processed with latency of 2.2sec to avoid API timeout erros
         if self.attributes.get("topcoin_filter", False):
-            pairlist = self.signal.topcoin(
+            pairlist, pairlist_volume = self.signal.topcoin(
                 pairlist,
                 self.attributes.get("topcoin_limit", 3500),
                 self.attributes.get("topcoin_volume", 0),
@@ -661,7 +660,7 @@ class MultiBot:
                 "Topcoin filter disabled, not filtering pairs!", more_inform
             )
 
-        # if no filtered coins left exit
+        # if no filtered coins left -> exit function
         if not pairlist:
             self.logging.info("No pair(s) left after topcoin filter", True)
             return
@@ -690,7 +689,7 @@ class MultiBot:
                 pair = self.attributes.get("market") + "_" + pair
                 # Traded on our exchange?
                 if pair in self.pair_data:
-                    self.logging.debug(pair + " added to the list")
+                    self.logging.debug(pair + " added to the pair list")
                     pairs.append(pair)
                 else:
                     self.logging.info(
@@ -701,6 +700,10 @@ class MultiBot:
                         + "'",
                         more_inform,
                     )
+            for pair in pairlist_volume:
+                market_pair = self.attributes.get("market") + "_" + pair[0]
+                if market_pair in self.pair_data:
+                    self.asyncState.pairs_volume.append(pair)
 
         self.logging.debug("Pairs after topcoin filter " + str(pairs))
 
@@ -714,6 +717,7 @@ class MultiBot:
             else:
                 maxpairs = len(pairs)
             pairs = pairs[0:maxpairs]
+            self.asyncState.pairs_volume = self.asyncState.pairs_volume[0:maxpairs]
             self.logging.info(
                 "Limiting volume sorted symrank list to max active deals of "
                 + str(maxpairs),
@@ -848,7 +852,7 @@ class MultiBot:
             self.asyncState.bot_active
             or self.attributes.get("continuous_update", False)
         ):
-            pair = self.tg_data["pair"]
+            pair = self.tg_data["pair"]  # signal pair with quote currency returned
 
             if (
                 self.attributes.get("continuous_update", False)
@@ -862,7 +866,7 @@ class MultiBot:
 
                 # Filter pair according to topcoin criteria if set
                 if self.attributes.get("topcoin_filter", False):
-                    pair = self.signal.topcoin(
+                    pair, pair_volume = self.signal.topcoin(
                         pair,
                         self.attributes.get("topcoin_limit", 3500),
                         self.attributes.get("topcoin_volume", 0),
@@ -891,6 +895,25 @@ class MultiBot:
                             self.logging.info("Adding " + pair, True)
 
                         self.asyncState.multibot["pairs"].append(pair)
+
+                        # if limit_symrank_pairs_to_mad == True, add trigger coin to pairs_volume list and sort
+                        if (
+                            self.attributes.get("limit_symrank_pairs_to_mad", False)
+                            and self.asyncState.pairs_volume
+                        ):
+                            self.asyncState.pairs_volume.append(pair_volume)
+                            self.asyncState.pairs_volume = sorted(
+                                self.asyncState.pairs_volume,
+                                key=lambda x: x[1],
+                                reverse=True,
+                            )
+                            self.asyncState.multibot["pairs"] = []
+                            for i in range(len(self.asyncState.pairs_volume)):
+                                self.asyncState.multibot["pairs"].append(
+                                    self.attributes.get("market")
+                                    + "_"
+                                    + self.asyncState.pairs_volume[i][0]
+                                )
 
             # do not remove pairs when deal_mode == "signal" to trigger deals faster when next START signal is received
             elif self.tg_data["action"] == "STOP":
