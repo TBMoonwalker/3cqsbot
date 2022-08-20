@@ -80,12 +80,16 @@ class Signals:
     def topvolume(self, id, volume, exchange, market):
         # Check if topcoin has enough volume
         if volume > 0:
+            volume_target = False
+            volume_btc = 0
 
             exchange = self.cgexchanges(exchange, id)
 
             self.logging.debug(self.cgexchanges.cache_info())
-            volume_target = False
+
             for target in exchange["tickers"]:
+                volume_btc = target["converted_volume"]["btc"]
+
                 converted_btc = format_currency(
                     target["converted_volume"]["btc"], "", locale="en_US"
                 )
@@ -101,6 +105,7 @@ class Signals:
                     "USD",
                     locale="en_US",
                 )
+
                 if (
                     target["target"] == market
                     and target["converted_volume"]["btc"] >= volume
@@ -145,14 +150,13 @@ class Signals:
                     break
                 else:
                     volume_target = False
-            if not volume_target:
-                self.logging.info(
-                    market + " quote pair not traded on " + exchange["name"]
-                )
+                    self.logging.info(
+                        market + " quote pair not traded on " + exchange["name"]
+                    )
         else:
             volume_target = True
 
-        return volume_target
+        return volume_target, volume_btc
 
     def topcoin(self, pairs, rank, volume, exchange, trademarket, first_time):
 
@@ -193,8 +197,11 @@ class Signals:
                         if first_time:
                             sleep(2.2)
                         # Check if topcoin has enough volume
-                        if self.topvolume(symbol["id"], volume, exchange, trademarket):
-                            pairlist.append(pair)
+                        enough_volume, volume_btc = self.topvolume(
+                            symbol["id"], volume, exchange, trademarket
+                        )
+                        if enough_volume:
+                            pairlist.append((pair, volume_btc))
                             break
         else:
             pairlist = ""
@@ -213,7 +220,10 @@ class Signals:
                         + str(rank)
                     )
                     # Check if topcoin has enough volume
-                    if self.topvolume(symbol["id"], volume, exchange, trademarket):
+                    enough_volume, volume_btc = self.topvolume(
+                        symbol["id"], volume, exchange, trademarket
+                    )
+                    if enough_volume:
                         pairlist = pairs
                         break
 
@@ -223,10 +233,17 @@ class Signals:
             if isinstance(pairlist, str):
                 self.logging.info(str(pairlist) + " matching top coin filter criteria")
             else:
+                pairlist_sorted = sorted(pairlist, key=lambda x: x[1], reverse=True)
                 self.logging.info(
-                    str(len(pairlist))
+                    str(len(pairlist_sorted))
+                    + " BTC volume sorted "
+                    + trademarket
                     + " symrank pair(s) AFTER top coin filter: "
-                    + str(pairlist)
+                    + str(pairlist_sorted)
                 )
+
+                pairlist = []
+                for i in range(len(pairlist_sorted)):
+                    pairlist.append(pairlist_sorted[i][0])
 
         return pairlist

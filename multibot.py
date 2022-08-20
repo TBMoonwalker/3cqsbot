@@ -615,7 +615,7 @@ class MultiBot:
                 return True
 
     def create(self):
-        tg_inform = True
+        more_inform = self.attributes.get("extensive_notification", False)
         # if dealmode is signal (aka strategy == manual for multibot),
         # preserve pair list of bot. 3cqs START signal triggers deal
         dealmode_is_signal = (
@@ -658,7 +658,7 @@ class MultiBot:
                 self.asyncState.first_topcoin_call = False
         else:
             self.logging.info(
-                "Topcoin filter disabled, not filtering pairs!", tg_inform
+                "Topcoin filter disabled, not filtering pairs!", more_inform
             )
 
         # if no filtered coins left exit
@@ -671,7 +671,7 @@ class MultiBot:
             if self.asyncState.multibot:
                 if pair in self.asyncState.multibot["pairs"]:
                     self.logging.info(
-                        pair + " is already included in the pair list", tg_inform
+                        pair + " is already included in the pair list", more_inform
                     )
             elif pair in self.pair_data:
                 self.logging.debug(pair + " added to the pair list")
@@ -683,7 +683,7 @@ class MultiBot:
                     + "or not tradable on '"
                     + self.attributes.get("account_name")
                     + "'",
-                    tg_inform,
+                    more_inform,
                 )
         elif pairlist:
             for pair in pairlist:
@@ -699,7 +699,7 @@ class MultiBot:
                         + "or not tradable on '"
                         + self.attributes.get("account_name")
                         + "'",
-                        tg_inform,
+                        more_inform,
                     )
 
         self.logging.debug("Pairs after topcoin filter " + str(pairs))
@@ -714,8 +714,10 @@ class MultiBot:
             else:
                 maxpairs = len(pairs)
             pairs = pairs[0:maxpairs]
-            self.logging.debug(
-                "Pair list after limiting initial pairs " + str(pairs), tg_inform
+            self.logging.info(
+                "Limiting volume sorted symrank list to max active deals of "
+                + str(maxpairs),
+                more_inform,
             )
 
         # Adapt mad if pairs are under value
@@ -830,7 +832,7 @@ class MultiBot:
             self.disable()
 
     def trigger(self, random_only=False):
-        tg_inform = True
+        more_inform = self.attributes.get("extensive_notification", False)
         # Updates multi bot with new pairs
         pair = ""
         mad = self.attributes.get("mad")
@@ -853,7 +855,7 @@ class MultiBot:
                 and not self.asyncState.bot_active
             ):
                 self.logging.info(
-                    "Continuous update active for disabled bot", tg_inform
+                    "Continuous update active for disabled bot", more_inform
                 )
 
             if self.tg_data["action"] == "START":
@@ -870,12 +872,12 @@ class MultiBot:
                     )
                 else:
                     self.logging.info(
-                        "Topcoin filter disabled, not filtering pairs!", tg_inform
+                        "Topcoin filter disabled, not filtering pairs!", more_inform
                     )
                 if pair:
                     if pair in self.asyncState.multibot["pairs"]:
                         self.logging.info(
-                            pair + " is already included in the pair list", tg_inform
+                            pair + " is already included in the pair list", more_inform
                         )
                     else:
                         if self.attributes.get("topcoin_filter", False):
@@ -905,11 +907,11 @@ class MultiBot:
                     else:
                         self.logging.info(
                             pair + " not removed because it was not in the pair list",
-                            tg_inform,
+                            more_inform,
                         )
                 else:
                     self.logging.info(
-                        pair + " ignored because deal_mode is 'signal'", tg_inform
+                        pair + " ignored because deal_mode is 'signal'", more_inform
                     )
 
             mad_before = mad
@@ -958,11 +960,11 @@ class MultiBot:
                 ):
                     self.logging.info(
                         "Max active deals reached, not triggering a new one.",
-                        tg_inform,
+                        more_inform,
                     )
                 else:
                     self.logging.info(
                         "Deal with this pair already active, not triggering a new one.",
-                        tg_inform,
+                        more_inform,
                     )
             self.report_deals(successful_deal)

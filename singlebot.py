@@ -165,7 +165,8 @@ class SingleBot:
             "Total profit of "
             + str(counted_all_bots)
             + " single bots with finished deals: "
-            + format_currency(total_profit, "USD", locale="en_US")
+            + format_currency(total_profit, "USD", locale="en_US"),
+            True,
         )
 
         #        for bot in bots:
@@ -484,6 +485,7 @@ class SingleBot:
 
     def trigger(self):
         # Triggers a single bot deal
+        more_inform = self.attributes.get("extensive_notification", False)
         new_bot = True
         pair = self.tg_data["pair"]
         enabled_bots_counted, bots_enabled = self.count_enabled_bots()
@@ -549,30 +551,34 @@ class SingleBot:
                                     self.logging.info(
                                         "Single bot not created. Blocking new deals, max deals of "
                                         + str(maxdeals)
-                                        + " reached."
+                                        + " reached.",
+                                        more_inform,
                                     )
                             else:
                                 self.logging.info(
                                     "Single bot not created. Blocking new deals, max deals of "
                                     + str(maxdeals)
-                                    + " reached."
+                                    + " reached.",
+                                    more_inform,
                                 )
                         else:
-                            self.logging.info("Pair not added")
+                            self.logging.info("Pair not added", more_inform)
                     else:
                         self.logging.info(
                             "Maximum bots/deals of "
                             + str(maxdeals)
                             + " reached. Single bot with "
                             + pair
-                            + " not added."
+                            + " not added.",
+                            more_inform,
                         )
 
                 elif self.tg_data["action"] == "STOP":
                     self.logging.info(
                         "Stop command on non-existing single bot for pair "
                         + pair
-                        + " ignored."
+                        + " ignored.",
+                        more_inform,
                     )
             else:  # already created bot
                 self.logging.debug("Pair: " + pair)
@@ -592,7 +598,8 @@ class SingleBot:
                                 + str(bot["active_deals_count"])
                                 + "/"
                                 + str(bot["max_active_deals"])
-                                + ". No deal triggered"
+                                + ". No deal triggered",
+                                more_inform,
                             )
                             return
                         # avoid deals over limit
@@ -612,13 +619,15 @@ class SingleBot:
                                 self.logging.info(
                                     "Blocking new deals, because last enabled bot can potentially reach max deals of "
                                     + str(maxdeals)
-                                    + "."
+                                    + ".",
+                                    more_inform,
                                 )
                         else:
                             self.logging.info(
                                 "Blocking new deals, maximum active deals of "
                                 + str(maxdeals)
-                                + " reached."
+                                + " reached.",
+                                more_inform,
                             )
 
                     else:
@@ -627,7 +636,8 @@ class SingleBot:
                             + str(maxdeals)
                             + " reached. No single bot with "
                             + pair
-                            + " created/enabled."
+                            + " created/enabled.",
+                            more_inform,
                         )
                 elif self.tg_data["action"] == "STOP" and self.attributes.get(
                     "delete_single_bots", False

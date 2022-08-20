@@ -541,7 +541,7 @@ async def get_btcpulse(interval_sec):
                     if asyncState.btc_downtrend:
                         TG_inform = True
                     logging.info(
-                        "btc-pulse signaling UPtrend (golden cross check) - actual BTC price: "
+                        "btc-pulse signaling **UP**trend (golden cross check) - actual BTC price: "
                         + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
                         + "   EMA9-5m: "
                         + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
@@ -569,7 +569,7 @@ async def get_btcpulse(interval_sec):
                     if not asyncState.btc_downtrend:
                         TG_inform = True
                     logging.info(
-                        "btc-pulse signaling DOWNtrend - actual BTC price: "
+                        "btc-pulse signaling **DOWN**trend - actual BTC price: "
                         + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
                         + "   EMA9-5m: "
                         + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
@@ -591,7 +591,7 @@ async def get_btcpulse(interval_sec):
                 if asyncState.btc_downtrend:
                     TG_inform = True
                 logging.info(
-                    "btc-pulse signaling UPtrend - actual BTC price: "
+                    "btc-pulse signaling **UP**trend - actual BTC price: "
                     + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
                     + "   EMA9-5m: "
                     + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
@@ -604,6 +604,14 @@ async def get_btcpulse(interval_sec):
                         "3cqsbot enabled: '"
                         + str(asyncState.multibot["is_enabled"])
                         + "'",
+                        TG_inform,
+                    )
+                if (
+                    attributes.get("fearandgreed", False)
+                    and not asyncState.fgi_allows_trading
+                ):
+                    logging.info(
+                        "3cqsbot will not be enabled because FGI does not allow trading",
                         TG_inform,
                     )
                 asyncState.btc_downtrend = False
@@ -838,7 +846,7 @@ async def symrank():
 
 @client.on(events.NewMessage(chats=attributes.get("chatroom", "3C Quick Stats")))
 async def my_event_handler(event):
-    tg_inform = True
+    more_inform = attributes.get("extensive_notification", False)
     tg_output = tg_data(parse_tg(event.raw_text))
     logging.debug("TG msg: " + str(tg_output))
     dealmode_signal = attributes.get("deal_mode", "", asyncState.dca_conf) == "signal"
@@ -871,13 +879,13 @@ async def my_event_handler(event):
                     "token_whitelist", []
                 )
                 logging.info(
-                    tg_output["pair"] + " in whitelist, processing signal", tg_inform
+                    tg_output["pair"] + " in whitelist, processing signal", more_inform
                 )
             else:
                 token_whitelisted = True
             if not token_whitelisted:
                 logging.info(
-                    "Signal ignored because pair is not whitelisted", tg_inform
+                    "Signal ignored because pair is not whitelisted", more_inform
                 )
                 return
 
@@ -890,7 +898,7 @@ async def my_event_handler(event):
                     "Signal ignored because '"
                     + attributes.get("symrank_signal")
                     + "' is configured",
-                    tg_inform,
+                    more_inform,
                 )
                 return
 
@@ -899,7 +907,7 @@ async def my_event_handler(event):
                 "continuous_update", False
             ):
                 logging.info(
-                    "Signal not processed because 3cqsbot is disabled", tg_inform
+                    "Signal not processed because 3cqsbot is disabled", more_inform
                 )
                 return
 
@@ -910,7 +918,7 @@ async def my_event_handler(event):
                     + " is not traded on '"
                     + attributes.get("account_name")
                     + "'",
-                    tg_inform,
+                    more_inform,
                 )
                 return
 
@@ -938,7 +946,7 @@ async def my_event_handler(event):
                         + " and price action: "
                         + str(tg_output["price_action"])
                         + " not meeting config filter limits - signal ignored",
-                        tg_inform,
+                        more_inform,
                     )
                     return
 
@@ -946,7 +954,7 @@ async def my_event_handler(event):
             if tg_output["action"] == "STOP" and dealmode_signal:
                 logging.info(
                     "STOP signal ignored - not necessary when deal_mode = signal",
-                    tg_inform,
+                    more_inform,
                 )
                 return
 
