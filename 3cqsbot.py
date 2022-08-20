@@ -546,13 +546,13 @@ async def get_btcpulse(interval_sec):
                         + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
                         + "   EMA9-5m: "
                         + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
-                        + " > EMA50-5m: "
+                        + " more than EMA50-5m: "
                         + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US")
                         + " and BTC price 5 minutes before: "
                         + format_currency(btcusdt[-2])
                         + "   EMA9-5m: "
                         + format_currency(btcusdt.EMA9[-2], "USD", locale="en_US")
-                        + " < EMA50-5m: "
+                        + " less than EMA50-5m: "
                         + format_currency(btcusdt.EMA50[-2], "USD", locale="en_US"),
                         TG_inform,
                     )
@@ -574,7 +574,7 @@ async def get_btcpulse(interval_sec):
                         + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
                         + "   EMA9-5m: "
                         + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
-                        + " < EMA50-5m: "
+                        + " less than EMA50-5m: "
                         + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US"),
                         TG_inform,
                     )
@@ -596,7 +596,7 @@ async def get_btcpulse(interval_sec):
                     + format_currency(btcusdt["Close"][-1], "USD", locale="en_US")
                     + "   EMA9-5m: "
                     + format_currency(btcusdt.EMA9[-1], "USD", locale="en_US")
-                    + " > EMA50-5m: "
+                    + " more than EMA50-5m: "
                     + format_currency(btcusdt.EMA50[-1], "USD", locale="en_US"),
                     TG_inform,
                 )
