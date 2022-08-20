@@ -191,7 +191,14 @@ class SingleBot:
                 payload={"limit": 100, "bot_id": bot["id"]},
             )
             if error:
-                self.logging.error("function report_deals: " + error["msg"])
+                self.logging.error(
+                    "function report_deals: botid: "
+                    + str(bot["id"])
+                    + "   bot: "
+                    + str(bot)
+                    + "   error msg: "
+                    + error["msg"]
+                )
             else:
                 for deals in data:
                     if (

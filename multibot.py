@@ -556,6 +556,7 @@ class MultiBot:
             )
 
     def new_deal(self, triggerpair):
+        more_inform = self.attributes.get("extensive_notifications", False)
         # Triggers a new deal
         if triggerpair:
             pair = triggerpair
@@ -592,14 +593,14 @@ class MultiBot:
                         "Max active deals of "
                         + str(self.asyncState.multibot["max_active_deals"])
                         + " reached, not adding a new one.",
-                        True,
+                        more_inform,
                     )
                 else:
-                    # modified output because this will be the most common error
-                    self.logging.error(
-                        "No deal triggered: "
-                        + "function new_deal: "
-                        + error["msg"].split(":")[1].split(" ")[1]
+                    # modified output because of open deal - this will be the most common error
+                    self.logging.info(
+                        "No deal triggered because of "
+                        + error["msg"].split(":")[1].split(" ")[1],
+                        more_inform,
                     )
                 return False
             else:
@@ -896,7 +897,7 @@ class MultiBot:
 
                         self.asyncState.multibot["pairs"].append(pair)
 
-                        # if limit_symrank_pairs_to_mad == True, add trigger coin to pairs_volume list and sort
+                        # if limit_symrank_pairs_to_mad == True, add trigger pair to pairs_volume list and sort
                         if (
                             self.attributes.get("limit_symrank_pairs_to_mad", False)
                             and self.asyncState.pairs_volume
