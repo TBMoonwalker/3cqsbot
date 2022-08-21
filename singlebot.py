@@ -169,19 +169,6 @@ class SingleBot:
             True,
         )
 
-        #        for bot in bots:
-        #            self.logging.info(
-        #                "Bot "
-        #                + bot["pairs"][0]
-        #                + " with "
-        #                + str(bot["finished_deals_count"])
-        #                + " finished deals. Total profit: "
-        #                + format_currency(
-        #                    bot["finished_deals_profit_usd"], "USD", locale="en_US"
-        #                ),
-        #                True,
-        #            )
-
         for bot in bots_with_active_deals:
             error, data = self.p3cw.request(
                 entity="deals",
@@ -190,14 +177,21 @@ class SingleBot:
                 additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
                 payload={"limit": 100, "bot_id": bot["id"]},
             )
+            # sometimes API request error, instead report bot data with less details
             if error:
-                self.logging.error(
-                    "function report_deals: botid: "
-                    + str(bot["id"])
-                    + "   bot: "
-                    + str(bot)
-                    + "   error msg: "
-                    + error["msg"]
+                self.logging.info(
+                    "Deal "
+                    + bot["pairs"][0]
+                    + " open since "
+                    + format_timedelta(
+                        datetime.utcnow()
+                        - datetime.strptime(bot["created_at"], "%Y-%m-%dT%H:%M:%S.%fZ"),
+                        locale="en_US",
+                    )
+                    + "   Actual profit: "
+                    + format_currency(
+                        bot["active_deals_usd_profit"], "USD", locale="en_US"
+                    )
                 )
             else:
                 for deals in data:
@@ -213,7 +207,7 @@ class SingleBot:
                         )
 
                     self.logging.info(
-                        "Last deal "
+                        "Deal "
                         + deals["pair"]
                         + " open since "
                         + format_timedelta(

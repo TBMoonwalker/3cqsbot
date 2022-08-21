@@ -556,7 +556,6 @@ class MultiBot:
             )
 
     def new_deal(self, triggerpair):
-        more_inform = self.attributes.get("extensive_notifications", False)
         # Triggers a new deal
         if triggerpair:
             pair = triggerpair
@@ -593,14 +592,14 @@ class MultiBot:
                         "Max active deals of "
                         + str(self.asyncState.multibot["max_active_deals"])
                         + " reached, not adding a new one.",
-                        more_inform,
+                        True,
                     )
                 else:
                     # modified output because of open deal - this will be the most common error
                     self.logging.info(
                         "No deal triggered because of "
                         + error["msg"].split(":")[1].split(" ")[1],
-                        more_inform,
+                        True,
                     )
                 return False
             else:
