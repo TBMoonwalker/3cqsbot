@@ -180,9 +180,9 @@ class SingleBot:
             # sometimes API request error, instead report bot data with less details
             if error:
                 self.logging.info(
-                    "Deal "
+                    "Open deal "
                     + bot["pairs"][0]
-                    + " open since "
+                    + " since "
                     + format_timedelta(
                         datetime.utcnow()
                         - datetime.strptime(bot["created_at"], "%Y-%m-%dT%H:%M:%S.%fZ"),
@@ -195,41 +195,42 @@ class SingleBot:
                 )
             else:
                 for deals in data:
-                    if (
-                        deals["bought_volume"] == None
-                    ):  # if no bought_volume, then use base_order_volume for bought_volume
-                        bought_volume = format_currency(
-                            deals["base_order_volume"], "USD", locale="en_US"
-                        )
-                    else:
-                        bought_volume = format_currency(
-                            deals["bought_volume"], "USD", locale="en_US"
-                        )
+                    if not deals["finished?"]:
+                        if (
+                            deals["bought_volume"] == None
+                        ):  # if no bought_volume, then use base_order_volume for bought_volume
+                            bought_volume = format_currency(
+                                deals["base_order_volume"], "USD", locale="en_US"
+                            )
+                        else:
+                            bought_volume = format_currency(
+                                deals["bought_volume"], "USD", locale="en_US"
+                            )
 
-                    self.logging.info(
-                        "Deal "
-                        + deals["pair"]
-                        + " open since "
-                        + format_timedelta(
-                            datetime.utcnow()
-                            - datetime.strptime(
-                                deals["created_at"], "%Y-%m-%dT%H:%M:%S.%fZ"
-                            ),
-                            locale="en_US",
+                        self.logging.info(
+                            "Open deal "
+                            + deals["pair"]
+                            + " since "
+                            + format_timedelta(
+                                datetime.utcnow()
+                                - datetime.strptime(
+                                    deals["created_at"], "%Y-%m-%dT%H:%M:%S.%fZ"
+                                ),
+                                locale="en_US",
+                            )
+                            + "   Actual profit: "
+                            + format_currency(
+                                deals["actual_usd_profit"], "USD", locale="en_US"
+                            )
+                            + " ("
+                            + deals["actual_profit_percentage"]
+                            + "%)"
+                            + "   Bought volume: "
+                            + bought_volume
+                            + "   Deal error: "
+                            + str(deals["deal_has_error"]),
+                            True,
                         )
-                        + "   Actual profit: "
-                        + format_currency(
-                            deals["actual_usd_profit"], "USD", locale="en_US"
-                        )
-                        + " ("
-                        + deals["actual_profit_percentage"]
-                        + "%)"
-                        + "   Bought volume: "
-                        + bought_volume
-                        + "   Deal error: "
-                        + str(deals["deal_has_error"]),
-                        True,
-                    )
 
         return
 
