@@ -108,7 +108,13 @@ asyncState.pair_data = []
 asyncState.symrank_success = False
 asyncState.multibot = {}
 asyncState.pairs_volume = []
-asyncState.receive_signals = False
+asyncState.receive_signals = (
+    False  # start processing 3cqs signals after everything is initialised
+)
+asyncState.start_signals_24h = 0
+asyncState.stop_signals_24h = 0
+asyncState.start_signals = 0
+asyncState.stop_signals = 0
 
 ######################################################
 #                     Methods                        #
@@ -266,7 +272,7 @@ def account_data():
 
 
 async def pair_data(account, interval_sec):
-
+    more_inform = attributes.get("extensive_notifications", False)
     while True:
         try:
             pairs = []
@@ -314,7 +320,7 @@ async def pair_data(account, interval_sec):
                 + account["market_code"]
                 + "' imported. Next update in "
                 + format_timedelta(interval_sec, locale="en_US"),
-                True,
+                more_inform,
             )
             notification.send_notification()
             await asyncio.sleep(interval_sec)
@@ -445,6 +451,24 @@ async def get_fgi(ema_fast, ema_slow):
                 )
 
                 asyncState.fgi_time_until_update = time_until_update
+
+            logging.info(
+                "3cqs signals processed over 24h while bot was enabled - Start: "
+                + str(asyncState.start_signals_24h)
+                + "   Stop: "
+                + str(asyncState.stop_signals_24h),
+                True,
+            )
+            asyncState.start_signals_24h = 0
+            asyncState.stop_signals_24h = 0
+
+            logging.info(
+                "TOTAL 3cqs signals processed while bot was enabled - Start: "
+                + str(asyncState.start_signals)
+                + "   Stop: "
+                + str(asyncState.stop_signals),
+                True,
+            )
 
             notification.send_notification()
             # request FGI once per day, because is is calculated only once per day
@@ -925,6 +949,10 @@ async def my_event_handler(event):
 
             # Check if 3cqs START signal passes optional symrank criteria
             if tg_output["volatility"] != 0 and tg_output["action"] == "START":
+                # STOP signals are counted in multibot/singlebot.py
+                asyncState.start_signals_24h += 1
+                asyncState.start_signals += 1
+
                 if not (
                     tg_output["volatility"]
                     >= attributes.get("volatility_limit_min", 0.1)

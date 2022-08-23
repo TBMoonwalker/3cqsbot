@@ -917,6 +917,9 @@ class MultiBot:
 
             # do not remove pairs when deal_mode == "signal" to trigger deals faster when next START signal is received
             elif self.tg_data["action"] == "STOP":
+                # START signals are counted in 3cqsbot.py
+                self.asyncState.stop_signals_24h += 1
+                self.asyncState.stop_signals += 1
 
                 if not dealmode_is_signal:
                     if pair in self.asyncState.multibot["pairs"]:

@@ -509,6 +509,11 @@ class SingleBot:
         )
 
         if self.bot_data:
+            # START signals are counted in 3cqsbot.py
+            if self.tg_data["action"] == "STOP":
+                self.asyncState.stop_signals_24h += 1
+                self.asyncState.stop_signals += 1
+
             for bot in self.bot_data:
                 if botname == bot["name"]:
                     new_bot = False
