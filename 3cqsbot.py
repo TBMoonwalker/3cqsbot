@@ -452,23 +452,23 @@ async def get_fgi(ema_fast, ema_slow):
 
                 asyncState.fgi_time_until_update = time_until_update
 
-            logging.info(
-                "3cqs signals processed over 24h while bot was enabled - Start: "
-                + str(asyncState.start_signals_24h)
-                + "   Stop: "
-                + str(asyncState.stop_signals_24h),
-                True,
-            )
-            asyncState.start_signals_24h = 0
-            asyncState.stop_signals_24h = 0
+                logging.info(
+                    "3cqs signals processed over 24h while bot was enabled - Start: "
+                    + str(asyncState.start_signals_24h)
+                    + "   Stop: "
+                    + str(asyncState.stop_signals_24h),
+                    True,
+                )
+                asyncState.start_signals_24h = 0
+                asyncState.stop_signals_24h = 0
 
-            logging.info(
-                "TOTAL 3cqs signals processed while bot was enabled - Start: "
-                + str(asyncState.start_signals)
-                + "   Stop: "
-                + str(asyncState.stop_signals),
-                True,
-            )
+                logging.info(
+                    "TOTAL 3cqs signals processed while bot was enabled - Start: "
+                    + str(asyncState.start_signals)
+                    + "   Stop: "
+                    + str(asyncState.stop_signals),
+                    True,
+                )
 
             notification.send_notification()
             # request FGI once per day, because is is calculated only once per day
@@ -1073,6 +1073,32 @@ async def my_event_handler(event):
     notification.send_notification()
 
 
+def report_funds_needed(dca_conf="dca_bot"):
+
+    bo = attributes.get("bo", "", dca_conf)
+    so = attributes.get("so", "", dca_conf)
+    os = attributes.get("os", "", dca_conf)
+    ss = attributes.get("ss", "", dca_conf)
+    sos = attributes.get("sos", "", dca_conf)
+    mstc = attributes.get("mstc", "", dca_conf)
+
+    fundsneeded = bo + so
+    socalc = so
+    pd = sos
+    for i in range(mstc - 1):
+        socalc = socalc * os
+        fundsneeded += socalc
+        pd = (pd * ss) + sos
+
+    if attributes.get("single"):
+        maxdeals = int(attributes.get("single_count", "0", dca_conf))
+    else:
+        maxdeals = int(attributes.get("mad", "0", dca_conf))
+    fundsneeded = fundsneeded * maxdeals
+
+    return fundsneeded, pd
+
+
 async def main():
 
     # Check for single instance run
@@ -1116,18 +1142,76 @@ async def main():
             + str(attributes.get("topcoin_volume", 0)),
             True,
         )
+    logging.info(
+        "Sort and limit symrank pairs to mad: "
+        + str(attributes.get("limit_symrank_pairs_to_mad", False)),
+        True,
+    )
     logging.info("BTC pulse: '" + str(attributes.get("btc_pulse", False)) + "'", True)
     logging.info(
         "FGI trading: '" + str(attributes.get("fearandgreed", False)) + "'", True
     )
     if attributes.get("fearandgreed", False):
         logging.info(
-            "FGI trading range: "
+            "FGI required for trading: ["
             + str(attributes.get("fgi_trade_min"))
             + "-"
-            + str(attributes.get("fgi_trade_max")),
+            + str(attributes.get("fgi_trade_max"))
+            + "]",
             True,
         )
+        fundsneeded, pd = report_funds_needed("fgi_aggressive")
+        logging.info(
+            "[fgi_aggressive "
+            + str(attributes.get("fgi_min", "0", "fgi_aggressive"))
+            + "-"
+            + str(attributes.get("fgi_max", "0", "fgi_aggressive"))
+            + "]:   mad/single bots: "
+            + str(attributes.get("mad", "0", "fgi_aggressive"))
+            + "/"
+            + str(attributes.get("single_count", "0", "fgi_aggressive"))
+            + "   funds needed: "
+            + format_currency(fundsneeded, "USD", locale="en_US")
+            + "   covering max pd: "
+            + f"{pd:2.1f}"
+            + "%",
+            True,
+        )
+        fundsneeded, pd = report_funds_needed("fgi_moderate")
+        logging.info(
+            "[fgi_moderate "
+            + str(attributes.get("fgi_min", "0", "fgi_moderate"))
+            + "-"
+            + str(attributes.get("fgi_max", "0", "fgi_moderate"))
+            + "]:   mad/single bots: "
+            + str(attributes.get("mad", "0", "fgi_moderate"))
+            + "/"
+            + str(attributes.get("single_count", "0", "fgi_moderate"))
+            + "   funds needed: "
+            + format_currency(fundsneeded, "USD", locale="en_US")
+            + "   covering max pd: "
+            + f"{pd:2.1f}"
+            + "%",
+            True,
+        )
+        fundsneeded, pd = report_funds_needed("fgi_defensive")
+        logging.info(
+            "[fgi_defensive "
+            + str(attributes.get("fgi_min", "0", "fgi_defensive"))
+            + "-"
+            + str(attributes.get("fgi_max", "0", "fgi_defensive"))
+            + "]:   mad/single bots: "
+            + str(attributes.get("mad", "0", "fgi_defensive"))
+            + "/"
+            + str(attributes.get("single_count", "0", "fgi_defensive"))
+            + "   funds needed: "
+            + format_currency(fundsneeded, "USD", locale="en_US")
+            + "   covering max pd: "
+            + f"{pd:2.1f}"
+            + "%",
+            True,
+        )
+
     logging.info(
         "Continuous pair update for multibot with other deal_mode than 'signal': '"
         + str(attributes.get("continuous_update", False))
@@ -1170,7 +1254,7 @@ async def main():
 
         logging.info("DCA setting: '[" + asyncState.dca_conf + "]'", True)
         logging.info(
-            "Deal mode of actual DCA setting: '"
+            "Deal mode of DCA setting: '"
             + attributes.get("deal_mode", "", asyncState.dca_conf)
             + "'",
             True,
