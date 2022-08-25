@@ -31,6 +31,19 @@ class MultiBot:
 
         return strategy
 
+    def bot(self):
+
+        bot = {}
+
+        for bot in self.bot_data:
+            if (self.prefix + "_" + self.subprefix + "_" + self.suffix) == bot["name"]:
+                bot.update({"id": str(bot["id"])})
+                bot.update({"name": bot["name"]})
+                bot.update({"enabled": bot["is_enabled"]})
+                bot.update({"pairs": bot["pairs"]})
+
+        return bot
+
     def adjustmad(self, pairs, mad):
         # Lower max active deals, when pairs are under mad
         if len(pairs) * self.attributes.get("sdsp") < mad:
@@ -95,9 +108,11 @@ class MultiBot:
 
         return payload
 
-    def enable(self, bot):
+    def enable(self):
+        bot = self.bot()
+
         # Enables an existing bot
-        if not bot["is_enabled"]:
+        if not bot["enabled"]:
             self.logging.info("Enabling bot: " + bot["name"])
 
             error, data = self.p3cw.request(
@@ -165,22 +180,10 @@ class MultiBot:
 
     def create(self):
         # Creates a multi bot with start signal
-        new_bot = True
         pairs = []
-        botnames = []
         mad = self.attributes.get("mad")
-
-        # Check for existing or new bot
-        for bot in self.bot_data:
-
-            botnames.append(bot["name"])
-
-            if (self.prefix + "_" + self.subprefix + "_" + self.suffix) == bot["name"]:
-                botid = str(bot["id"])
-                new_bot = False
-                break
-
-        self.logging.debug("Existing bot names: " + str(botnames))
+        bot = self.bot()
+        status = False
 
         # Initial pairlist
         for pair in self.pair_data:
@@ -190,8 +193,7 @@ class MultiBot:
         # Adapt mad if pairs are under value
         mad = self.adjustmad(pairs, mad)
 
-        if new_bot:
-
+        if not bot:
             self.logging.info(
                 "Creating multi bot "
                 + self.prefix
@@ -205,97 +207,72 @@ class MultiBot:
                 entity="bots",
                 action="create_bot",
                 additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-                payload=self.payload(pairs, mad, new_bot),
+                payload=self.payload(pairs, mad, bot),
             )
 
             if error:
                 self.logging.error(error["msg"])
             else:
-                if not self.attributes.get("ext_botswitch", False):
-                    self.enable(data)
-                else:
-                    self.logging.info(
-                        "ext_botswitch set to true, bot has to be enabled by external TV signal"
-                    )
-                self.new_deal(data, triggerpair="")
-        else:
-            self.logging.info(
-                "Updating multi bot " + bot["name"] + " with filtered symrank pairs"
-            )
-            error, data = self.p3cw.request(
-                entity="bots",
-                action="update",
-                action_id=botid,
-                additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-                payload=self.payload(pairs, mad, new_bot),
-            )
+                status = True
 
-            if error:
-                self.logging.error(error["msg"])
-            else:
-                self.logging.debug("Pairs: " + str(pair))
-                if not self.attributes.get("ext_botswitch", False):
-                    self.enable(data)
-                else:
-                    self.logging.info(
-                        "ext_botswitch set to true, bot enabling/disabling has to be managed by external TV signal"
-                    )
+        return status
 
     def trigger(self, triggeronly=False):
         # Updates multi bot with new pairs
         triggerpair = ""
         mad = self.attributes.get("mad")
+        bot = self.bot()
 
-        for bot in self.bot_data:
-            if (self.prefix + "_" + self.subprefix + "_" + self.suffix) == bot["name"]:
+        # Existing Bot
+        if bot:
 
-                if not triggeronly:
-                    pair = self.attributes.get("market") + "_" + self.ws_data["symbol"]
+            if not triggeronly:
+                pair = self.attributes.get("market") + "_" + self.ws_data["symbol"]
 
-                    self.logging.info(
-                        "Got new 3cqs " + self.ws_data["signal"] + " signal for " + pair
-                    )
+                self.logging.info(
+                    "Got new 3cqs " + self.ws_data["signal"] + " signal for " + pair
+                )
 
-                    if self.ws_data["signal"] == "BOT_START":
-                        triggerpair = pair
+                if self.ws_data["signal"] == "BOT_START":
+                    triggerpair = pair
 
-                        if pair in bot["pairs"]:
-                            self.logging.info(
-                                pair + " is already included in the pair list"
-                            )
-                        else:
-                            if pair:
-                                self.logging.info("Adding pair " + pair)
-                                bot["pairs"].append(pair)
+                    if pair in bot["pairs"]:
+                        self.logging.info(
+                            pair + " is already included in the pair list"
+                        )
                     else:
-                        if pair in bot["pairs"]:
-                            self.logging.info("Remove pair " + pair)
-                            bot["pairs"].remove(pair)
-                        else:
-                            self.logging.info(
-                                pair + " was not included in the pair list, not removed"
-                            )
-
-                    # Adapt mad if pairs are under value
-                    mad = self.adjustmad(bot["pairs"], mad)
-                    self.logging.info(
-                        "Adjusting mad to amount of included symrank pairs: " + str(mad)
-                    )
-
-                    error, data = self.p3cw.request(
-                        entity="bots",
-                        action="update",
-                        action_id=str(bot["id"]),
-                        additional_headers={
-                            "Forced-Mode": self.attributes.get("trade_mode")
-                        },
-                        payload=self.payload(bot["pairs"], mad, new_bot=False),
-                    )
-
-                    if error:
-                        self.logging.error(error["msg"])
+                        if pair:
+                            self.logging.info("Adding pair " + pair)
+                            bot["pairs"].append(pair)
                 else:
-                    data = bot
+                    if pair in bot["pairs"]:
+                        self.logging.info("Remove pair " + pair)
+                        bot["pairs"].remove(pair)
+                    else:
+                        self.logging.info(
+                            pair + " was not included in the pair list, not removed"
+                        )
 
-                if self.attributes.get("deal_mode") == "signal" and data:
-                    self.new_deal(data, triggerpair)
+                # Adapt mad if pairs are under value
+                mad = self.adjustmad(bot["pairs"], mad)
+                self.logging.info(
+                    "Adjusting mad to amount of included symrank pairs: " + str(mad)
+                )
+
+                error, data = self.p3cw.request(
+                    entity="bots",
+                    action="update",
+                    action_id=str(bot["id"]),
+                    additional_headers={
+                        "Forced-Mode": self.attributes.get("trade_mode")
+                    },
+                    payload=self.payload(bot["pairs"], mad, new_bot=False),
+                )
+
+                if error:
+                    self.logging.error(error["msg"])
+            else:
+                data = bot
+
+            if self.attributes.get("deal_mode") == "signal" and data:
+                self.new_deal(data, triggerpair)

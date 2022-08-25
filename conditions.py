@@ -11,7 +11,7 @@ from functools import lru_cache, wraps
 from time import monotonic_ns
 
 
-class Signals:
+class Conditions:
     def __init__(self, logging):
         self.logging = logging
 
@@ -35,7 +35,7 @@ class Signals:
     # Credits goes to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts
     @retry(wait=wait_fixed(2))
-    def btctechnical(self, symbol):
+    def data(self, symbol):
         btcusdt = yf.download(
             tickers=symbol, period="6h", interval="5m", progress=False
         )
@@ -61,7 +61,7 @@ class Signals:
         self.logging.info("Starting btc-pulse")
 
         while True:
-            btcusdt = self.btctechnical("BTC-USD")
+            btcusdt = self.data("BTC-USD")
             # if EMA 50 > EMA9 or <-1% drop then the sleep mode is activated
             # else bool is false and while loop is broken
             if (
@@ -72,7 +72,7 @@ class Signals:
 
                 # after 5mins getting the latest BTC data to see if it has had a sharp rise in previous 5 mins
                 await asyncio.sleep(300)
-                btcusdt = self.btctechnical("BTC-USD")
+                btcusdt = self.data("BTC-USD")
 
                 # this is the golden cross check fast moving EMA
                 # cuts slow moving EMA from bottom, if that is true then bool=false and break while loop

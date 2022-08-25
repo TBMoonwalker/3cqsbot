@@ -10,7 +10,7 @@ import math
 from py3cw.request import Py3CW
 from singlebot import SingleBot
 from multibot import MultiBot
-from signals import Signals
+from conditions import Conditions
 from filters import Filters
 from logging.handlers import RotatingFileHandler
 from config import Config
@@ -80,9 +80,11 @@ p3cw = Py3CW(
 
 # Initialize socket.io async client
 sio = socketio.AsyncClient(
+    logger=True,
+    engineio_logger=True,
     reconnection=True,
     reconnection_delay=attributes.get("reconnection_delay", 10000),
-    reconnection_attempts=attributes.get("reconnection_attempts", 5),
+    reconnection_attempts=attributes.get("reconnection_attempts", 0),
 )
 
 
@@ -198,8 +200,8 @@ async def bot_switch():
             if attributes.get("single"):
                 logging.info("Not activating old single bots (waiting for new signals)")
             else:
-                # Send new top 30 for activating the multibot
-                await symrank()
+                bot = MultiBot([], bot_data(), {}, 0, attributes, p3cw, logging)
+                bot.enable()
 
         elif asyncState.btc_downtrend and asyncState.bot_active:
             asyncState.bot_active = False
@@ -236,94 +238,86 @@ async def my_message(data):
 
     filters = Filters(data, attributes, asyncState.accountData, logging)
 
-    if (
-        asyncState.btc_downtrend
-        and attributes.get("btc_pulse", False)
-        and not attributes.get("ext_bot_active", False)
-    ):
-        logging.info("Signal not processed because of BTC downtrend")
-    else:
+    if data:
 
-        if data:
+        logging.info("New 3CQS signal '" + str(data["signal_name"]) + "' incoming...")
 
-            logging.info(
-                "New 3CQS signal '" + str(data["signal_name"]) + "' incoming..."
-            )
+        if filters.signal():
+            # Continue only if we can trade the right signal on the configured exchange
+            if (
+                filters.exchange()
+                and filters.whitelist()
+                and filters.topcoin()
+                and not filters.denylist()
+            ):
 
-            if filters.signal():
-                # Continue only if we can trade the right signal on the configured exchange
-                if (
-                    filters.exchange()
-                    and filters.whitelist()
-                    and filters.topcoin()
-                    and not filters.denylist()
-                ):
+                logging.debug("Websocket signal " + str(data))
 
-                    logging.debug("Websocket signal " + str(data))
+                bot_output = bot_data()
 
-                    bot_output = bot_data()
+                pair = attributes.get("market") + "_" + data["symbol"]
 
-                    pair = attributes.get("market") + "_" + data["symbol"]
+                # Choose multibot or singlebot
+                if attributes.get("single"):
+                    bot = SingleBot(
+                        data,
+                        bot_output,
+                        asyncState.accountData,
+                        attributes,
+                        p3cw,
+                        logging,
+                    )
+                else:
+                    # Create initial pairlist for multibot
+                    pair_output = [data["symbol"]]
 
-                    # Choose multibot or singlebot
-                    if attributes.get("single"):
-                        bot = SingleBot(
-                            data,
-                            bot_output,
-                            asyncState.accountData,
-                            attributes,
-                            p3cw,
-                            logging,
-                        )
-                    else:
-                        # Create initial pairlist for multibot
-                        pair_output = [data["symbol"]]
-
+                    if asyncState.multiInit == "empty" and data["signal"] != "BOT_STOP":
+                        # Minimum of two pairs is needed - stop Initialization afterwards
                         if (
-                            asyncState.multiInit == "empty"
+                            len(asyncState.pairData) < 2
                             and data["signal"] != "BOT_STOP"
                         ):
-                            # Minimum of two pairs is needed - stop Initialization afterwards
-                            if (
-                                len(asyncState.pairData) < 2
-                                and data["signal"] != "BOT_STOP"
-                            ):
-                                logging.info(
-                                    "Still filling initial pairs for multibot ...."
-                                )
-                                pair_data(data)
-                            else:
-                                logging.info("Initial pairs for multibot filled.")
-                                asyncState.multiInit = "filled"
-                                pair_output = asyncState.pairData
-
-                        bot = MultiBot(
-                            data,
-                            bot_output,
-                            asyncState.accountData,
-                            pair_output,
-                            attributes,
-                            p3cw,
-                            logging,
-                        )
-
-                        if asyncState.multiInit == "filled":
-                            logging.debug("Bot create")
-                            logging.debug(str(pair_output))
-                            bot.create()
-                            asyncState.multiInit = "initialized"
+                            logging.info(
+                                "Still filling initial pairs for multibot ...."
+                            )
+                            pair_data(data)
                         else:
-                            # Every signal triggers a new multibot deal
-                            bot.trigger(triggeronly=True)
+                            logging.info("Initial pairs for multibot filled.")
+                            asyncState.multiInit = "filled"
+                            pair_output = asyncState.pairData
 
-                    # Trigger bot if limits passed and pair is traded on the configured exchange
-                    if (
-                        filters.volatility and filters.price and filters.symrank
-                    ) or data["signal"] == "BOT_STOP":
+                    bot = MultiBot(
+                        data,
+                        bot_output,
+                        asyncState.accountData,
+                        pair_output,
+                        attributes,
+                        p3cw,
+                        logging,
+                    )
 
-                        logging.debug("Trigger bot")
+                    if asyncState.multiInit == "filled":
+                        logging.debug("Bot create")
+                        logging.debug(str(pair_output))
+                        if bot.create() and (
+                            not asyncState.btc_downtrend
+                            or attributes.get("ext_botswitch", False)
+                        ):
+                            bot.enable()
 
-                        bot.trigger()
+                        asyncState.multiInit = "initialized"
+                    else:
+                        # Every signal triggers a new multibot deal
+                        bot.trigger(triggeronly=True)
+
+                # Trigger bot if limits passed and pair is traded on the configured exchange
+                if (filters.volatility and filters.price and filters.symrank) or data[
+                    "signal"
+                ] == "BOT_STOP":
+
+                    logging.debug("Trigger bot")
+
+                    bot.trigger()
 
 
 @sio.event
@@ -332,7 +326,7 @@ async def disconnect():
 
 
 async def main():
-    signals = Signals(logging)
+    conditions = Conditions(logging)
     asyncState.accountData = account_data()
 
     await sio.connect(
@@ -352,7 +346,9 @@ async def main():
     if attributes.get("btc_pulse", False) and not attributes.get(
         "ext_bot_active", False
     ):
-        btc_downtrendtask = sio.loop.create_task(signals.getbtc_downtrend(asyncState))
+        btc_downtrendtask = sio.loop.create_task(
+            conditions.getbtc_downtrend(asyncState)
+        )
         btc_downtrendtask.add_done_callback(_handle_task_result)
         switchtask = sio.loop.create_task(bot_switch())
         switchtask.add_done_callback(_handle_task_result)
