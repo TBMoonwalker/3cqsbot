@@ -35,12 +35,12 @@ class MultiBot:
 
         bot = {}
 
-        for bot in self.bot_data:
-            if (self.prefix + "_" + self.subprefix + "_" + self.suffix) == bot["name"]:
-                bot.update({"id": str(bot["id"])})
-                bot.update({"name": bot["name"]})
-                bot.update({"enabled": bot["is_enabled"]})
-                bot.update({"pairs": bot["pairs"]})
+        for bots in self.bot_data:
+            if (self.prefix + "_" + self.subprefix + "_" + self.suffix) == bots["name"]:
+                bot.update({"id": str(bots["id"])})
+                bot.update({"name": bots["name"]})
+                bot.update({"enabled": bots["is_enabled"]})
+                bot.update({"pairs": bots["pairs"]})
 
         return bot
 
