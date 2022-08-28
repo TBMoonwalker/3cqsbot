@@ -109,8 +109,9 @@ asyncState.symrank_success = False
 asyncState.multibot = {}
 asyncState.pairs_volume = []
 asyncState.receive_signals = (
-    False  # start processing 3cqs signals after everything is initialised
+    False  # start processing 3cqs signals after async routines are working
 )
+asyncState.start_time = 0
 asyncState.start_signals_24h = 0
 asyncState.stop_signals_24h = 0
 asyncState.start_signals = 0
@@ -452,6 +453,15 @@ async def get_fgi(ema_fast, ema_slow):
 
                 asyncState.fgi_time_until_update = time_until_update
 
+                # some statistics
+                start_delta = datetime.utcnow() - asyncState.start_time
+                logging.info(
+                    "3cqsbot running since "
+                    + format_timedelta(
+                        start_delta,
+                        locale="en_US",
+                    )
+                )
                 logging.info(
                     "3cqs signals processed over 24h while bot was enabled - Start: "
                     + str(asyncState.start_signals_24h)
@@ -461,12 +471,21 @@ async def get_fgi(ema_fast, ema_slow):
                 )
                 asyncState.start_signals_24h = 0
                 asyncState.stop_signals_24h = 0
-
+                start_per_day = asyncState.start_signals / (
+                    start_delta / datetime.timedelta(day=1)
+                )
+                stop_per_day = asyncState.stop_signals / (
+                    start_delta / datetime.timedelta(day=1)
+                )
                 logging.info(
                     "TOTAL 3cqs signals processed while bot was enabled - Start: "
                     + str(asyncState.start_signals)
+                    + "   per day: "
+                    + f"{start_per_day:2.1f}"
                     + "   Stop: "
-                    + str(asyncState.stop_signals),
+                    + str(asyncState.stop_signals)
+                    + "   per day: "
+                    + f"{stop_per_day:2.1f}",
                     True,
                 )
 
@@ -927,6 +946,14 @@ async def my_event_handler(event):
                 )
                 return
 
+            # statistics about signals
+            if tg_output["action"] == "START":
+                asyncState.start_signals_24h += 1
+                asyncState.start_signals += 1
+            elif tg_output["action"] == "STOP":
+                asyncState.stop_signals_24h += 1
+                asyncState.stop_signals += 1
+
             # Check if bot is active
             if not asyncState.bot_active and not attributes.get(
                 "continuous_update", False
@@ -949,9 +976,6 @@ async def my_event_handler(event):
 
             # Check if 3cqs START signal passes optional symrank criteria
             if tg_output["volatility"] != 0 and tg_output["action"] == "START":
-                # STOP signals are counted in multibot/singlebot.py
-                asyncState.start_signals_24h += 1
-                asyncState.start_signals += 1
 
                 if not (
                     tg_output["volatility"]
@@ -1074,21 +1098,28 @@ async def my_event_handler(event):
 
 
 def report_funds_needed(dca_conf="dca_bot"):
-
-    bo = attributes.get("bo", "", dca_conf)
-    so = attributes.get("so", "", dca_conf)
-    os = attributes.get("os", "", dca_conf)
-    ss = attributes.get("ss", "", dca_conf)
-    sos = attributes.get("sos", "", dca_conf)
-    mstc = attributes.get("mstc", "", dca_conf)
+    tp = attributes.get("tp", "", dca_conf)  # take profit
+    bo = attributes.get("bo", "", dca_conf)  # base order
+    so = attributes.get("so", "", dca_conf)  # safety order
+    os = attributes.get("os", "", dca_conf)  # safety order volume scale
+    ss = attributes.get("ss", "", dca_conf)  # safety order step scale
+    sos = attributes.get("sos", "", dca_conf)  # price deviation to open safety orders
+    mstc = attributes.get("mstc", "", dca_conf)  # max safety trade count
 
     fundsneeded = bo + so
-    socalc = so
+    amount = so
     pd = sos
+    cum_size_base = bo + so / (1 - (1 * sos / 100))
     for i in range(mstc - 1):
-        socalc = socalc * os
-        fundsneeded += socalc
+        amount = amount * os
+        fundsneeded += amount
         pd = (pd * ss) + sos
+        price = (100 - pd) / 100
+        size_base = amount / price
+        cum_size_base += size_base
+        avg_price = fundsneeded / cum_size_base
+        required_price = avg_price * tp / 100 + avg_price
+        required_change = ((required_price / price) - 1) * 100
 
     if attributes.get("single"):
         maxdeals = int(attributes.get("single_count", "0", dca_conf))
@@ -1096,7 +1127,7 @@ def report_funds_needed(dca_conf="dca_bot"):
         maxdeals = int(attributes.get("mad", "0", dca_conf))
     fundsneeded = fundsneeded * maxdeals
 
-    return fundsneeded, pd
+    return fundsneeded, pd, required_change
 
 
 async def main():
@@ -1108,7 +1139,7 @@ async def main():
 
     ##### Initial reporting #####
     logging.info("*** 3CQS Bot started ***", True)
-
+    asyncState.start_time = datetime.utcnow()
     user = await client.get_participants("The3CQSBot")
     asyncState.chatid = user[0].id
 
@@ -1137,9 +1168,9 @@ async def main():
     if attributes.get("topcoin_filter", False):
         logging.info(
             "Marketcap Top "
-            + str(attributes.get("topcoin_limit", 3500))
+            + str(attributes.get("topcoin_limit", 3500, asyncState.dca_conf))
             + " - Min. daily BTC trading volume: "
-            + str(attributes.get("topcoin_volume", 0)),
+            + str(attributes.get("topcoin_volume", 0, asyncState.dca_conf)),
             True,
         )
     logging.info(
@@ -1160,55 +1191,58 @@ async def main():
             + "]",
             True,
         )
-        fundsneeded, pd = report_funds_needed("fgi_aggressive")
+        fundsneeded, pd, rc = report_funds_needed("fgi_aggressive")
         logging.info(
             "[fgi_aggressive "
             + str(attributes.get("fgi_min", "0", "fgi_aggressive"))
             + "-"
             + str(attributes.get("fgi_max", "0", "fgi_aggressive"))
-            + "]:   mad/single bots: "
+            + "]: mad/single bots: "
             + str(attributes.get("mad", "0", "fgi_aggressive"))
             + "/"
             + str(attributes.get("single_count", "0", "fgi_aggressive"))
-            + "   funds needed: "
+            + "  funds needed: "
             + format_currency(fundsneeded, "USD", locale="en_US")
-            + "   covering max pd: "
+            + "  cov. max price dev: "
             + f"{pd:2.1f}"
-            + "%",
+            + "%  max req. change: "
+            + f"{rc:2.1f}%",
             True,
         )
-        fundsneeded, pd = report_funds_needed("fgi_moderate")
+        fundsneeded, pd, rc = report_funds_needed("fgi_moderate")
         logging.info(
             "[fgi_moderate "
             + str(attributes.get("fgi_min", "0", "fgi_moderate"))
             + "-"
             + str(attributes.get("fgi_max", "0", "fgi_moderate"))
-            + "]:   mad/single bots: "
+            + "]: mad/single bots: "
             + str(attributes.get("mad", "0", "fgi_moderate"))
             + "/"
             + str(attributes.get("single_count", "0", "fgi_moderate"))
-            + "   funds needed: "
+            + "  funds needed: "
             + format_currency(fundsneeded, "USD", locale="en_US")
-            + "   covering max pd: "
-            + f"{pd:2.1f}"
-            + "%",
+            + "  cov. max price dev: "
+            + f"{pd:2.1f}%"
+            + "%  max req. change: "
+            + f"{rc:2.1f}%",
             True,
         )
-        fundsneeded, pd = report_funds_needed("fgi_defensive")
+        fundsneeded, pd, rc = report_funds_needed("fgi_defensive")
         logging.info(
             "[fgi_defensive "
             + str(attributes.get("fgi_min", "0", "fgi_defensive"))
             + "-"
             + str(attributes.get("fgi_max", "0", "fgi_defensive"))
-            + "]:   mad/single bots: "
+            + "]: mad/single bots: "
             + str(attributes.get("mad", "0", "fgi_defensive"))
             + "/"
             + str(attributes.get("single_count", "0", "fgi_defensive"))
-            + "   funds needed: "
+            + "  funds needed: "
             + format_currency(fundsneeded, "USD", locale="en_US")
-            + "   covering max pd: "
-            + f"{pd:2.1f}"
-            + "%",
+            + "  cov. max price dev: "
+            + f"{pd:2.1f}%"
+            + "%  max req. change: "
+            + f"{rc:2.1f}%",
             True,
         )
 

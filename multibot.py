@@ -170,12 +170,19 @@ class MultiBot:
         mstc = self.attributes.get("mstc", "", self.asyncState.dca_conf)
 
         fundsneeded = bo + so
-        socalc = so
+        amount = so
         pd = sos
+        cum_size_base = bo + so / (1 - (1 * sos / 100))
         for i in range(mstc - 1):
-            socalc = socalc * os
-            fundsneeded += socalc
+            amount = amount * os
+            fundsneeded += amount
             pd = (pd * ss) + sos
+            price = (100 - pd) / 100
+            size_base = amount / price
+            cum_size_base += size_base
+            avg_price = fundsneeded / cum_size_base
+            required_price = avg_price * tp / 100 + avg_price
+            required_change = ((required_price / price) - 1) * 100
 
         self.logging.info(
             "Using DCA settings ["
@@ -194,9 +201,10 @@ class MultiBot:
             + str(sos)
             + "%  MSTC: "
             + str(mstc)
-            + " - covering max. price deviation: "
+            + " - covering max price dev: "
             + f"{pd:2.1f}"
-            + "%",
+            + "% - max required change: "
+            + f"{required_change:2.1f}%",
             True,
         )
         self.logging.info(
@@ -647,8 +655,8 @@ class MultiBot:
         if self.attributes.get("topcoin_filter", False):
             pairlist, pairlist_volume = self.signal.topcoin(
                 pairlist,
-                self.attributes.get("topcoin_limit", 3500),
-                self.attributes.get("topcoin_volume", 0),
+                self.attributes.get("topcoin_limit", 3500, self.asyncState.dca_conf),
+                self.attributes.get("topcoin_volume", 0, self.asyncState.dca_conf),
                 self.attributes.get("topcoin_exchange", "binance"),
                 self.attributes.get("market"),
                 self.asyncState.first_topcoin_call,
@@ -868,8 +876,12 @@ class MultiBot:
                 if self.attributes.get("topcoin_filter", False):
                     pair, pair_volume = self.signal.topcoin(
                         pair,
-                        self.attributes.get("topcoin_limit", 3500),
-                        self.attributes.get("topcoin_volume", 0),
+                        self.attributes.get(
+                            "topcoin_limit", 3500, self.asyncState.dca_conf
+                        ),
+                        self.attributes.get(
+                            "topcoin_volume", 0, self.asyncState.dca_conf
+                        ),
                         self.attributes.get("topcoin_exchange", "binance"),
                         self.attributes.get("market"),
                         self.asyncState.first_topcoin_call,
@@ -917,9 +929,6 @@ class MultiBot:
 
             # do not remove pairs when deal_mode == "signal" to trigger deals faster when next START signal is received
             elif self.tg_data["action"] == "STOP":
-                # START signals are counted in 3cqsbot.py
-                self.asyncState.stop_signals_24h += 1
-                self.asyncState.stop_signals += 1
 
                 if not dealmode_is_signal:
                     if pair in self.asyncState.multibot["pairs"]:
@@ -986,11 +995,11 @@ class MultiBot:
                 ):
                     self.logging.info(
                         "Max active deals reached, not triggering a new one.",
-                        more_inform,
+                        True,
                     )
                 else:
                     self.logging.info(
                         "Deal with this pair already active, not triggering a new one.",
-                        more_inform,
+                        True,
                     )
             self.report_deals(successful_deal)

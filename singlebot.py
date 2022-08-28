@@ -104,12 +104,19 @@ class SingleBot:
         mstc = self.attributes.get("mstc", "", self.asyncState.dca_conf)
 
         fundsneeded = bo + so
-        socalc = so
+        amount = so
         pd = sos
+        cum_size_base = bo + so / (1 - (1 * sos / 100))
         for i in range(mstc - 1):
-            socalc = socalc * os
-            fundsneeded += socalc
+            amount = amount * os
+            fundsneeded += amount
             pd = (pd * ss) + sos
+            price = (100 - pd) / 100
+            size_base = amount / price
+            cum_size_base += size_base
+            avg_price = fundsneeded / cum_size_base
+            required_price = avg_price * tp / 100 + avg_price
+            required_change = ((required_price / price) - 1) * 100
 
         self.logging.info(
             "["
@@ -128,9 +135,10 @@ class SingleBot:
             + str(sos)
             + "%  MSTC: "
             + str(mstc)
-            + " - covering max. price deviation: "
+            + " - covering max price dev: "
             + f"{pd:2.1f}"
-            + "%",
+            + "% - max required change: "
+            + f"{required_change:2.1f}%",
             True,
         )
         self.logging.info(
@@ -509,10 +517,6 @@ class SingleBot:
         )
 
         if self.bot_data:
-            # START signals are counted in 3cqsbot.py
-            if self.tg_data["action"] == "STOP":
-                self.asyncState.stop_signals_24h += 1
-                self.asyncState.stop_signals += 1
 
             for bot in self.bot_data:
                 if botname == bot["name"]:
@@ -528,8 +532,12 @@ class SingleBot:
                         if self.attributes.get("topcoin_filter", False):
                             pair = self.signal.topcoin(
                                 pair,
-                                self.attributes.get("topcoin_limit", 3500),
-                                self.attributes.get("topcoin_volume", 0),
+                                self.attributes.get(
+                                    "topcoin_limit", 3500, self.asyncState.dca_conf
+                                ),
+                                self.attributes.get(
+                                    "topcoin_volume", 0, self.asyncState.dca_conf
+                                ),
                                 self.attributes.get("topcoin_exchange", "binance"),
                                 self.attributes.get("market"),
                                 self.asyncState.first_topcoin_call,
