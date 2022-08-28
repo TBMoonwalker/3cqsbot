@@ -5,7 +5,7 @@ import math
 import os
 import re
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from time import time
 
@@ -465,26 +465,26 @@ async def get_fgi(ema_fast, ema_slow):
                 logging.info(
                     "3cqs signals processed over 24h while bot was enabled - Start: "
                     + str(asyncState.start_signals_24h)
-                    + "   Stop: "
+                    + " - Stop: "
                     + str(asyncState.stop_signals_24h),
                     True,
                 )
                 asyncState.start_signals_24h = 0
                 asyncState.stop_signals_24h = 0
                 start_per_day = asyncState.start_signals / (
-                    start_delta / datetime.timedelta(day=1)
+                    start_delta / timedelta(days=1)
                 )
                 stop_per_day = asyncState.stop_signals / (
-                    start_delta / datetime.timedelta(day=1)
+                    start_delta / timedelta(days=1)
                 )
                 logging.info(
                     "TOTAL 3cqs signals processed while bot was enabled - Start: "
                     + str(asyncState.start_signals)
-                    + "   per day: "
+                    + " per day: "
                     + f"{start_per_day:2.1f}"
-                    + "   Stop: "
+                    + " - Stop: "
                     + str(asyncState.stop_signals)
-                    + "   per day: "
+                    + " per day: "
                     + f"{stop_per_day:2.1f}",
                     True,
                 )
@@ -1130,6 +1130,177 @@ def report_funds_needed(dca_conf="dca_bot"):
     return fundsneeded, pd, required_change
 
 
+def config_report():
+
+    if attributes.get("single"):
+        logging.info("Bot mode: 'single pair'", True)
+    else:
+        logging.info("Bot mode: 'multi pair'", True)
+
+    logging.info(
+        "Listening to 3cqs signals: '" + str(attributes.get("symrank_signal")) + "'",
+        True,
+    )
+    logging.info(
+        "Sort and limit symrank pairs to mad: '"
+        + str(attributes.get("limit_symrank_pairs", False))
+        + "'",
+        True,
+    )
+    logging.info(
+        "Continuous pair update for multibot with other deal_mode than 'signal': '"
+        + str(attributes.get("continuous_update", False))
+        + "'",
+        True,
+    )
+    logging.info("BTC pulse: '" + str(attributes.get("btc_pulse", False)) + "'", True)
+    logging.info(
+        "Topcoin filter: '" + str(attributes.get("topcoin_filter", False)) + "'", True
+    )
+    if attributes.get("topcoin_filter", False) and not attributes.get(
+        "fearandgreed", False
+    ):
+        logging.info(
+            "Marketcap top #"
+            + str(attributes.get("topcoin_limit", 3500, asyncState.dca_conf))
+            + " - Min. daily BTC trading volume: "
+            + str(attributes.get("topcoin_volume", 0, asyncState.dca_conf)),
+            True,
+        )
+    logging.info(
+        "FGI trading: '" + str(attributes.get("fearandgreed", False)) + "'", True
+    )
+    if attributes.get("fearandgreed", False):
+        logging.info(
+            "   FGI required for trading: ["
+            + str(attributes.get("fgi_trade_min"))
+            + "-"
+            + str(attributes.get("fgi_trade_max"))
+            + "]",
+            True,
+        )
+
+        fundsneeded, pd, rc = report_funds_needed("fgi_aggressive")
+        logging.info(
+            "[fgi_aggressive "
+            + str(attributes.get("fgi_min", "0", "fgi_aggressive"))
+            + "-"
+            + str(attributes.get("fgi_max", "0", "fgi_aggressive"))
+            + "]: "
+            + attributes.get("prefix", "", "fgi_aggressive")
+            + "_"
+            + attributes.get("subprefix", "", "fgi_aggressive")
+            + "_"
+            + attributes.get("suffix", "", "fgi_aggressive"),
+            True,
+        )
+        logging.info(
+            "   mad/single bots: "
+            + str(attributes.get("mad", "0", "fgi_aggressive"))
+            + "/"
+            + str(attributes.get("single_count", "0", "fgi_aggressive"))
+            + "  funds needed: "
+            + format_currency(fundsneeded, "USD", locale="en_US")
+            + "  cov. max price dev: "
+            + f"{pd:2.1f}%"
+            + "  max req. change: "
+            + f"{rc:2.1f}%",
+            True,
+        )
+        if attributes.get("topcoin_filter", False):
+            logging.info(
+                "   Topcoin filter: marketcap top #"
+                + str(attributes.get("topcoin_limit", 3500, "fgi_aggressive"))
+                + " - Min. daily BTC trading volume: "
+                + str(attributes.get("topcoin_volume", 0, "fgi_aggressive")),
+                True,
+            )
+
+        fundsneeded, pd, rc = report_funds_needed("fgi_moderate")
+        logging.info(
+            "[fgi_moderate "
+            + str(attributes.get("fgi_min", "0", "fgi_moderate"))
+            + "-"
+            + str(attributes.get("fgi_max", "0", "fgi_moderate"))
+            + "]: "
+            + attributes.get("prefix", "", "fgi_moderate")
+            + "_"
+            + attributes.get("subprefix", "", "fgi_moderate")
+            + "_"
+            + attributes.get("suffix", "", "fgi_moderate"),
+            True,
+        )
+        logging.info(
+            "   mad/single bots: "
+            + str(attributes.get("mad", "0", "fgi_moderate"))
+            + "/"
+            + str(attributes.get("single_count", "0", "fgi_moderate"))
+            + "  funds needed: "
+            + format_currency(fundsneeded, "USD", locale="en_US")
+            + "  cov. max price dev: "
+            + f"{pd:2.1f}%"
+            + "  max req. change: "
+            + f"{rc:2.1f}%",
+            True,
+        )
+        if attributes.get("topcoin_filter", False):
+            logging.info(
+                "   Topcoin filter: marketcap top #"
+                + str(attributes.get("topcoin_limit", 3500, "fgi_moderate"))
+                + " - Min. daily BTC trading volume: "
+                + str(attributes.get("topcoin_volume", 0, "fgi_moderate")),
+                True,
+            )
+
+        fundsneeded, pd, rc = report_funds_needed("fgi_defensive")
+        logging.info(
+            "[fgi_defensive "
+            + str(attributes.get("fgi_min", "0", "fgi_defensive"))
+            + "-"
+            + str(attributes.get("fgi_max", "0", "fgi_defensive"))
+            + "]: "
+            + attributes.get("prefix", "", "fgi_defensive")
+            + "_"
+            + attributes.get("subprefix", "", "fgi_defensive")
+            + "_"
+            + attributes.get("suffix", "", "fgi_defensive"),
+            True,
+        )
+        logging.info(
+            "   mad/single bots: "
+            + str(attributes.get("mad", "0", "fgi_defensive"))
+            + "/"
+            + str(attributes.get("single_count", "0", "fgi_defensive"))
+            + "  funds needed: "
+            + format_currency(fundsneeded, "USD", locale="en_US")
+            + "  cov. max price dev: "
+            + f"{pd:2.1f}%"
+            + "  max req. change: "
+            + f"{rc:2.1f}%",
+            True,
+        )
+        if attributes.get("topcoin_filter", False):
+            logging.info(
+                "   Topcoin filter: marketcap top #"
+                + str(attributes.get("topcoin_limit", 3500, "fgi_defensive"))
+                + " - Min. daily BTC trading volume: "
+                + str(attributes.get("topcoin_volume", 0, "fgi_defensive")),
+                True,
+            )
+
+    logging.info(
+        "External/TV bot switching: '"
+        + str(attributes.get("ext_botswitch", False))
+        + "'",
+        True,
+    )
+    logging.info("Quote currency: '" + str(attributes.get("market")) + "'")
+    logging.info(
+        "Token whitelist: '" + str(attributes.get("token_whitelist", "No")) + "'", True
+    )
+    return
+
+
 async def main():
 
     # Check for single instance run
@@ -1153,115 +1324,7 @@ async def main():
     pair_data_task.add_done_callback(_handle_task_result)
     await asyncio.sleep(3)
 
-    if attributes.get("single"):
-        logging.info("Bot mode: 'single pair'", True)
-    else:
-        logging.info("Bot mode: 'multi pair'", True)
-
-    logging.info(
-        "Listening to 3cqs signals: '" + str(attributes.get("symrank_signal")) + "'",
-        True,
-    )
-    logging.info(
-        "Topcoin filter: '" + str(attributes.get("topcoin_filter", False)) + "'", True
-    )
-    if attributes.get("topcoin_filter", False):
-        logging.info(
-            "Marketcap Top "
-            + str(attributes.get("topcoin_limit", 3500, asyncState.dca_conf))
-            + " - Min. daily BTC trading volume: "
-            + str(attributes.get("topcoin_volume", 0, asyncState.dca_conf)),
-            True,
-        )
-    logging.info(
-        "Sort and limit symrank pairs to mad: "
-        + str(attributes.get("limit_symrank_pairs_to_mad", False)),
-        True,
-    )
-    logging.info("BTC pulse: '" + str(attributes.get("btc_pulse", False)) + "'", True)
-    logging.info(
-        "FGI trading: '" + str(attributes.get("fearandgreed", False)) + "'", True
-    )
-    if attributes.get("fearandgreed", False):
-        logging.info(
-            "FGI required for trading: ["
-            + str(attributes.get("fgi_trade_min"))
-            + "-"
-            + str(attributes.get("fgi_trade_max"))
-            + "]",
-            True,
-        )
-        fundsneeded, pd, rc = report_funds_needed("fgi_aggressive")
-        logging.info(
-            "[fgi_aggressive "
-            + str(attributes.get("fgi_min", "0", "fgi_aggressive"))
-            + "-"
-            + str(attributes.get("fgi_max", "0", "fgi_aggressive"))
-            + "]: mad/single bots: "
-            + str(attributes.get("mad", "0", "fgi_aggressive"))
-            + "/"
-            + str(attributes.get("single_count", "0", "fgi_aggressive"))
-            + "  funds needed: "
-            + format_currency(fundsneeded, "USD", locale="en_US")
-            + "  cov. max price dev: "
-            + f"{pd:2.1f}"
-            + "%  max req. change: "
-            + f"{rc:2.1f}%",
-            True,
-        )
-        fundsneeded, pd, rc = report_funds_needed("fgi_moderate")
-        logging.info(
-            "[fgi_moderate "
-            + str(attributes.get("fgi_min", "0", "fgi_moderate"))
-            + "-"
-            + str(attributes.get("fgi_max", "0", "fgi_moderate"))
-            + "]: mad/single bots: "
-            + str(attributes.get("mad", "0", "fgi_moderate"))
-            + "/"
-            + str(attributes.get("single_count", "0", "fgi_moderate"))
-            + "  funds needed: "
-            + format_currency(fundsneeded, "USD", locale="en_US")
-            + "  cov. max price dev: "
-            + f"{pd:2.1f}%"
-            + "%  max req. change: "
-            + f"{rc:2.1f}%",
-            True,
-        )
-        fundsneeded, pd, rc = report_funds_needed("fgi_defensive")
-        logging.info(
-            "[fgi_defensive "
-            + str(attributes.get("fgi_min", "0", "fgi_defensive"))
-            + "-"
-            + str(attributes.get("fgi_max", "0", "fgi_defensive"))
-            + "]: mad/single bots: "
-            + str(attributes.get("mad", "0", "fgi_defensive"))
-            + "/"
-            + str(attributes.get("single_count", "0", "fgi_defensive"))
-            + "  funds needed: "
-            + format_currency(fundsneeded, "USD", locale="en_US")
-            + "  cov. max price dev: "
-            + f"{pd:2.1f}%"
-            + "%  max req. change: "
-            + f"{rc:2.1f}%",
-            True,
-        )
-
-    logging.info(
-        "Continuous pair update for multibot with other deal_mode than 'signal': '"
-        + str(attributes.get("continuous_update", False))
-        + "'",
-        True,
-    )
-    logging.info(
-        "External/TV bot switching: '"
-        + str(attributes.get("ext_botswitch", False))
-        + "'",
-        True,
-    )
-    logging.info("Quote currency: '" + str(attributes.get("market")) + "'")
-    logging.info(
-        "Token whitelist: '" + str(attributes.get("token_whitelist", "No")) + "'", True
-    )
+    config_report()
 
     # Check for inconsistencies of bot switching before starting 3cqsbot
     if attributes.get("btc_pulse", False) and attributes.get("ext_botswitch", False):

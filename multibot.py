@@ -716,7 +716,7 @@ class MultiBot:
         self.logging.debug("Pairs after topcoin filter " + str(pairs))
 
         # Run filters to adapt mad according to pair list - multibot creation with mad=1 possible
-        if self.attributes.get("limit_symrank_pairs_to_mad", False):
+        if self.attributes.get("limit_symrank_pairs", False):
             # Limit pairs to the maximal deals (mad)
             if self.attributes.get("mad") == 1:
                 maxpairs = 1
@@ -727,9 +727,8 @@ class MultiBot:
             pairs = pairs[0:maxpairs]
             self.asyncState.pairs_volume = self.asyncState.pairs_volume[0:maxpairs]
             self.logging.info(
-                "Limiting volume sorted symrank list to max active deals of "
-                + str(maxpairs),
-                more_inform,
+                "Volume sorting and limiting symrank list to max active deals",
+                True,
             )
 
         # Adapt mad if pairs are under value
@@ -910,7 +909,7 @@ class MultiBot:
 
                         # if limit_symrank_pairs_to_mad == True, add trigger pair to pairs_volume list and sort
                         if (
-                            self.attributes.get("limit_symrank_pairs_to_mad", False)
+                            self.attributes.get("limit_symrank_pairs", False)
                             and self.asyncState.pairs_volume
                         ):
                             self.asyncState.pairs_volume.append(pair_volume)
