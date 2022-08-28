@@ -454,40 +454,41 @@ async def get_fgi(ema_fast, ema_slow):
                 asyncState.fgi_time_until_update = time_until_update
 
                 # some statistics
-                start_delta = datetime.utcnow() - asyncState.start_time
-                logging.info(
-                    "3cqsbot running since "
-                    + format_timedelta(
-                        start_delta,
-                        locale="en_US",
+                if asyncState.receive_signals:
+                    start_delta = datetime.utcnow() - asyncState.start_time
+                    logging.info(
+                        "3cqsbot running since "
+                        + format_timedelta(
+                            start_delta,
+                            locale="en_US",
+                        )
                     )
-                )
-                logging.info(
-                    "3cqs signals processed over 24h while bot was enabled - Start: "
-                    + str(asyncState.start_signals_24h)
-                    + " - Stop: "
-                    + str(asyncState.stop_signals_24h),
-                    True,
-                )
-                asyncState.start_signals_24h = 0
-                asyncState.stop_signals_24h = 0
-                start_per_day = asyncState.start_signals / (
-                    start_delta / timedelta(days=1)
-                )
-                stop_per_day = asyncState.stop_signals / (
-                    start_delta / timedelta(days=1)
-                )
-                logging.info(
-                    "TOTAL 3cqs signals processed while bot was enabled - Start: "
-                    + str(asyncState.start_signals)
-                    + " per day: "
-                    + f"{start_per_day:2.1f}"
-                    + " - Stop: "
-                    + str(asyncState.stop_signals)
-                    + " per day: "
-                    + f"{stop_per_day:2.1f}",
-                    True,
-                )
+                    logging.info(
+                        "3cqs signals processed over 24h while bot was enabled - Start: "
+                        + str(asyncState.start_signals_24h)
+                        + " - Stop: "
+                        + str(asyncState.stop_signals_24h),
+                        True,
+                    )
+                    asyncState.start_signals_24h = 0
+                    asyncState.stop_signals_24h = 0
+                    start_per_day = asyncState.start_signals / (
+                        start_delta / timedelta(days=1)
+                    )
+                    stop_per_day = asyncState.stop_signals / (
+                        start_delta / timedelta(days=1)
+                    )
+                    logging.info(
+                        "TOTAL 3cqs signals processed while bot was enabled - Start: "
+                        + str(asyncState.start_signals)
+                        + " per day: "
+                        + f"{start_per_day:2.1f}"
+                        + " - Stop: "
+                        + str(asyncState.stop_signals)
+                        + " per day: "
+                        + f"{stop_per_day:2.1f}",
+                        True,
+                    )
 
             notification.send_notification()
             # request FGI once per day, because is is calculated only once per day
