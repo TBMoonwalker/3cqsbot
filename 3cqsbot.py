@@ -97,11 +97,14 @@ async def connect():
 asyncState = type("", (), {})()
 asyncState.btc_downtrend = True
 asyncState.bot_active = True
-asyncState.chatid = ""
 asyncState.fh = 0
 asyncState.accountData = {}
 asyncState.pairData = []
 asyncState.multiInit = "empty"
+asyncState.fgi = -1
+asyncState.fgi_downtrend = False
+asyncState.fgi_allows_trading = False
+asyncState.fgi_time_until_update = 1
 
 ######################################################
 #                     Methods                        #
@@ -217,9 +220,14 @@ async def bot_switch():
 
     while True:
 
-        if not asyncState.btc_downtrend and not asyncState.bot_active:
+        if (
+            not asyncState.btc_downtrend
+            and not asyncState.bot_active
+            and not asyncState.fgi_downtrend
+        ):
 
             logging.debug("bot_active before enabling: " + str(asyncState.bot_active))
+            logging.info("BTC uptrending")
 
             asyncState.bot_active = True
 
@@ -230,8 +238,11 @@ async def bot_switch():
                 bot.enable()
 
         elif asyncState.btc_downtrend and asyncState.bot_active:
+
             asyncState.bot_active = False
+
             logging.debug("bot_active: " + str(asyncState.bot_active))
+
             if attributes.get("single"):
                 bot = SingleBot([], bot_data(), {}, attributes, p3cw, logging)
                 bot.disable(bot_data(), True)
@@ -240,8 +251,7 @@ async def bot_switch():
                 bot.disable()
 
         else:
-            logging.debug("Nothing do to")
-            logging.debug("bot_active: " + str(asyncState.bot_active))
+            logging.debug("Nothing to do - bot active: " + str(asyncState.bot_active))
 
         await asyncio.sleep(60)
 
@@ -309,24 +319,31 @@ async def my_message(data):
                             bot = bot_type(data, asyncState.pairData)
                             logging.debug("Bot create")
                             logging.debug(str(asyncState.pairData))
+
+                            # Enable new multibot only on btc uptrend
                             if bot.create() and (
                                 not asyncState.btc_downtrend
                                 or attributes.get("ext_botswitch", False)
                             ):
                                 bot.enable()
+                            else:
+                                logging.info(
+                                    "Multibot created, but not activated. BTC is in downtrend!"
+                                )
 
                             asyncState.multiInit = "initialized"
-
-                        else:
-                            # Every signal triggers a new multibot deal
-                            bot.trigger(triggeronly=True)
 
                     # Trigger bot if limits passed and pair is traded on the configured exchange
                     if filters.volatility and filters.price and filters.symrank:
 
-                        logging.debug("Trigger bot")
-
-                        bot.trigger()
+                        if asyncState.btc_downtrend:
+                            # Continue to update Multibot pairlist in downtrend
+                            if not attributes.get("single"):
+                                logging.debug("Add new pair to multibot")
+                                bot.trigger()
+                        else:
+                            logging.debug("Trigger bot")
+                            bot.trigger()
 
 
 @sio.event
@@ -338,6 +355,9 @@ async def main():
     conditions = Conditions(logging)
     asyncState.accountData = account_data()
 
+    logging.info("*** 3CQS Bot started ***")
+
+    # Connect to 3CQS websocket
     await sio.connect(
         attributes.get("api_url"),
         headers={
@@ -348,29 +368,27 @@ async def main():
         socketio_path="/stream/v1/signals",
     )
 
-    await sio.wait()
-
-    logging.info("*** 3CQS Bot started ***")
-
+    # Start background tasks for BTC Pulse and external Signal, if nesessary
     if attributes.get("btc_pulse", False) and not attributes.get(
         "ext_bot_active", False
     ):
-        btc_downtrendtask = sio.loop.create_task(
-            conditions.getbtc_downtrend(asyncState)
-        )
+
+        logging.debug("Activating BTC Pulse.")
+        btc_downtrendtask = asyncio.create_task(conditions.btcdowntrend(asyncState))
         btc_downtrendtask.add_done_callback(_handle_task_result)
-        switchtask = sio.loop.create_task(bot_switch())
+        switchtask = asyncio.create_task(bot_switch())
         switchtask.add_done_callback(_handle_task_result)
 
-        while True:
-            await btc_downtrendtask
-            await switchtask
+        await btc_downtrendtask
+        await switchtask
 
     elif attributes.get("btc_pulse", False) and attributes.get("ext_bot_active", False):
         sys.tracebacklimit = 0
         sys.exit(
             "Check config.ini, btc_pulse and ext_bot_active both set to true - not allowed"
         )
+
+    await sio.wait()
 
 
 if __name__ == "__main__":

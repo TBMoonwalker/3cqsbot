@@ -217,7 +217,7 @@ class MultiBot:
 
         return status
 
-    def trigger(self, triggeronly=False):
+    def trigger(self):
         # Updates multi bot with new pairs
         triggerpair = ""
         mad = self.attributes.get("mad")
@@ -226,53 +226,43 @@ class MultiBot:
         # Existing Bot
         if bot:
 
-            if not triggeronly:
-                pair = self.attributes.get("market") + "_" + self.ws_data["symbol"]
+            pair = self.attributes.get("market") + "_" + self.ws_data["symbol"]
 
-                self.logging.info(
-                    "Got new 3cqs " + self.ws_data["signal"] + " signal for " + pair
-                )
+            self.logging.info(
+                "Got new 3cqs " + self.ws_data["signal"] + " signal for " + pair
+            )
 
-                if self.ws_data["signal"] == "BOT_START":
-                    triggerpair = pair
+            if self.ws_data["signal"] == "BOT_START":
+                triggerpair = pair
 
-                    if pair in bot["pairs"]:
-                        self.logging.info(
-                            pair + " is already included in the pair list"
-                        )
-                    else:
-                        if pair:
-                            self.logging.info("Adding pair " + pair)
-                            bot["pairs"].append(pair)
+                if pair in bot["pairs"]:
+                    self.logging.info(pair + " is already included in the pair list")
                 else:
-                    if pair in bot["pairs"]:
-                        self.logging.info("Remove pair " + pair)
-                        bot["pairs"].remove(pair)
-                    else:
-                        self.logging.info(
-                            pair + " was not included in the pair list, not removed"
-                        )
-
-                # Adapt mad if pairs are under value
-                mad = self.adjustmad(bot["pairs"], mad)
-                self.logging.info(
-                    "Adjusting mad to amount of included symrank pairs: " + str(mad)
-                )
-
-                error, data = self.p3cw.request(
-                    entity="bots",
-                    action="update",
-                    action_id=str(bot["id"]),
-                    additional_headers={
-                        "Forced-Mode": self.attributes.get("trade_mode")
-                    },
-                    payload=self.payload(bot["pairs"], mad, new_bot=False),
-                )
-
-                if error:
-                    self.logging.error(error["msg"])
+                    if pair:
+                        self.logging.info("Adding pair " + pair)
+                        bot["pairs"].append(pair)
             else:
-                data = bot
+                if pair in bot["pairs"]:
+                    self.logging.info("Remove pair " + pair)
+                    bot["pairs"].remove(pair)
+                else:
+                    self.logging.info(
+                        pair + " was not included in the pair list, not removed"
+                    )
 
-            if self.attributes.get("deal_mode") == "signal" and data:
-                self.new_deal(data, triggerpair)
+            # Adapt mad if pairs are under value
+            mad = self.adjustmad(bot["pairs"], mad)
+            self.logging.info(
+                "Adjusting mad to amount of included symrank pairs: " + str(mad)
+            )
+
+            error, data = self.p3cw.request(
+                entity="bots",
+                action="update",
+                action_id=str(bot["id"]),
+                additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
+                payload=self.payload(bot["pairs"], mad, new_bot=False),
+            )
+
+            if error:
+                self.logging.error(error["msg"])
