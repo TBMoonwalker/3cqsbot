@@ -77,14 +77,14 @@ class Conditions:
                     and btcusdt.EMA50[-2] > btcusdt.EMA9[-2]
                 ):
                     self.logging.info("btc-pulse signaling uptrend")
-                    asyncState.btcbool = False
+                    asyncState.btc_downtrend = False
                 else:
                     self.logging.info("btc-pulse signaling downtrend")
-                    asyncState.btcbool = True
+                    asyncState.btc_downtrend = True
 
             else:
                 self.logging.info("btc-pulse signaling uptrend")
-                asyncState.btcbool = False
+                asyncState.btc_downtrend = False
 
             self.logging.info("Next btc-pulse check in 5m")
             await asyncio.sleep(300)

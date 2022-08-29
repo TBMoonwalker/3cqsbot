@@ -220,11 +220,7 @@ async def bot_switch():
 
     while True:
 
-        if (
-            not asyncState.btc_downtrend
-            and not asyncState.bot_active
-            and not asyncState.fgi_downtrend
-        ):
+        if not asyncState.btc_downtrend and not asyncState.bot_active:
 
             logging.debug("bot_active before enabling: " + str(asyncState.bot_active))
             logging.info("BTC uptrending")
@@ -251,7 +247,10 @@ async def bot_switch():
                 bot.disable()
 
         else:
-            logging.debug("Nothing to do - bot active: " + str(asyncState.bot_active))
+            if asyncState.bot_active:
+                logging.debug("Bot started")
+            else:
+                logging.debug("Bot stopped")
 
         await asyncio.sleep(60)
 
