@@ -6,11 +6,11 @@ debug = false
 #log_file_count = 5
 
 [websocket]
-api_version = 0.5-beta
-api_key = "Your api key from 3CQS here - without Quotes"
-api_url = https://stream.3cqs.com
-reconnection_delay = 10000
-reconnection_attempts = 5
+websocket_version = 0.5-beta
+websocket_key = "Your api key from 3CQS here - without Quotes"
+websocket_url = https://stream.3cqs.com
+websocket_reconnection_delay = 10000
+websocket_reconnection_attempts = 5
 
 [commas]
 key = "Your api key from 3Commas here - without Quotes"

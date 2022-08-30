@@ -8,12 +8,8 @@ The 3cqsbot can be used to start and stop [3commas](https://3commas.io) dca bots
 
 ## 3CQS Signals Bot
 
-Join the telegram channel [telegram channel](https://t.me/The3CQSBot) according to the official Telegram [documentation](https://core.telegram.org/api/obtaining_api_id)
-
-Wait for the signals. Actually the signals are in a beta phase and you have to be chosen to get them. Be patient if they not arrive after joining
-
-## Telegram API
-In the meantime create your [telegram api account](https://my.telegram.org/apps) and insert them into `api_id` and `api_hash` fields in the *'telegram'* section of the `config.ini`
+## Websocket API
+Get your websocket url, key from @Mantis in the discord channel
 
 ## 3Commas API
 Create a [3commas api account](https://3commas.io/api_access_tokens) too and insert the values in the `key` and `secret` fields in the *'commas'* section of the `config.ini`
@@ -52,16 +48,15 @@ log_file_count | integer | NO | (5) | How many logfiles will be archived, be
 ## Telegram
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
-api_id | string | YES |   | Telegram API ID
-api_hash | string | YES |   | Telegram API Hash
-sessionfile | string | NO | (tgsession) | Telegram sessionfile location
+websocket_version | string | YES |   | 3CQS websocket version
+websocket_key | string | YES |   | 3CQS websocket key
+websocket_url | string | YES |   | 3CQS websocket url
 
 **!!! ATTENTION - Do not share your sessionfile with other 3cqsbot instances - this will lead to problems and misfunctional bots. For each instance you have to create a new sessionfile !!!**
 
 ## 3Commas
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
-chatroom | string |NO | (3C Quick Stats) | Name of the chatroom - on Windows please use the ID 5011413076
 key | string | YES |    | 3Commas API Key
 secret | string | YES | | 3Commas API Secret
 timeout | integer | NO | (3) | Timeout waiting for a 3Commas api response

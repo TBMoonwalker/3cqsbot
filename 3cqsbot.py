@@ -83,8 +83,8 @@ sio = socketio.AsyncClient(
     logger=True,
     engineio_logger=True,
     reconnection=True,
-    reconnection_delay=attributes.get("reconnection_delay", 10000),
-    reconnection_attempts=attributes.get("reconnection_attempts", 0),
+    reconnection_delay=attributes.get("websocket_reconnection_delay", 10000),
+    reconnection_attempts=attributes.get("websocket_reconnection_attempts", 0),
 )
 
 
@@ -358,10 +358,10 @@ async def main():
 
     # Connect to 3CQS websocket
     await sio.connect(
-        attributes.get("api_url"),
+        attributes.get("websocket_url"),
         headers={
-            "api-key": attributes.get("api_key"),
-            "user-agent": "3CQS Signal Client/" + attributes.get("api_version"),
+            "api-key": attributes.get("websocket_key"),
+            "user-agent": "3CQS Signal Client/" + attributes.get("websocket_version"),
         },
         transports=["websocket", "polling"],
         socketio_path="/stream/v1/signals",

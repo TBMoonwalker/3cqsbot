@@ -11,11 +11,11 @@ echo "[general]" > config.ini
 
 # Websocket settings
 echo "[websocket]" >> config.ini
-[ $WEBSOCKET_VERSION ] && echo "api_version = $WEBSOCKET_VERSION" >> config.ini
-[ $WEBSOCKET_KEY ] && echo "api_key = $WEBSOCKET_KEY" >> config.ini
-[ $WEBSOCKET_URL ] && echo "api_url = $WEBSOCKET_URL" >> config.ini
-[ $WEBSOCKET_RECONNECT_TIMEOUT ] && echo "reconnection_delay = $WEBSOCKET_RECONNECT_TIMEOUT" >> config.ini
-[ $WEBSOCKET_RECONNECT_ATTEMPTS ] && echo "reconnection_attempts = $WEBSOCKET_RECONNECT_ATTEMPTS" >> config.ini
+[ $WEBSOCKET_VERSION ] && echo "websocket_version = $WEBSOCKET_VERSION" >> config.ini
+[ $WEBSOCKET_KEY ] && echo "websocket_key = $WEBSOCKET_KEY" >> config.ini
+[ $WEBSOCKET_URL ] && echo "websocket_url = $WEBSOCKET_URL" >> config.ini
+[ $WEBSOCKET_RECONNECT_TIMEOUT ] && echo "websocket_reconnection_delay = $WEBSOCKET_RECONNECT_TIMEOUT" >> config.ini
+[ $WEBSOCKET_RECONNECT_ATTEMPTS ] && echo "websocket_reconnection_attempts = $WEBSOCKET_RECONNECT_ATTEMPTS" >> config.ini
 
 # 3Commas settings
 echo "[commas]" >> config.ini
