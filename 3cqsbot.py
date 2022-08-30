@@ -578,8 +578,8 @@ async def get_btcpulse(interval_sec):
     i = round(3600 / interval_sec, 0)
     while True:
         try:
-            ## inform every hour on TG and after first start
-            if i >= round(3600 / interval_sec, 0):
+            ## in debug mode inform every hour on TG and after first start
+            if i >= round(3600 / interval_sec, 0) and attributes.get("debug", False):
                 TG_inform = True
                 i = 0
             else:
@@ -615,7 +615,7 @@ async def get_btcpulse(interval_sec):
                     btcusdt.EMA9[-1] > btcusdt.EMA50[-1]
                     and btcusdt.EMA9[-2] < btcusdt.EMA50[-2]
                 ):
-                    # Inform about BTC trend changes
+                    # Inform about BTC trend change
                     if asyncState.btc_downtrend:
                         TG_inform = True
                     logging.info(
@@ -640,10 +640,18 @@ async def get_btcpulse(interval_sec):
                             + "'",
                             TG_inform,
                         )
+                    if (
+                        attributes.get("fearandgreed", False)
+                        and not asyncState.fgi_allows_trading
+                    ):
+                        logging.info(
+                            "3cqsbot will not be enabled because FGI does not allow trading",
+                            TG_inform,
+                        )
                     asyncState.btc_downtrend = False
                     TG_inform = False
                 else:
-                    # Inform about BTC trend changes
+                    # Inform about BTC trend change
                     if not asyncState.btc_downtrend:
                         TG_inform = True
                     logging.info(
@@ -665,7 +673,7 @@ async def get_btcpulse(interval_sec):
                     asyncState.btc_downtrend = True
                     TG_inform = False
             else:
-                # Inform about BTC trend changes
+                # Inform about BTC trend change
                 if asyncState.btc_downtrend:
                     TG_inform = True
                 logging.info(
