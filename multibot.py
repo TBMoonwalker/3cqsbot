@@ -41,6 +41,8 @@ class MultiBot:
                 bot.update({"name": bots["name"]})
                 bot.update({"enabled": bots["is_enabled"]})
                 bot.update({"pairs": bots["pairs"]})
+                bot.update({"active_deals_count": bots["active_deals_count"]})
+                bot.update({"max_active_deals": bots["max_active_deals"]})
 
         return bot
 
@@ -266,3 +268,9 @@ class MultiBot:
 
             if error:
                 self.logging.error(error["msg"])
+
+            if self.attributes.get("deal_mode") == "signal":
+                data = bot
+
+            if self.attributes.get("deal_mode") == "signal" and data:
+                self.new_deal(data, triggerpair)

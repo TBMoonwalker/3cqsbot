@@ -35,5 +35,5 @@ trade_mode = paper
 account_name = "Your paper account here - without quotes"
 
 [filter]
-symrank_signal = triple100
+symrank_signal = 1
 token_denylist = [USDT_BTC, USDT_ETH, USDT_BUSD, USDT_USDC]

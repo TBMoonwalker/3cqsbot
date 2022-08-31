@@ -11,16 +11,13 @@ class Filters:
         token_signal = False
 
         if (
-            self.ws_data["signal_name"] == self.attributes.get("symrank_signal")
-            or self.attributes.get("symrank_signal") == "all"
+            self.ws_data["signal_name_id"]
+            in self.attributes.get("symrank_signal").split(",")
+            or self.attributes.get("symrank_signal") == 99
         ):
             token_signal = True
         else:
-            self.logging.info(
-                "Signal ignored because '"
-                + self.attributes.get("symrank_signal")
-                + "' is configured"
-            )
+            self.logging.info("Signal ignored because it isn't configured")
 
         return token_signal
 

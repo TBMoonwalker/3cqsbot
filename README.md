@@ -165,7 +165,7 @@ Everything is the same as with the other multi mode, but the deals are started d
 
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
-symrank_signal | string | YES | (triple100), top30, quad100, quad250, svol, svoldouble, xvol, hvol, hvoldouble, uvol, all | Decide which signal the bot should parse.
+symrank_signal | integer | YES | 1 | Decide which signal the bot should parse (see Signals section)
 symrank_limit_min | integer | NO | (1) | Bots will be created when the symrank value is over this limit
 symrank_limit_max | integer | NO | (100) | Bots will be created when the symrank value is under this limit
 volatility_limit_min | number | NO | (0.1) | Bots will be created when the volatility value is over this limit
@@ -184,35 +184,37 @@ ext_botswitch | boolean | NO | (false), true | If enabled the automatic multi
 token_denylist | array |YES | ([BUSD_USDT, USDC_USDT, USDT_USDT, USDT_USDP]) | Denylist of pairs which not be used by the bot for new deals
 
 ### Signals
-The new version of 3cqs signals is now separated into three main versions. To decide which version fit your needs, please take a look at the indicators beneath. The description can be found on Discord too: https://discord.com/channels/720875074806349874/835100061583015947/958724423513419876
+Beneath you can see a list of all available 3CQS signals right now. You can combine them in your `symrank_signal` attribute like "symrank_signal = 1,2".
 
-#### triple100
-SIGNAL NAME: SymRank Top 100 Triple Tracker
-BOT_START: SymRank <= 100
-Volatility Score >= 3, 
-Price Action Score >= 2
-
-#### top30
-SIGNAL NAME: SymRank Top 30
-BOT_START: SymRank <= 30
-
-#### hvol
-SIGNAL NAME: Hyper Volatility
-BOT_START: Volatility Score >= 6
-
-#### uvol
-SIGNAL NAME: Hyper Volatility
-BOT_START: Volatility Score >= 8
-
-#### xvol
-SIGNAL NAME: X-treme Volatility
-BOT_START: Volatility Score >= 10
+ID | Name
+------------ | ------------
+1 | SymRank Top 100 Triple Tracker
+2 | SymRank Top 30
+3 |	Hyper Volatility
+4 |	Ultra Volatility
+5 |	X-Treme Volatility
+6 |	SymRank Top 100 Quadruple Tracker
+7 |	SymRank Top 250 Quadruple Tracker
+8 |	Hyper Volatility Double Tracker
+9 |	Super Volatility
+10|	Super Volatility Double Tracker
+11|	SymRank Top 50
+12|	SymRank Top 10
+13|	SymScore Super Bullish (BETA)
+14|	SymScore Hyper Bullish (BETA)
+15|	SymScore Ultra Bullish (BETA)
+16|	SymScore X-Treme Bullish (BETA)
+17|	SymScore Super Bearish (BETA)
+18|	SymScore Hyper Bearish (BETA)
+19|	SymScore Ultra Bearish (BETA)
+20|	SymScore X-Treme Bearish (BETA)
+99 | Use all signals
 
 #### all
 Pass through all signals
 
 ### BTC Pulse
-BTCPulse is a simple strategy which monitors BTC Price Action to start new deals or just put the bot to sleep ( no new deals but active deals keep running) based on:-
+BTC Pulse is a simple strategy which monitors BTC Price Action to start new deals or just put the bot to sleep ( no new deals but active deals keep running) based on:-
 If BTC is in upswing new deals are started 
 If BTC is dumping no new deals are started
 

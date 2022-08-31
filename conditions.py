@@ -1,10 +1,13 @@
 import yfinance as yf
 import numpy as np
 import asyncio
+import json
+import requests
 
 from tenacity import retry, wait_fixed
 from functools import lru_cache, wraps
 from time import monotonic_ns
+from dateutil.relativedelta import relativedelta as rd
 
 
 class Conditions:
@@ -54,7 +57,7 @@ class Conditions:
     # https://discord.gg/tradealts
     async def btcdowntrend(self, asyncState):
 
-        self.logging.info("Starting btc-pulse")
+        self.logging.info("Condition: Starting BTC-Pulse")
 
         while True:
             btcusdt = self.ticker("BTC-USD")
@@ -64,7 +67,7 @@ class Conditions:
                 btcusdt.percentchange_15mins[-1] < -1
                 or btcusdt.EMA50[-1] > btcusdt.EMA9[-1]
             ):
-                self.logging.info("btc-pulse signaling downtrend")
+                self.logging.info("BTC-Pulse signaling downtrend")
 
                 # after 5mins getting the latest BTC data to see if it has had a sharp rise in previous 5 mins
                 await asyncio.sleep(300)
@@ -76,27 +79,40 @@ class Conditions:
                     btcusdt.EMA9[-1] > btcusdt.EMA50[-1]
                     and btcusdt.EMA50[-2] > btcusdt.EMA9[-2]
                 ):
-                    self.logging.info("btc-pulse signaling uptrend")
+                    self.logging.info("BTC-Pulse signaling uptrend")
                     asyncState.btc_downtrend = False
                 else:
-                    self.logging.info("btc-pulse signaling downtrend")
+                    self.logging.info("BTC-Pulse signaling downtrend")
                     asyncState.btc_downtrend = True
 
             else:
-                self.logging.info("btc-pulse signaling uptrend")
+                self.logging.info("BTC-Pulse signaling uptrend")
                 asyncState.btc_downtrend = False
 
-            self.logging.info("Next btc-pulse check in 5m")
+            self.logging.info("Next BTC-Pulse check in 5m")
+
             await asyncio.sleep(300)
 
     # Credits goes to @M1ch43l from
     # https://discord.gg/tradealts
+    # Credits go to @M1ch43l
+    # Adjust DCA settings dynamically according to social sentiment: greed = aggressive DCA, neutral = moderate DCA, fear = conservative DCA
+    @retry(wait=wait_fixed(10))
+    def requests_call(self, method, url, timeout):
+        response = []
+        try:
+            response = requests.request(method, url, timeout=timeout)
+        except Exception as e:
+            raise IOError(
+                "Fear and greed index API actually down, retrying in 60s, Error is:" + e
+            )
+        return response
+
     async def get_fgi(self, asyncState, ema_fast, ema_slow):
 
         url = "https://api.alternative.me/fng/?limit=100"
         self.logging.info(
-            "Using crypto fear and greed index (FGI) from alternative.me for changing 3cqsbot DCA settings to defensive, moderate or aggressive",
-            True,
+            "Condition: Starting crypto fear and greed index (FGI) from alternative.me"
         )
 
         while True:
@@ -117,8 +133,7 @@ class Conditions:
                 self.logging.info(
                     "Current FGI: {:d}".format(fgi_values[-1])
                     + " - time till next update: "
-                    + fmt.format(rd(seconds=time_until_update)),
-                    True,
+                    + fmt.format(rd(seconds=time_until_update))
                 )
                 asyncState.fgi = fgi_values[-1]
 
@@ -129,8 +144,7 @@ class Conditions:
                         + " less than FGI-EMA{:d}: {:.1f}".format(
                             ema_slow, fgi_ema_slow[-1]
                         )
-                        + "  -- downtrending",
-                        True,
+                        + "  -- downtrending"
                     )
                 else:
                     asyncState.fgi_downtrend = False
@@ -139,8 +153,7 @@ class Conditions:
                         + " greater than FGI-EMA{:d}: {:.1f}".format(
                             ema_slow, fgi_ema_slow[-1]
                         )
-                        + "  -- uptrending",
-                        True,
+                        + "  -- uptrending"
                     )
 
                 # FGI downtrend = true if FGI drops >= 10 between actual and last day
@@ -152,12 +165,10 @@ class Conditions:
                     self.logging.info(
                         "FGI actual/yesterday/before yesterday: {:d}/{:d}/{:d}".format(
                             fgi_values[-1], fgi_values[-2], fgi_values[-3]
-                        ),
-                        True,
+                        )
                     )
                     self.logging.info(
-                        "Drop > 10 between actual vs. yesterday or drop > 15 between actual vs. before yesterday",
-                        True,
+                        "Drop > 10 between actual vs. yesterday or drop > 15 between actual vs. before yesterday"
                     )
 
                 asyncState.fgi_time_until_update = time_until_update

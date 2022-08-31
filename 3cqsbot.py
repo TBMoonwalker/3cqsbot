@@ -40,8 +40,10 @@ args = parser.parse_args()
 # Set logging facility
 if attributes.get("debug", False):
     loglevel = "DEBUG"
+    wslogger = True
 else:
     loglevel = "INFO"
+    wslogger = False
 
 # Set logging output
 # Thanks to @M1cha3l for improving logging output
@@ -80,8 +82,8 @@ p3cw = Py3CW(
 
 # Initialize socket.io async client
 sio = socketio.AsyncClient(
-    logger=True,
-    engineio_logger=True,
+    logger=wslogger,
+    engineio_logger=wslogger,
     reconnection=True,
     reconnection_delay=attributes.get("websocket_reconnection_delay", 10000),
     reconnection_attempts=attributes.get("websocket_reconnection_attempts", 0),
@@ -220,37 +222,37 @@ async def bot_switch():
 
     while True:
 
-        if not asyncState.btc_downtrend and not asyncState.bot_active:
+        if not asyncState.btc_downtrend:
 
-            logging.debug("bot_active before enabling: " + str(asyncState.bot_active))
-            logging.info("BTC uptrending")
+            if not asyncState.bot_active:
+                asyncState.bot_active = True
 
-            asyncState.bot_active = True
+                logging.debug(
+                    "bot_active before enabling: " + str(asyncState.bot_active)
+                )
+                logging.info("BTC uptrending")
 
-            if attributes.get("single"):
-                logging.info("Not activating old single bots (waiting for new signals)")
-            else:
-                bot = MultiBot([], bot_data(), {}, 0, attributes, p3cw, logging)
-                bot.enable()
-
-        elif asyncState.btc_downtrend and asyncState.bot_active:
-
-            asyncState.bot_active = False
-
-            logging.debug("bot_active: " + str(asyncState.bot_active))
-
-            if attributes.get("single"):
-                bot = SingleBot([], bot_data(), {}, attributes, p3cw, logging)
-                bot.disable(bot_data(), True)
-            else:
-                bot = MultiBot([], bot_data(), {}, 0, attributes, p3cw, logging)
-                bot.disable()
+                if attributes.get("single"):
+                    logging.info(
+                        "Not activating old single bots (waiting for new signals)"
+                    )
+                else:
+                    bot = MultiBot([], bot_data(), {}, 0, attributes, p3cw, logging)
+                    bot.enable()
 
         else:
+
             if asyncState.bot_active:
-                logging.debug("Bot started")
-            else:
-                logging.debug("Bot stopped")
+                asyncState.bot_active = False
+
+                logging.debug("bot_active: " + str(asyncState.bot_active))
+
+                if attributes.get("single"):
+                    bot = SingleBot([], bot_data(), {}, attributes, p3cw, logging)
+                    bot.disable(bot_data(), True)
+                else:
+                    bot = MultiBot([], bot_data(), {}, 0, attributes, p3cw, logging)
+                    bot.disable()
 
         await asyncio.sleep(60)
 
@@ -303,7 +305,8 @@ async def my_message(data):
                         # Create initial pairlist for multibot
                         pair_output = [data["symbol"]]
 
-                        if asyncState.multiInit == "empty":
+                        # Check if Multibot exist and if not fill initial pairs
+                        if asyncState.multiInit == "empty" and not bot.bot():
                             # Minimum of two pairs is needed - stop Initialization afterwards
                             if len(asyncState.pairData) < 2:
                                 logging.info(
@@ -314,6 +317,7 @@ async def my_message(data):
                                 logging.info("Initial pairs for multibot filled.")
                                 asyncState.multiInit = "filled"
 
+                        # Create new Multibot
                         if asyncState.multiInit == "filled":
                             bot = bot_type(data, asyncState.pairData)
                             logging.debug("Bot create")
@@ -353,6 +357,7 @@ async def disconnect():
 async def main():
     conditions = Conditions(logging)
     asyncState.accountData = account_data()
+    loop = asyncio.get_event_loop()
 
     logging.info("*** 3CQS Bot started ***")
 
@@ -367,25 +372,38 @@ async def main():
         socketio_path="/stream/v1/signals",
     )
 
-    # Start background tasks for BTC Pulse and external Signal, if nesessary
-    if attributes.get("btc_pulse", False) and not attributes.get(
-        "ext_bot_active", False
-    ):
-
-        logging.debug("Activating BTC Pulse.")
-        btc_downtrendtask = asyncio.create_task(conditions.btcdowntrend(asyncState))
-        btc_downtrendtask.add_done_callback(_handle_task_result)
-        switchtask = asyncio.create_task(bot_switch())
-        switchtask.add_done_callback(_handle_task_result)
-
-        await btc_downtrendtask
-        await switchtask
-
-    elif attributes.get("btc_pulse", False) and attributes.get("ext_bot_active", False):
+    # BTC-Pulse and External Bot cannot be activated at the same time
+    if attributes.get("btc_pulse", False) and attributes.get("ext_bot_active", False):
         sys.tracebacklimit = 0
         sys.exit(
             "Check config.ini, btc_pulse and ext_bot_active both set to true - not allowed"
         )
+
+    btc_downtrendtask = asyncio.create_task(conditions.btcdowntrend(asyncState))
+    btc_downtrendtask.add_done_callback(_handle_task_result)
+
+    switchtask = asyncio.create_task(bot_switch())
+    switchtask.add_done_callback(_handle_task_result)
+
+    fgi_task = asyncio.create_task(
+        conditions.get_fgi(
+            asyncState,
+            attributes.get("fgi_ema_fast", 9),
+            attributes.get("fgi_ema_slow", 50),
+        )
+    )
+    fgi_task.add_done_callback(_handle_task_result)
+
+    # Start background tasks for BTC Pulse
+    if attributes.get("btc_pulse", False) and not attributes.get(
+        "ext_bot_active", False
+    ):
+        await btc_downtrendtask
+        await switchtask
+
+    # Start background tasks for FGI
+    if attributes.get("fearandgreed", False):
+        await fgi_task
 
     await sio.wait()
 
