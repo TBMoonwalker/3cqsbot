@@ -12,12 +12,12 @@ class Filters:
 
         if (
             self.ws_data["signal_name_id"]
-            in self.attributes.get("symrank_signal").split(",")
+            in list(map(int, self.attributes.get("symrank_signal").split(",")))
             or self.attributes.get("symrank_signal") == 99
         ):
             token_signal = True
         else:
-            self.logging.info("Signal ignored because it isn't configured")
+            self.logging.info("Signal ignored because signal isn't configured")
 
         return token_signal
 

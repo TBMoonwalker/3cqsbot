@@ -219,7 +219,7 @@ class MultiBot:
 
         return status
 
-    def trigger(self):
+    def trigger(self, triggeronly=False):
         # Updates multi bot with new pairs
         triggerpair = ""
         mad = self.attributes.get("mad")
@@ -229,6 +229,7 @@ class MultiBot:
         if bot:
 
             pair = self.attributes.get("market") + "_" + self.ws_data["symbol"]
+            pair_update = True
 
             self.logging.info(
                 "Got new 3cqs " + self.ws_data["signal"] + " signal for " + pair
@@ -251,26 +252,31 @@ class MultiBot:
                     self.logging.info(
                         pair + " was not included in the pair list, not removed"
                     )
+                    pair_update = False
 
-            # Adapt mad if pairs are under value
-            mad = self.adjustmad(bot["pairs"], mad)
-            self.logging.info(
-                "Adjusting mad to amount of included symrank pairs: " + str(mad)
-            )
+            if pair_update:
+                # Adapt mad if pairs are under value
+                mad = self.adjustmad(bot["pairs"], mad)
+                self.logging.info(
+                    "Adjusting mad to amount of included symrank pairs: " + str(mad)
+                )
 
-            error, data = self.p3cw.request(
-                entity="bots",
-                action="update",
-                action_id=str(bot["id"]),
-                additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-                payload=self.payload(bot["pairs"], mad, new_bot=False),
-            )
+                error, data = self.p3cw.request(
+                    entity="bots",
+                    action="update",
+                    action_id=str(bot["id"]),
+                    additional_headers={
+                        "Forced-Mode": self.attributes.get("trade_mode")
+                    },
+                    payload=self.payload(bot["pairs"], mad, new_bot=False),
+                )
 
-            if error:
-                self.logging.error(error["msg"])
+                if error:
+                    self.logging.error(error["msg"])
 
             if self.attributes.get("deal_mode") == "signal":
                 data = bot
 
-            if self.attributes.get("deal_mode") == "signal" and data:
-                self.new_deal(data, triggerpair)
+            if not triggeronly:
+                if self.attributes.get("deal_mode") == "signal" and data:
+                    self.new_deal(data, triggerpair)

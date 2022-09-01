@@ -89,12 +89,6 @@ sio = socketio.AsyncClient(
     reconnection_attempts=attributes.get("websocket_reconnection_attempts", 0),
 )
 
-
-@sio.event
-async def connect():
-    logging.debug("connection established")
-
-
 # Initialize global variables
 asyncState = type("", (), {})()
 asyncState.btc_downtrend = True
@@ -270,6 +264,35 @@ def _handle_task_result(task: asyncio.Task) -> None:
         )
 
 
+async def _websocket_connect():
+    await sio.connect(
+        attributes.get("websocket_url"),
+        headers={
+            "api-key": attributes.get("websocket_key"),
+            "user-agent": "3CQS Signal Client/" + attributes.get("websocket_version"),
+        },
+        transports=["websocket", "polling"],
+        socketio_path="/stream/v1/signals",
+    )
+
+
+@sio.on("error")
+async def connect_error(data):
+    logging.info("error from websocket server, trying to reconnect")
+    await sio.sleep(10)
+    await _websocket_connect()
+
+
+@sio.event
+async def connect():
+    logging.debug("connection established")
+
+
+@sio.event
+async def disconnect():
+    logging.info("disconnected from websocket server")
+
+
 @sio.on("signal")
 async def my_message(data):
 
@@ -343,15 +366,10 @@ async def my_message(data):
                             # Continue to update Multibot pairlist in downtrend
                             if not attributes.get("single"):
                                 logging.debug("Add new pair to multibot")
-                                bot.trigger()
+                                bot.trigger(triggeronly=True)
                         else:
                             logging.debug("Trigger bot")
                             bot.trigger()
-
-
-@sio.event
-async def disconnect():
-    logging.info("disconnected from websocket server")
 
 
 async def main():
@@ -362,15 +380,7 @@ async def main():
     logging.info("*** 3CQS Bot started ***")
 
     # Connect to 3CQS websocket
-    await sio.connect(
-        attributes.get("websocket_url"),
-        headers={
-            "api-key": attributes.get("websocket_key"),
-            "user-agent": "3CQS Signal Client/" + attributes.get("websocket_version"),
-        },
-        transports=["websocket", "polling"],
-        socketio_path="/stream/v1/signals",
-    )
+    await _websocket_connect()
 
     # BTC-Pulse and External Bot cannot be activated at the same time
     if attributes.get("btc_pulse", False) and attributes.get("ext_bot_active", False):
@@ -404,8 +414,6 @@ async def main():
     # Start background tasks for FGI
     if attributes.get("fearandgreed", False):
         await fgi_task
-
-    await sio.wait()
 
 
 if __name__ == "__main__":
