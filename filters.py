@@ -26,17 +26,16 @@ class Filters:
         # Filter: Check if symbol is in whitelist
         token_whitelisted = False
 
-        if self.attributes.get("token_whitelist", []):
-            token_whitelisted = self.ws_data["symbol"] in self.attributes.get(
-                "token_whitelist", []
-            )
+        token_whitelisted = self.ws_data["symbol"] in self.attributes.get(
+            "token_whitelist", []
+        )
+
+        if not token_whitelisted:
             self.logging.info(
                 "Signal ignored because symbol '"
                 + str(self.ws_data["symbol"])
                 + "' is not whitelisted"
             )
-        else:
-            token_whitelisted = True
 
         return token_whitelisted
 
@@ -44,16 +43,16 @@ class Filters:
         # Filter: Check if symbol is in denylist
         token_denylisted = False
 
-        if self.attributes.get("token_denylist", []):
-            token_denylisted = self.ws_data["symbol"] in self.attributes.get(
-                "token_denylist", []
+        token_denylisted = self.ws_data["symbol"] in self.attributes.get(
+            "token_denylist", []
+        )
+
+        if token_denylisted:
+            self.logging.info(
+                "Signal ignored because symbol '"
+                + str(self.ws_data["symbol"])
+                + "' is on denylist"
             )
-            if token_denylisted:
-                self.logging.info(
-                    "Signal ignored because symbol '"
-                    + str(self.ws_data["symbol"])
-                    + "' is on denylist"
-                )
 
         return token_denylisted
 

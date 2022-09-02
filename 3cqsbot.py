@@ -97,6 +97,7 @@ asyncState.fh = 0
 asyncState.accountData = {}
 asyncState.pairData = []
 asyncState.multiInit = "empty"
+asyncState.tasks = []
 asyncState.fgi = -1
 asyncState.fgi_downtrend = False
 asyncState.fgi_allows_trading = False
@@ -389,31 +390,38 @@ async def main():
             "Check config.ini, btc_pulse and ext_bot_active both set to true - not allowed"
         )
 
-    btc_downtrendtask = asyncio.create_task(conditions.btcdowntrend(asyncState))
-    btc_downtrendtask.add_done_callback(_handle_task_result)
-
-    switchtask = asyncio.create_task(bot_switch())
-    switchtask.add_done_callback(_handle_task_result)
-
-    fgi_task = asyncio.create_task(
-        conditions.get_fgi(
-            asyncState,
-            attributes.get("fgi_ema_fast", 9),
-            attributes.get("fgi_ema_slow", 50),
-        )
-    )
-    fgi_task.add_done_callback(_handle_task_result)
-
     # Start background tasks for BTC Pulse
     if attributes.get("btc_pulse", False) and not attributes.get(
         "ext_bot_active", False
     ):
-        await btc_downtrendtask
-        await switchtask
+        btc_downtrendtask = asyncio.create_task(conditions.btcdowntrend(asyncState))
+        btc_downtrendtask.add_done_callback(_handle_task_result)
+
+        switchtask = asyncio.create_task(bot_switch())
+        switchtask.add_done_callback(_handle_task_result)
+
+        asyncState.tasks.append(btc_downtrendtask)
+        asyncState.tasks.append(switchtask)
+
+        # await btc_downtrendtask
+        # await switchtask
 
     # Start background tasks for FGI
     if attributes.get("fearandgreed", False):
-        await fgi_task
+        fgi_task = asyncio.create_task(
+            conditions.get_fgi(
+                asyncState,
+                attributes.get("fgi_ema_fast", 9),
+                attributes.get("fgi_ema_slow", 50),
+            )
+        )
+        fgi_task.add_done_callback(_handle_task_result)
+
+        asyncState.tasks.append(fgi_task)
+
+        # await fgi_task
+
+    await asyncio.wait(asyncState.tasks)
 
 
 if __name__ == "__main__":

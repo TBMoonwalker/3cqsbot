@@ -26,7 +26,8 @@ class SingleBot:
             + "_"
             + self.suffix
         )
-        self.pair = self.attributes.get("market") + "_" + self.ws_data["symbol"]
+        if self.ws_data:
+            self.pair = self.attributes.get("market") + "_" + self.ws_data["symbol"]
 
     def strategy(self):
         if self.attributes.get("deal_mode", "signal") == "signal":
