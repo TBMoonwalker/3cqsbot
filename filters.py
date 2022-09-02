@@ -9,10 +9,13 @@ class Filters:
 
         # Filter: Check if it is the right signal
         token_signal = False
+        signals = [self.attributes.get("symrank_signal")]
+
+        if not isinstance(self.attributes.get("symrank_signal"), int):
+            signals = list(map(int, self.attributes.get("symrank_signal").split(",")))
 
         if (
-            self.ws_data["signal_name_id"]
-            in list(map(int, self.attributes.get("symrank_signal").split(",")))
+            self.ws_data["signal_name_id"] in signals
             or self.attributes.get("symrank_signal") == 99
         ):
             token_signal = True
