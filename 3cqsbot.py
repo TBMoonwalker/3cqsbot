@@ -421,7 +421,10 @@ async def main():
 
         # await fgi_task
 
-    await asyncio.wait(asyncState.tasks)
+    if asyncState.tasks:
+        await asyncio.wait(asyncState.tasks)
+    else:
+        await sio.wait()
 
 
 if __name__ == "__main__":
