@@ -29,9 +29,13 @@ class Filters:
         # Filter: Check if symbol is in whitelist
         token_whitelisted = False
 
-        token_whitelisted = self.ws_data["symbol"] in self.attributes.get(
-            "token_whitelist", []
-        )
+        if self.attributes.get("token_whitelist", []):
+            token_whitelisted = self.ws_data["symbol"] in self.attributes.get(
+                "token_whitelist", []
+            )
+        else:
+            # No Whitelist configured, so make it True
+            token_whitelisted = True
 
         if not token_whitelisted:
             self.logging.info(
