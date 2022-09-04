@@ -91,7 +91,7 @@ sio = socketio.AsyncClient(
 
 # Initialize global variables
 asyncState = type("", (), {})()
-asyncState.btc_downtrend = True
+asyncState.btc_downtrend = False
 asyncState.bot_active = True
 asyncState.fh = 0
 asyncState.accountData = {}

@@ -203,7 +203,7 @@ class MultiBot:
                 + self.subprefix
                 + "_"
                 + self.suffix
-                + " with filtered symrank pairs"
+                + " with initial pairs"
             )
             error, data = self.p3cw.request(
                 entity="bots",
