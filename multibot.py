@@ -209,7 +209,7 @@ class MultiBot:
                 entity="bots",
                 action="create_bot",
                 additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-                payload=self.payload(pairs, mad, bot),
+                payload=self.payload(pairs, mad, new_bot=True),
             )
 
             if error:
