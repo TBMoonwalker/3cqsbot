@@ -114,6 +114,7 @@ class MultiBot:
         bot = self.bot()
 
         # Enables an existing bot
+        self.logging.debug(str(bot))
         if not bot["enabled"]:
             self.logging.info("Enabling bot: " + bot["name"])
 

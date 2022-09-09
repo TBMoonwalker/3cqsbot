@@ -352,6 +352,8 @@ async def my_message(data):
                                 not asyncState.btc_downtrend
                                 or attributes.get("ext_botswitch", False)
                             ):
+                                # Bot object needs to be created again, to gather newly created Multibot
+                                bot = bot_type(data, asyncState.pairData)
                                 bot.enable()
                             else:
                                 logging.info(
@@ -376,7 +378,6 @@ async def my_message(data):
 async def main():
     conditions = Conditions(logging)
     asyncState.accountData = account_data()
-    loop = asyncio.get_event_loop()
 
     logging.info("*** 3CQS Bot started ***")
 
