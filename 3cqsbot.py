@@ -277,8 +277,8 @@ async def _websocket_connect():
     )
 
 
-@sio.on("error")
-async def connect_error(data):
+@sio.event
+async def connect_error():
     logging.info("error from websocket server, trying to reconnect")
     await sio.sleep(10)
     await _websocket_connect()
@@ -292,6 +292,11 @@ async def connect():
 @sio.event
 async def disconnect():
     logging.info("disconnected from websocket server")
+
+
+@sio.on("*")
+async def catch_all(event, data):
+    logging.debug("Event: " + str(event))
 
 
 @sio.on("signal")
