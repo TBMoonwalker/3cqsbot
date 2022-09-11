@@ -376,117 +376,120 @@ async def get_fgi(ema_fast, ema_slow):
                     True,
                 )
                 asyncState.fgi = fgi_values[-1]
+                # calculate EMA crosses if fgi_pulse == True
+                if attributes.get("fgi_pulse", False):
+                    if fgi_ema_fast[-1] < fgi_ema_slow[-1]:
+                        asyncState.fgi_downtrend = True
+                        asyncState.fgi_allows_trading = False
+                        output_str = "FGI-EMA{0:d}: {1:.1f}".format(
+                            ema_fast, fgi_ema_fast[-1]
+                        ) + " less than FGI-EMA{:d}: {:.1f}".format(
+                            ema_slow, fgi_ema_slow[-1]
+                        )
+                        if round(fgi_ema_fast[-1], 1) < round(fgi_ema_fast[-2], 1):
+                            logging.info(
+                                "FGI downtrending ↘️ - "
+                                + output_str
+                                + " - Fast EMA falling ↘️ compared to yesterday"
+                                + " ("
+                                + str(round(fgi_ema_fast[-2], 1))
+                                + ") - trading not allowed",
+                                True,
+                            )
+                        else:
+                            logging.info(
+                                "FGI still in the downtrend zone ↘️ - "
+                                + output_str
+                                + " - however fast EMA equal or rising ↗️ compared to yesterday"
+                                " ("
+                                + str(round(fgi_ema_fast[-2], 1))
+                                + ") - trading still not allowed",
+                                True,
+                            )
+                    else:
+                        asyncState.fgi_downtrend = False
+                        output_str = "FGI-EMA{0:d}: {1:.1f}".format(
+                            ema_fast, fgi_ema_fast[-1]
+                        ) + " greater than FGI-EMA{:d}: {:.1f}".format(
+                            ema_slow, fgi_ema_slow[-1]
+                        )
+                        if round(fgi_ema_fast[-1], 1) < round(fgi_ema_fast[-2], 1):
+                            logging.info(
+                                "FGI still in the uptrend zone ↗️ - "
+                                + output_str
+                                + "  - however fast EMA falling ↘️ compared to yesterday"
+                                " (" + str(round(fgi_ema_fast[-2], 1)) + ")",
+                                True,
+                            )
+                        else:
+                            logging.info(
+                                "FGI uptrending ↗️ - "
+                                + output_str
+                                + "  - Fast EMA equal or rising ↗️ compared to yesterday"
+                                " (" + str(round(fgi_ema_fast[-2], 1)) + ")",
+                                True,
+                            )
 
-                if fgi_ema_fast[-1] < fgi_ema_slow[-1]:
-                    asyncState.fgi_downtrend = True
-                    asyncState.fgi_allows_trading = False
-                    output_str = "FGI-EMA{0:d}: {1:.1f}".format(
-                        ema_fast, fgi_ema_fast[-1]
-                    ) + " less than FGI-EMA{:d}: {:.1f}".format(
-                        ema_slow, fgi_ema_slow[-1]
-                    )
-                    if round(fgi_ema_fast[-1], 1) < round(fgi_ema_fast[-2], 1):
+                    # FGI downtrend = true if FGI drops >= 10 between actual and last day
+                    # OR >= 15 between actual and second to last day
+                    if ((fgi_values[-2] - fgi_values[-1]) >= 10) or (
+                        (fgi_values[-3] - fgi_values[-1]) >= 15
+                    ):
+                        asyncState.fgi_drop = True
+                        asyncState.fgi_allows_trading = False
                         logging.info(
-                            "FGI downtrending ↘️ - "
-                            + output_str
-                            + " - Fast EMA falling ↘️ compared to yesterday"
-                            + " ("
-                            + str(round(fgi_ema_fast[-2], 1))
-                            + ") - trading not allowed",
+                            f"FGI actual/yesterday/before yesterday: {fgi_values[-1]}/{fgi_values[-2]}/{fgi_values[-3]}",
+                            True,
+                        )
+                        logging.info(
+                            "⬇️ Drop > 10 between actual vs. yesterday or drop > 15 between actual vs. before yesterday. Drop to large, trading not allowed for today! ⬇️",
                             True,
                         )
                     else:
-                        logging.info(
-                            "FGI still in the downtrend zone ↘️ - "
-                            + output_str
-                            + " - however fast EMA equal or rising ↗️ compared to yesterday"
-                            " ("
-                            + str(round(fgi_ema_fast[-2], 1))
-                            + ") - trading still not allowed",
-                            True,
-                        )
-                else:
-                    asyncState.fgi_downtrend = False
-                    output_str = "FGI-EMA{0:d}: {1:.1f}".format(
-                        ema_fast, fgi_ema_fast[-1]
-                    ) + " greater than FGI-EMA{:d}: {:.1f}".format(
-                        ema_slow, fgi_ema_slow[-1]
-                    )
-                    if round(fgi_ema_fast[-1], 1) < round(fgi_ema_fast[-2], 1):
-                        logging.info(
-                            "FGI still in the uptrend zone ↗️ - "
-                            + output_str
-                            + "  - however fast EMA falling ↘️ compared to yesterday"
-                            " (" + str(round(fgi_ema_fast[-2], 1)) + ")",
-                            True,
-                        )
-                    else:
-                        logging.info(
-                            "FGI uptrending ↗️ - "
-                            + output_str
-                            + "  - Fast EMA equal or rising ↗️ compared to yesterday"
-                            " (" + str(round(fgi_ema_fast[-2], 1)) + ")",
-                            True,
-                        )
+                        asyncState.fgi_drop = False
 
-                # FGI downtrend = true if FGI drops >= 10 between actual and last day
-                # OR >= 15 between actual and second to last day
-                if ((fgi_values[-2] - fgi_values[-1]) >= 10) or (
-                    (fgi_values[-3] - fgi_values[-1]) >= 15
-                ):
-                    asyncState.fgi_drop = True
-                    asyncState.fgi_allows_trading = False
-                    logging.info(
-                        f"FGI actual/yesterday/before yesterday: {fgi_values[-1]}/{fgi_values[-2]}/{fgi_values[-3]}",
-                        True,
-                    )
-                    logging.info(
-                        "⬇️ Drop > 10 between actual vs. yesterday or drop > 15 between actual vs. before yesterday. Drop to large, trading not allowed for today! ⬇️",
-                        True,
-                    )
-                else:
-                    asyncState.fgi_drop = False
+                    if (
+                        not asyncState.fgi_allows_trading
+                        and not asyncState.fgi_downtrend
+                        and not asyncState.fgi_drop
+                    ):
+                        if asyncState.fgi >= attributes.get(
+                            "fgi_trade_min", 0
+                        ) and asyncState.fgi <= attributes.get("fgi_trade_max", 100):
+                            logging.info(
+                                "FGI inside allowed trading range ["
+                                + str(attributes.get("fgi_trade_min", 0))
+                                + ".."
+                                + str(attributes.get("fgi_trade_max", 100))
+                                + "] - trading allowed",
+                                True,
+                            )
+                            asyncState.fgi_allows_trading = True
+                        elif asyncState.fgi < attributes.get(
+                            "fgi_trade_min", 0
+                        ) or asyncState.fgi > attributes.get("fgi_trade_max", 100):
+                            logging.info(
+                                "FGI uptrending but outside the allowed trading range ["
+                                + str(attributes.get("fgi_trade_min", 0))
+                                + ".."
+                                + str(attributes.get("fgi_trade_max", 100))
+                                + "] - trading not allowed",
+                                True,
+                            )
 
-                if (
-                    not asyncState.fgi_allows_trading
-                    and not asyncState.fgi_downtrend
-                    and not asyncState.fgi_drop
-                ):
-                    if asyncState.fgi >= attributes.get(
-                        "fgi_trade_min", 0
-                    ) and asyncState.fgi <= attributes.get("fgi_trade_max", 100):
-                        logging.info(
-                            "FGI inside allowed trading range ["
-                            + str(attributes.get("fgi_trade_min", 0))
-                            + ".."
-                            + str(attributes.get("fgi_trade_max", 100))
-                            + "] - trading allowed",
-                            True,
-                        )
-                        asyncState.fgi_allows_trading = True
-                    elif asyncState.fgi < attributes.get(
-                        "fgi_trade_min", 0
-                    ) or asyncState.fgi > attributes.get("fgi_trade_max", 100):
-                        logging.info(
-                            "FGI uptrending but outside the allowed trading range ["
-                            + str(attributes.get("fgi_trade_min", 0))
-                            + ".."
-                            + str(attributes.get("fgi_trade_max", 100))
-                            + "] - trading not allowed",
-                            True,
-                        )
-
-                logging.debug(
-                    "FGI downtrending: '" + str(asyncState.fgi_downtrend) + "'"
-                )
-                logging.debug("FGI drop: '" + str(asyncState.fgi_drop) + "'")
-                logging.debug(
-                    "FGI allows trading: '" + str(asyncState.fgi_allows_trading) + "'"
-                )
+                    logging.debug(
+                        "FGI downtrending: '" + str(asyncState.fgi_downtrend) + "'"
+                    )
+                    logging.debug("FGI drop: '" + str(asyncState.fgi_drop) + "'")
+                    logging.debug(
+                        "FGI allows trading: '"
+                        + str(asyncState.fgi_allows_trading)
+                        + "'"
+                    )
 
                 asyncState.fgi_time_until_update = time_until_update
 
-                # some statistics
+                # display amount of 3cqs signals received per day
                 if asyncState.receive_signals:
                     start_delta = datetime.utcnow() - asyncState.start_time
                     logging.info(
@@ -641,7 +644,7 @@ async def get_btcpulse(interval_sec):
                             TG_inform,
                         )
                     if (
-                        attributes.get("fearandgreed", False)
+                        attributes.get("fgi_pulse", False)
                         and not asyncState.fgi_allows_trading
                     ):
                         logging.info(
@@ -693,7 +696,7 @@ async def get_btcpulse(interval_sec):
                         TG_inform,
                     )
                 if (
-                    attributes.get("fearandgreed", False)
+                    attributes.get("fgi_pulse", False)
                     and not asyncState.fgi_allows_trading
                 ):
                     logging.info(
@@ -1095,7 +1098,7 @@ async def my_event_handler(event):
     notification.send_notification()
 
 
-def report_funds_needed(dca_conf="dca_bot"):
+def report_funds_needed(dca_conf="dcabot"):
     tp = attributes.get("tp", "", dca_conf)  # take profit
     bo = attributes.get("bo", "", dca_conf)  # base order
     so = attributes.get("so", "", dca_conf)  # safety order
@@ -1156,7 +1159,7 @@ def config_report():
         "Topcoin filter: '" + str(attributes.get("topcoin_filter", False)) + "'", True
     )
     if attributes.get("topcoin_filter", False) and not attributes.get(
-        "fearandgreed", False
+        "fgi_trading", False
     ):
         logging.info(
             "Marketcap top #"
@@ -1166,18 +1169,27 @@ def config_report():
             True,
         )
     logging.info(
-        "FGI trading: '" + str(attributes.get("fearandgreed", False)) + "'", True
+        "FGI pulse: '"
+        + str(attributes.get("fgi_pulse", False))
+        + "'   Fast EMA: "
+        + str(attributes.get("fgi_ema_fast", 9))
+        + "d   Slow EMA: "
+        + str(attributes.get("fgi_ema_slow", 20))
+        + "d",
+        True,
     )
-    if attributes.get("fearandgreed", False):
-        logging.info(
-            "   FGI required for trading: ["
-            + str(attributes.get("fgi_trade_min"))
-            + "-"
-            + str(attributes.get("fgi_trade_max"))
-            + "]",
-            True,
-        )
-
+    logging.info(
+        "FGI trading: '"
+        + str(attributes.get("fgi_trading", False))
+        + "'   FGI required for trading: ["
+        + str(attributes.get("fgi_trade_min", 0))
+        + "-"
+        + str(attributes.get("fgi_trade_max", 100))
+        + "]",
+        True,
+    )
+    if attributes.get("fgi_trading", False):
+        # report [fgi_aggressive] DCA settings
         fundsneeded, pd, rc = report_funds_needed("fgi_aggressive")
         logging.info(
             "[fgi_aggressive "
@@ -1213,7 +1225,7 @@ def config_report():
                 + str(attributes.get("topcoin_volume", 0, "fgi_aggressive")),
                 True,
             )
-
+        # report [fgi_moderate] DCA settings
         fundsneeded, pd, rc = report_funds_needed("fgi_moderate")
         logging.info(
             "[fgi_moderate "
@@ -1249,7 +1261,7 @@ def config_report():
                 + str(attributes.get("topcoin_volume", 0, "fgi_moderate")),
                 True,
             )
-
+        # report [fgi_defensive] DCA settings
         fundsneeded, pd, rc = report_funds_needed("fgi_defensive")
         logging.info(
             "[fgi_defensive "
@@ -1283,6 +1295,39 @@ def config_report():
                 + str(attributes.get("topcoin_limit", 3500, "fgi_defensive"))
                 + " - Min. daily BTC trading volume: "
                 + str(attributes.get("topcoin_volume", 0, "fgi_defensive")),
+                True,
+            )
+    else:
+        # report [dcabot] DCA settings
+        fundsneeded, pd, rc = report_funds_needed("dcabot")
+        logging.info(
+            "[dcabot]: "
+            + attributes.get("prefix", "", "dcabot")
+            + "_"
+            + attributes.get("subprefix", "", "dcabot")
+            + "_"
+            + attributes.get("suffix", "", "dcabot"),
+            True,
+        )
+        logging.info(
+            "   mad/single bots: "
+            + str(attributes.get("mad", "0", "dcabot"))
+            + "/"
+            + str(attributes.get("single_count", "0", "dcabot"))
+            + "  funds needed: "
+            + format_currency(fundsneeded, "USD", locale="en_US")
+            + "  cov. max price dev: "
+            + f"{pd:2.1f}%"
+            + "  max req. change: "
+            + f"{rc:2.1f}%",
+            True,
+        )
+        if attributes.get("topcoin_filter", False):
+            logging.info(
+                "   Topcoin filter: marketcap top #"
+                + str(attributes.get("topcoin_limit", 3500, "dcabot"))
+                + " - Min. daily BTC trading volume: "
+                + str(attributes.get("topcoin_volume", 0, "dcabot")),
                 True,
             )
 
@@ -1331,16 +1376,18 @@ async def main():
             "Check config.ini: btc_pulse AND ext_botswitch both set to true - not allowed"
         )
 
-    # Enable FGI dependent trading
-    if attributes.get("fearandgreed", False):
+    # Obtain FGI values in the background
+    if attributes.get("fgi_pulse", False) or attributes.get("fgi_trading", False):
         get_fgi_task = client.loop.create_task(
             get_fgi(
-                attributes.get("fgi_ema_fast", 9), attributes.get("fgi_ema_slow", 50)
+                attributes.get("fgi_ema_fast", 9), attributes.get("fgi_ema_slow", 20)
             )
         )
         get_fgi_task.add_done_callback(_handle_task_result)
         await asyncio.sleep(3)
 
+    # Enable FGI dependent trading
+    if attributes.get("fgi_trading", False):
         fgi_dca_conf_change_task = client.loop.create_task(
             fgi_dca_conf_change(3600)
         )  # check once per hour
@@ -1364,7 +1411,11 @@ async def main():
         asyncState.btc_downtrend = False
 
     # Central Bot Switching module for btc_pulse and FGI
-    if attributes.get("btc_pulse", False) or attributes.get("fearandgreed", False):
+    if (
+        attributes.get("btc_pulse", False)
+        or attributes.get("fgi_pulse", False)
+        or attributes.get("fgi_trading", False)
+    ):
         bot_switch_task = client.loop.create_task(bot_switch(60))
         bot_switch_task.add_done_callback(_handle_task_result)
 

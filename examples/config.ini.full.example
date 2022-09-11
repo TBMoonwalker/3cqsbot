@@ -184,13 +184,14 @@ symrank_signal = quadruple100
 #continuous_update = True
 #limit_symrank_pairs_to_mad = False
 #random_pair = True
+#btc_pulse = False
+#fgi_pulse = False
+#fgi_ema_fast = 9
+#fgi_ema_slow = 20
 ### Use different DCA settings according to FGI, define DCA settings under [fgi_aggressive], [fgi_moderate] and [fgi_defensive]
 #fearandgreed = False
 #fgi_trade_min = 30
 #fgi_trade_max = 100
-#fgi_ema_fast = 9
-#fgi_ema_slow = 50
-#btc_pulse = False
 ### ATTENTION: if ext_botswitch set to True, btc_pulse will be ignored
 #ext_botswitch = False
 ### additional token denylist (blacklist of 3commas is used by default)

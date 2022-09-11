@@ -394,8 +394,8 @@ class MultiBot:
             )
             sys.exit("Aborting script. Please check for correct botid in config.ini!")
 
-        # If no botid given and fearandgreed is set to true, then exit
-        if self.config_botid == "" and self.attributes.get("fearandgreed", False):
+        # If no botid given and fgi_trading or fgi_pulse is set to true, then exit
+        if self.config_botid == "" and (self.attributes.get("fgi_trading", False) or self.attributes.get("fgi_pulse", False)):
             self.logging.error(
                 "Please add 'botid = xxxxxxx' to [dcabot] for using FGI. FGI guided DCA settings will only applied "
                 + "to existent 3cqsbot. \n Script will be aborted if no 3cqsbot is found by botname"
@@ -448,7 +448,7 @@ class MultiBot:
 
             # If FGI is used and botid is not set in [dcabot], which is mandatory to prevent creating new bots with different botids,
             # abort program for security reasons
-            if self.config_botid == "" and self.attributes.get("fearandgreed", False):
+            if self.config_botid == "" and (self.attributes.get("fgi_trading", False) or self.attributes.get("fgi_pulse", False)):
                 self.logging.error(
                     "No botid set in [dcabot] and no 3cqsbot '"
                     + self.botname
