@@ -238,7 +238,7 @@ class Filters:
 
     def __get_exchange(self):
 
-        exchange = self.account["exchange"]
+        exchange = self.account["market_code"]
 
         # Paper trading is statically mapped to Binance
         if self.account["exchange"] == "Paper trading account":
