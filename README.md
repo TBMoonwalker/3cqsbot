@@ -1,19 +1,28 @@
-# TBMoonWalker 3CQSBot
+# Based on TBMoonWalker's 3CQSBot v2 script - Improved by M1ch43l with following features added
+
+1. Implementation of sentiment trading according to Crypto Fear and Greed Index (FGI) with separate dca profiles including profile specific topcoin filter settings and amount of concurrent deals. New sections `[fgi_aggressive]`, `[fgi_moderate]` and `[fgi_defensive]` added for individual single/multi bot DCA configurations
+2. Implemented fgi_pulse trading, similar to btcpulse however using the crossing of EMA9 to EMA20 as default values to decide for trading
+3. Reporting for Telegram added, also extended reporting available for reporting every 3CQS signal
+4. For Multibot: if deal_mode `signal` is used, deals are triggered ONCE (no ASAP modus compared to single bot configuration)
+5. Symrank list sorting and limiting to maximum active deals (mad) according to trading volume if limit_symrank_pairs (old option name: limit_pairs) is set to True
+6. Pairs list is updated every 6 hours, to check on 3Commas for new or blacklisted coins
+7. White-list token implemented - trade only certain coins
+8. Improved error handling, if CoinGeckos or Yahoo Finance API requests are lagging
 
 ## Summary
 
-The 3cqsbot can be used to start and stop [3commas](https://3commas.io) dca bots with the help of the 3cqs trading signals.
-3CQS trading signals are developed using various market indicators and extensive technical research of the current and historical market atmosphere. They offer effective trading suggestions to purchase, trade, or hold an asset. 3CQS trading signals are designed to signal the start and stop of DCA (Dollar Cost Average) bots for optimal performance under a variety of market conditions. You can subscribe to the [telegram channel](https://t.me/The3CQSBot) to receive these signals. If you have any questions regarding the signals, please contact the developer [directly](https://www.3cqs.com/contact/).
+This python script program is addressed to users with basic linux command line experience and advanced experience for running single / multibots using the trading platform [3Commas](https://3commas.io). 3cqsbot can be used to start and stop DCA (Dollar Cost Average) bots with the help of external given 3CQS trading signals.
+3CQS trading signals are developed using various market indicators and extensive technical research of the current and historical market atmosphere. They offer effective trading suggestions to purchase, trade or hold an asset. 3CQS trading signals are designed to signal the start and stop of DCA bots for optimal performance under a variety of market conditions. You can subscribe to the <https://t.me/The3CQSBot> to receive these signals. Enter `/signals` after joining and select proper signals you want to receive. It is recommended to start with 'SymRank Top 100 Quadruple tracker' as default and to switch off all other signals to avoid of being banned from receiving to much signals. If you have any questions regarding the signals, please contact the developer [directly](https://www.3cqs.com/contact/).
 
 ## Disclaimer
 
-Note: **The 3cqsbot is meant to be used for educational purposes only. Use with real funds at your own risk**
+Note: **The 3cqsbot is meant to be used for educational purposes only. The use with real funds is FULLY at your own risk and not recommended. The signal sender as well the authors of 3cqsbot cannot be held responsible for losses when using real money**
 
 ## Prerequisites
 
 ### 3CQS Signals Bot
 
-Join the telegram channel [telegram channel](https://t.me/The3CQSBot) according to the official Telegram [documentation](https://core.telegram.org/api/obtaining_api_id)
+Join the telegram channel <https://t.me/The3CQSBot> according to the official Telegram [documentation](https://core.telegram.org/api/obtaining_api_id)
 
 Wait for the signals. Actually the signals are in a beta phase and you have to be chosen to get them. Be patient if they not arrive after joining
 
@@ -52,29 +61,33 @@ pip3 install -r requirements.txt
 
 Copy the `*.example*` from the examples directory to `config.ini` in the root folder and change your settings regarding the available settings below. The value type doesn't matter, because Pythons configparser is taking care of the types. So you don't need '' or "" around the values.
 
-### General
+### [general]
 
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
-timezone | string | NO | Europe/Amsterdam | Set logging to timezone
+timezone | string | NO | Europe/Amsterdam | Set logging to timezone, see <https://gist.github.com/heyalexej/8bf688fd67d7199be4a1682b3eec7568> for a list of possible timezones
 debug | boolean | NO | (false), true   | Set logging to debug
 logrotate | integer | NO | (7) | How many logfiles will be archived, before deleted
 
-### Telegram
+### [telegram]
 
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
 api_id | string | YES |   | Telegram API ID
 api_hash | string | YES |   | Telegram API Hash
 sessionfile | string | NO | (tgsession) | Telegram sessionfile location
-chatroom | string | NO | ("3C Quick Stats") | Telegram channel to receive the 3cqs signals
+chatroom | string | NO | (3C Quick Stats) | Telegram channel to receive the 3cqs signals
 notifications | boolean | NO | (false), true | set to true to enable notifications - code from Cyberjunky
 extensive_notifications | boolean | NO | (false), true | every START/STOP signal is reported
-notify-urls | string | NO |   | one or a list of apprise notify urls, each in " " seperated with commas. See [Apprise website](https://github.com/caronc/apprise) for more information.
+notify-urls | string | NO | ["tgram://bottoken/ChatID"]  | See following instructions to obtain the TG bottoken and ChatID
+  
+To get your Telegram bot token (format is 1234567890:alphanumeric_characters) see <https://www.siteguarding.com/en/how-to-get-telegram-bot-api-token>. Enter in the same dialog box of @BotFather /start to enable your notification bot on Telegram.  
+To get your ChatID (format is 1234567890) enter @RawDataBot in the channel search function. Under search results with the section "chats" select "Telegram Bot Raw". Press the START button or type /start. On the output you see "Made by @SeanChannel". In the output look for "chat": "id". This is your ChatID to enter. See also <https://www.alphr.com/find-chat-id-telegram/> for instructions.  
+Other notifications ways are possible. Enter one or a list of apprise notify urls, each in " " seperated with commas. See [Apprise website](https://github.com/caronc/apprise) for more information.
+  
+**!!! ATTENTION - When creating multiple 3cqsbot instances by copying the 3cqsbot directory, REMOVE your telegram sessionfile (tgsession.session) with other 3cqsbot instances - otherwise this will lead to problems and misfunctional bots. For each instance you have to create a new TG sessionfile by starting the bot once manually!!!**
 
-**!!! ATTENTION - Do not share your sessionfile with other 3cqsbot instances - this will lead to problems and misfunctional bots. For each instance you have to create a new sessionfile !!!**
-
-### 3Commas
+### [3commas]
 
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
@@ -85,12 +98,14 @@ timeout | integer | NO | (3) | Timeout waiting for a 3Commas api response
 retries | integer | NO | (5) | Number of retries after a 3Commas api call was not successful
 delay_between_retries | number | NO | (2.0) | Waiting time factor between unsuccessful retries
 system_bot_value | integer | NO | (300) | Number of actual bots running on your account. This is important, so that the script can see all running bots and does not start duplicates!
+botid | integer | NO | (1234567) | Applies only to multi bot and in combination with market sentiment trading using the fear and greed index for cryptos (FGI)  - Using botid of an already created bot ensures that the algo applies modification only to this bot and avoids creating a new one, e.g. if bot name is changed or DCA settings are changed according to FGI
 
-### DCABot configuration
+### DCABot configuration [dcabot, fgi_aggressive, fgi_moderate, fgi_defensive]
 
 Name | Type | Mandatory | Values(default) | Description
 ------------ | ------------ | ------------ | ------------ | ------------
-botid | integer | NO | (1234567) | Applies only to multi bot and in combination with FGI - Using botid of an already created bot ensures that the algo applies modification only to this bot and avoids creating a new one, e.g. if bot name is changed or DCA settings are changed according to FGI
+fgi_min | integer | NO | (61) or (31) or (0) | for `[fgi_aggressive]` or `[fgi_moderate]` or `[fgi_defensive]`
+fgi_max | integer | NO | (100) or (60) or (30) | for `[fgi_aggressive]` or `[fgi_moderate]` or `[fgi_defensive]`
 prefix | string | YES | (3CQSBOT)  | The name prefix of the created bot
 subprefix | string | YES | (MULTI) | Subprefix of the bot (Best would be SINGLE or MULTI)
 suffix | string | YES | (TA_SAFE) | Suffix in the bot name - could be the used DCA setting of the TA community
@@ -108,17 +123,19 @@ sos | number | YES | (2.4) | Price deviation to open safety orders
 mstc | integer | YES | (25) | Max safety trades count
 max | integer | YES | (1) | Max active safety trades count
 sdsp | integer | NO | (1) | Simultaneous deals per same pair (only Multibot)
-btc_min_vol | number | NO | (100) | Minimum 24h volume trading calculated in BTC
+btc_min_vol | number | NO | (100) | Minimum 24h volume trading calculated in BTC by 3commas
 cooldown | number | NO | (30) | Number of seconds to wait until starting another deal
 deals_count | integer | NO | (0) | Bot will be disabled after completing this number of deals. If 0 bot will not be disabled (default)
+topcoin_limit | integer | NO | (3500) | Token pair has to be in the marketcap ranking limit to be traded by the bot
+topcoin_volume | integer | NO | (0) | additional trading volume check on Coingecko which is done first before adding the coin in the trading list of 3commas (it is unclear how actual and accurate btc_min_vol of 3commas is). Only pairs with the given volume are traded. Default is 0 and means CG volume check is disabled
 
-Configure the 'dcabot' section in the `config.ini` according to your favourite bot configuration.
+Configure the `[dcabot]` and if using market sentiment trading add `[fgi_aggressive]`, `[fgi_moderate]`, `[fgi_defensive]` section in the `config.ini` according to your favourite bot configuration. Tip: You can use different bot names, so you know which dca setting is used by the bot or deal.
 
 If you don't have any DCA settings, please take a look at [Ribsy's site](https://www.buymeacoffee.com/Ribsy/posts) for published settings and background information and for the [TA community list](https://docs.google.com/spreadsheets/d/1cQ68_Sl70SRFRMeGu0zgBhTCuQvSf6ENi_obLhr7kpw/edit#gid=885933644) with all tested DCA settings
 
 Default configuration is based on Trade Alts Safer settings: <https://discord.gg/tradealts>
 
-#### Singlebot configuration
+#### Single bot configuration
 
 **single_count** = how many singlebots can run overall
 
@@ -132,7 +149,7 @@ Default configuration is based on Trade Alts Safer settings: <https://discord.gg
 
 `single_count=3`, `mad=2` - Three singlebots are started, and two deals are started per singlebot
 
-#### Multibot configuration
+#### Multi bot configuration
 
 **mad** = how many deals per composite bot can run
 
@@ -144,7 +161,7 @@ Default configuration is based on Trade Alts Safer settings: <https://discord.gg
 
 Condition: **single=true deal_mode=signal**
 
-A single bot for a specific pair (the signal) will be created when the signal fits your configured filters and when the signal is a "START" signal. The deal will be start immediately. The bot will be disabled on a stop signal for this specific pair. If `delete_single_bots`is set to true, the script tries do delete the bot. This only works, when no deal is running.
+A single bot for a specific pair (the signal) will be created when the pair fits your configured filters and when the 3CQS signal is a "#START" signal. The deal will be started immediately. The bot will be disabled on a #STOP signal for this specific pair. If `delete_single_bots` is set to true, the script tries do delete the bot. This only works, when no deal is running.
 
 Condition: **single=true deal_mode="self assigned strategy"**
 
@@ -200,7 +217,7 @@ account_name | string | YES | (Paper trading 123456)  | Account name for trading
 single | boolean | YES | (false), true | Type of not creation (False for multi pair DCA Bots / True for single pair DCA Bots)
 delete_single_bots | boolean | NO | (false), true | If set to true, bots without an active deal will be deleted in single bot configuration
 singlebot_update | boolean | NO | (true), false | If set to true, singlebots settings will be updated when enabled again (new settings only work after restart of the script)
-trade_future | boolean | NO | (false), true | Enable futures trading
+trade_future | boolean | NO | (false), true | Enable futures trading - **actually NOT working, implementation is planned**
 leverage_type | string | NO | (cross), custom, not_specified, isolated | Different leverage types for futures trading from 3commas
 leverage_value | integer | NO | (2) | Leverage value for futures trading
 stop_loss_percent | integer | NO | (1) | Stop loss value in percent for futures trading
@@ -220,19 +237,17 @@ volatility_limit_max | number | NO | (100) | Bots will be created when the volat
 price_action_limit_min | number | NO | (0.1) | Bots will be created when the price_action value is over this limit
 price_action_limit_max | number | NO | (100) | Bots will be created when the price_action value is under this limit
 topcoin_filter | boolean | NO | (false), true | Disables the topcoin filter (default)
-topcoin_limit | integer | NO | (3500) | Token pair has to be in the configured topcoin limit to be traded by the bot
-topcoin_volume | integer | NO | (0) | Volume check against Coingecko (btc_min_vol means volume check directly in 3commas - not before like this setting). Only pairs with the given volume are traded. Default is 0 and means volume check is disabled
 topcoin_exchange | string | NO | (binance), gdax | Name of the exchange to check the volume. Because every exchange has another id, please contact me for your exchange and I will update this list here for configuration
 continuous_update | boolean | NO | (true), false | If set to true the multi bot is continuously updated with pairs independent of being activated or deactivated, e.g. by btc_pulse. The top30 symrank list is called once when bot is started.
-limit_initial_pairs | boolean | NO | (false), true | Limit initial pairs to the max number of deals (MAD) for multi bot - top pairs are chosen
+limit_symrank_pairs | boolean | NO | (false), true | Limit symrank pairs to the max number of deals (MAD) and sort them by trading volume for multi bot - top pairs are chosen
 random_pair | boolean | NO | (false), true | If true then random pairs from the symrank list will be used for new deals in multibot
 btc_pulse | boolean | NO | (false), true | Enable or disable the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
-fgi_pulse | boolean | NO | (false), true | Enable or disable the bots according to markets sentiment
+fgi_pulse | boolean | NO | (false), true | Enable or disable the bots according to markets sentiment using EMA crossing
 fgi_ema_fast | integer | NO | (9) | determine down-/uptrending of FGI using EMA fast crossing up/down EMA slow
 fgi_ema_slow | integer | NO | (20) | determine down-/uptrending of FGI using EMA fast crossing up/down EMA slow
 fgi_trading | boolean | NO | (false), true | If true, three different dca settings can be used according to market's sentiment (use [fgi_aggressive] for bull market, [fgi_moderate] for sideways market, [fgi_defensive] for bear market, each with corresponding dca settings)
-fgi_trade_min | integer | NO | (0) | if fearandgreed set to true define minimum fgi for trading
-fgi_trade_max | integer | NO | (100) | if fearandgreed set to true define maximum fgi for trading
+fgi_trade_min | integer | NO | (0) | if fgi_trading set to true define minimum FGI value for trading
+fgi_trade_max | integer | NO | (100) | if fgi_trading set to true define maximum FGI value for trading
 ext_botswitch | boolean | NO | (false), true | If true the automatic multibot enablement will be disabled and only triggered by external events - you must disable BTC Pulse if you enable this switch !!!
 token_denylist | list | NO | ([BUSD_USDT, USDC_USDT, USDT_USDT, USDT_USDP]) | Additional denylist of assets in combination to 3commas blacklist to prevent the bot from including and buying unwanted assets
 token_whitelist | list | NO | ([BTC_BUSD, ETH_BUSD]) | Trade only whitelisted pairs
@@ -247,15 +262,15 @@ SymRank is a proprietary symbol ranking system exclusive to 3CQS users that rank
 
 ### What are Volatiltiy Scores?
 
-Pricing is monitored in near realtime and calculated which results in 15m, 30m, 1h, etc. volatility interval percentages. Each interval is then weighted and averaged based on the timeframe (more recent time frames are weighted higher), from which a score is then calculated. Higher scores are greater volatility.
+Pricing is monitored in near realtime and calculated which results in 15m, 30m, 1h, etc. volatility interval percentages. Each interval is then weighted and averaged based on the timeframe (more recent time frames are weighted higher), from which a score is calculated. Higher scores are greater volatility.
 
 ### What are Price Action Scores?
 
-Realtime pricing is monitored and calculated using a combination of moving average formulas. Similar to volatility, more weight is given to recent pricing, which a score is then calculated.
+Realtime pricing is monitored and calculated using a combination of moving average formulas. Similar to volatility, more weight is given to recent pricing, from which a score is calculated.
 
 ### Price Action & Volatility Score Insight
 
-3CQS price action and volatility take into account pricing over the last 24 hours. Scores that are red are considered currently on a downtrend and green if on an uptrend.
+3CQS price action and volatility take into account pricing over the last 24 hours. Scores that are marked with the red color are considered currently on a downtrend and green if on an uptrend.
 
 Price action scores that are significantly negative are when price is moving much lower over the last 24 hours. Volatility scores can be negative as well, but are not calculated the same and won’t generally be seen with as large negative scores.
 
@@ -271,13 +286,13 @@ These three indicators are tracked and if any fall out the starting thresholds f
 
 #### ```quadruple100```
 
-**Signal Name**: SymRank Top 100 Quadruple Tracker (BETA)  
+**Signal Name**: SymRank Top 100 Quadruple Tracker  
 Criteria for BOT_START: SymRank <= 100, Volatility Score >= 3, Price Action Score >= 2, RSI-14 15m <= 65  
 These four indicators are tracked and if any fall out the starting thresholds for a period of time a BOT_STOP signal is sent
 
 #### ```quadruple250```
 
-**Signal Name**: SymRank Top 250 Quadruple Tracker (BETA)  
+**Signal Name**: SymRank Top 250 Quadruple Tracker  
 Criteria for BOT_START: SymRank <= 250, Volatility Score >= 3, Price Action Score >= 2, RSI-14 15m <= 65  
 These four indicators are tracked and if any fall out the starting thresholds for a period of time a BOT_STOP signal is sent
 
@@ -347,13 +362,13 @@ Note: **Please use 3cqsbot only on paper trading. Usage with real funds is at yo
 
 This settings allows you to use the Crypto Fear and Greed index (FGI) to identify the sentiment of the corresponding market phase. The FGI is determined once a day on <https://alternative.me/crypto/fear-and-greed-index/>
 ![Screenshot](FGI%20borders%20screenshot.png)
-How to use: when FGI is signaling "greed/very greed" (FGI values usually between 60-100) you may use aggressive DCA settings [fgi_aggressive], e.g. Mars/Banshee/69er covering a price drop of 20-40%.
+How to use: when FGI is signaling "greed/very greed" (FGI values usually between 60-100) you may use aggressive DCA settings `[fgi_aggressive]`, e.g. Mars/Banshee/69er DCA settings covering a price drop of 20-40%.
 
-In phases of fear (FGI values 0-30) over a longer time that may correspond to a beginning or consolidating bear market, the bot can switch to very defensive/conservative DCA settings [fgi_defensive], eg. TA safer, ZachTech BitMan covering a price drop of up to 60%.
+In phases of fear (FGI values 0-30) over a longer time that may correspond to a beginning or consolidating bear market, the bot can switch to very defensive/conservative DCA settings `[fgi_defensive]`, eg. TA safer, ZachTech BitMan DCA settings covering a price drop of up to 60%.
 
 Get the excel lists from @Snurg at <https://discord.com/channels/720875074806349874/829512509798219788/965771867413696532> to get the optimal DCA settings in corresdonding market phases according to your trade funds.
 
-For sideways market (FGI values 31-60) you can define DCA settings under [fgi_moderate].
+For sideways market (FGI values 31-60) you can define DCA settings under `[fgi_moderate]`.
 
 In each fgi section define the variables ```fgi_min``` and ```fgi_max``` so that the correct DCA settings are applied. If ```fgi_min/fgi_max``` are not set, then values between ```fgi_min = 0``` and ```fgi_max = 30``` are assumed for defensive, FGI values between 31-60 are assumed for moderate and FGI values between 61-100 are assumed for aggressive settings.
 
@@ -363,12 +378,12 @@ If corresponding fgi section is not found, the standard [dcabot] section is used
 
 Optionally, the multi pair bot can be renamed according to the prefix, subprefix and suffix given in the corresponding fgi section, e.g. renaming from 3CQSBOT_MULTI_aggressive to 3CQSBOT_MULTI_defensive. To make sure it is always the same bot, you can additionally use the option 'botid' with the same botid number of an already created multi bot in all fgi sections.
 
-For single bots the standard name (prefix, subprefix, suffix) defined in [dcabot] is used ensuring that the algo finds all single bots under standard name to switch them off when receiving the #STOP signal from 3CQS.
+For single bots the standard name (prefix, subprefix, suffix) defined in `[dcabot]` is used ensuring that the algo finds all single bots under standard name to switch them off when receiving the #STOP signal from 3CQS.
 
 ### Fear and Greed Index Trading range
 
 With the options ```fgi_trade_min = 10``` and ```fgi_trade_max = 100``` you can define the allowed trading range.
-Additionally, similar to btc-pulse a fast (9)/slow (50) EMA of FGI is used to determine up-/downtrending fear and greed. Fast EMA crossing up slow EMA allows the beginning of trading as long it is over ```fgi_trade_min```. You can customize the EMA values with the options ```fgi_ema_fast``` and ```fgi_ema_slow```.
+Additionally, similar to btc-pulse a fast (9)/slow (20) EMA of FGI is used to determine up-/downtrending fear and greed. Fast EMA crossing up slow EMA allows the beginning of trading as long it is over ```fgi_trade_min```. You can customize the EMA values with the options ```fgi_ema_fast``` and ```fgi_ema_slow```.
 
 ### External bot switch
 
