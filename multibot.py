@@ -265,10 +265,10 @@ class MultiBot:
 
                 if error:
                     self.logging.error(error["msg"])
+                else:
+                    if self.attributes.get("deal_mode") == "signal":
+                        data = bot
 
-            if self.attributes.get("deal_mode") == "signal":
-                data = bot
-
-            if not triggeronly:
-                if self.attributes.get("deal_mode") == "signal" and data:
-                    self.__new_deal(data, triggerpair)
+                    if not triggeronly:
+                        if self.attributes.get("deal_mode") == "signal" and data:
+                            self.__new_deal(data, triggerpair)
