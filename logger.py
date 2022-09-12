@@ -1,12 +1,12 @@
 """Cyberjunky's 3Commas bot helpers."""
-### many thanks to Cyberjunky for using his code ###
+### credits got to Cyberjunky for using his logging code ###
+import datetime
 import json
 import logging
 import os
 import queue
 import threading
 import time
-import datetime
 from logging.handlers import TimedRotatingFileHandler as _TimedRotatingFileHandler
 
 import apprise
@@ -47,7 +47,7 @@ class NotificationHandler:
     def queue_notification(self, message):
         """Queue notification messages."""
         if self.enabled:
-            message.encode(encoding = 'UTF-8', errors = 'strict')
+            message.encode(encoding="UTF-8", errors="strict")
             now = datetime.datetime.now()
             self.message += now.strftime("%H:%M:%S") + f" - {message}\n\n"
 
@@ -62,13 +62,15 @@ class NotificationHandler:
 class TimedRotatingFileHandler(_TimedRotatingFileHandler):
     """Override original code to fix bug with not deleting old logfiles."""
 
-    def __init__(self, filename="", when="midnight", interval=1, backupCount=7, encoding='utf-8'):
+    def __init__(
+        self, filename="", when="midnight", interval=1, backupCount=7, encoding="utf-8"
+    ):
         super().__init__(
             filename=filename,
             when=when,
             interval=int(interval),
             backupCount=int(backupCount),
-            encoding=encoding
+            encoding=encoding,
         )
 
     def getFilesToDelete(self):
@@ -157,7 +159,9 @@ class Logger:
 
         # Log to file and rotate if needed
         file_handle = TimedRotatingFileHandler(
-            filename=f"{self.datadir}/logs/{self.program}.log", backupCount=logstokeep, encoding='utf-8'
+            filename=f"{self.datadir}/logs/{self.program}.log",
+            backupCount=logstokeep,
+            encoding="utf-8",
         )
         file_handle.setFormatter(formatter)
         self.my_logger.addHandler(file_handle)

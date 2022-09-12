@@ -1,18 +1,12 @@
-import yfinance as yf
-import numpy as np
-import asyncio
 import math
 import re
-import babel.numbers
-import requests
-import json
-from logging import exception
-from dateutil.relativedelta import relativedelta as rd
+from functools import lru_cache, wraps
+from time import monotonic_ns, sleep
 
+from babel.numbers import format_currency
+from dateutil.relativedelta import relativedelta as rd
 from pycoingecko import CoinGeckoAPI
 from tenacity import retry, wait_fixed
-from functools import lru_cache, wraps
-from time import monotonic_ns
 
 
 class Signals:
@@ -55,7 +49,7 @@ class Signals:
             return wrapper_cache(_func)
 
     @staticmethod
-    @timed_lru_cache(seconds=10800)
+    @timed_lru_cache(seconds=10800, maxsize=None)
     @retry(wait=wait_fixed(5))
     def cgexchanges(exchange, id):
         cg = CoinGeckoAPI()
@@ -66,7 +60,7 @@ class Signals:
         return exchange
 
     @staticmethod
-    @timed_lru_cache(seconds=10800)
+    @timed_lru_cache(seconds=10800, maxsize=None)
     def cgvalues(rank):
         cg = CoinGeckoAPI()
         market = []
@@ -85,38 +79,44 @@ class Signals:
 
     def topvolume(self, id, volume, exchange, market):
         # Check if topcoin has enough volume
-        volume_target = True
 
+        volume_btc = 0
         if volume > 0:
+            volume_target = False
 
             exchange = self.cgexchanges(exchange, id)
 
-            self.logging.debug(self.cgvalues.cache_info())
+            self.logging.debug(self.cgexchanges.cache_info())
 
             for target in exchange["tickers"]:
-                converted_btc = babel.numbers.format_currency(
+
+                converted_btc = format_currency(
                     target["converted_volume"]["btc"], "", locale="en_US"
                 )
-                converted_usd = babel.numbers.format_currency(
+                converted_usd = format_currency(
                     target["converted_volume"]["usd"], "USD", locale="en_US"
                 )
                 btc_price = (
                     target["converted_volume"]["usd"]
                     / target["converted_volume"]["btc"]
                 )
-                configured_usd = babel.numbers.format_currency(
+                configured_usd = format_currency(
                     (volume * btc_price),
                     "USD",
                     locale="en_US",
                 )
+
                 if (
                     target["target"] == market
                     and target["converted_volume"]["btc"] >= volume
                 ):
                     volume_target = True
+                    volume_btc = target["converted_volume"]["btc"]
                     self.logging.info(
-                        str(target["base"])
-                        + " daily volume is "
+                        market
+                        + "_"
+                        + str(target["base"])
+                        + " daily trading volume is "
                         + converted_btc
                         + " BTC ("
                         + converted_usd
@@ -124,7 +124,8 @@ class Signals:
                         + str(volume)
                         + " BTC ("
                         + configured_usd
-                        + ")"
+                        + ") on "
+                        + exchange["name"]
                     )
                     break
                 elif (
@@ -132,9 +133,12 @@ class Signals:
                     and target["converted_volume"]["btc"] < volume
                 ):
                     volume_target = False
+                    volume_btc = target["converted_volume"]["btc"]
                     self.logging.info(
-                        str(target["base"])
-                        + " daily volume is "
+                        market
+                        + "_"
+                        + str(target["base"])
+                        + " daily trading volume is "
                         + converted_btc
                         + " BTC ("
                         + converted_usd
@@ -142,17 +146,31 @@ class Signals:
                         + str(volume)
                         + " BTC ("
                         + configured_usd
-                        + ")"
+                        + ") on "
+                        + exchange["name"]
                     )
                     break
                 else:
                     volume_target = False
+                    volume_btc = 0
+
+            if volume_btc == 0:
+                if exchange["tickers"]:
+                    self.logging.info(
+                        market
+                        + "_"
+                        + target["base"]
+                        + " is not traded on "
+                        + exchange["name"]
+                    )
+                else:
+                    self.logging.info("Pair is not traded on " + exchange["name"])
         else:
             volume_target = True
 
-        return volume_target
+        return volume_target, volume_btc
 
-    def topcoin(self, pairs, rank, volume, exchange, trademarket):
+    def topcoin(self, pairs, rank, volume, exchange, trademarket, first_time):
 
         market = self.cgvalues(rank)
 
@@ -184,12 +202,18 @@ class Signals:
                             str(pair)
                             + " is ranked #"
                             + str(symbol["market_cap_rank"])
-                            + " and has passed marketcap filter limit of #"
+                            + " and has passed marketcap filter limit of top #"
                             + str(rank)
                         )
+                        # Prevent from being block for 30sec from too many API requests
+                        if first_time:
+                            sleep(2.2)
                         # Check if topcoin has enough volume
-                        if self.topvolume(symbol["id"], volume, exchange, trademarket):
-                            pairlist.append(pair)
+                        enough_volume, volume_btc = self.topvolume(
+                            symbol["id"], volume, exchange, trademarket
+                        )
+                        if enough_volume:
+                            pairlist.append((pair, volume_btc))
                             break
         else:
             pairlist = ""
@@ -204,171 +228,37 @@ class Signals:
                         str(pairs)
                         + " is ranked #"
                         + str(symbol["market_cap_rank"])
-                        + " and has passed marketcap filter limit of #"
+                        + " and has passed marketcap filter limit of top #"
                         + str(rank)
                     )
                     # Check if topcoin has enough volume
-                    if self.topvolume(symbol["id"], volume, exchange, trademarket):
-                        pairlist = pairs
+                    enough_volume, volume_btc = self.topvolume(
+                        symbol["id"], volume, exchange, trademarket
+                    )
+                    if enough_volume:
+                        pairlist = tuple([coin, volume_btc])
                         break
 
+        pairtuple_sorted = []
         if not pairlist:
-            self.logging.info(str(pairs) + " did not match the topcoin filter criteria")
+            self.logging.info(str(pairs) + " not matching the topcoin filter criteria")
         else:
-            if isinstance(pairlist, str):
+            if isinstance(pairlist, tuple):
+                pairtuple_sorted = pairlist
+                pairlist = trademarket + "_" + pairlist[0]
                 self.logging.info(str(pairlist) + " matching top coin filter criteria")
             else:
+                pairtuple_sorted = sorted(pairlist, key=lambda x: x[1], reverse=True)
                 self.logging.info(
-                    str(len(pairlist))
+                    str(len(pairtuple_sorted))
+                    + " BTC volume sorted "
+                    + trademarket
                     + " symrank pair(s) AFTER top coin filter: "
-                    + str(pairlist)
+                    + str(pairtuple_sorted)
                 )
 
-        return pairlist
+                pairlist = []
+                for i in range(len(pairtuple_sorted)):
+                    pairlist.append(pairtuple_sorted[i][0])
 
-    # Credits go to @M1ch43l
-    # Adjust DCA settings dynamically according to social sentiment: greed = aggressive DCA, neutral = moderate DCA, fear = conservative DCA
-    @retry(wait=wait_fixed(10))
-    def requests_call(self, method, url, timeout):
-        response = []
-        try:
-            response = requests.request(method, url, timeout=timeout)
-        except Exception as e:
-            raise IOError("Fear and greed index API actually down, retrying in 60s, Error is:" + e)
-        return response
-
-    async def get_fgi(self, asyncState, ema_fast, ema_slow):
-        
-        url = "https://api.alternative.me/fng/?limit=100"
-        self.logging.info("Using crypto fear and greed index (FGI) from alternative.me for changing 3cqsbot DCA settings to defensive, moderate or aggressive", True)
-
-        while True:
-            fgi_values = []
-            fgi_ema_fast = []
-            fgi_ema_slow = []
-            asyncState.fgi_notification = True
-            response = self.requests_call("GET", url, 5)
-            raw_data = json.loads(response.text)
-            for i in range(len(raw_data["data"])):
-                fgi_values.insert(0, int(raw_data["data"][i]["value"]))
-            fgi_ema_fast = self.ema(fgi_values, ema_fast)
-            fgi_ema_slow = self.ema(fgi_values, ema_slow)
-            time_until_update = int(raw_data["data"][0]["time_until_update"])
-            fmt = '{0.hours}h:{0.minutes}m:{0.seconds}s'
-            # Web response sometimes slow, so proceed only if time_until_update for next web update > 10 sec
-            if time_until_update > 10:
-                self.logging.info(
-                "Current FGI: {:d}".format(fgi_values[-1]) 
-                + " - time till next update: " + fmt.format(rd(seconds=time_until_update)), 
-                True
-            )
-                asyncState.fgi = fgi_values[-1]
-
-                if fgi_ema_fast[-1] < fgi_ema_slow[-1]:
-                    asyncState.fgi_downtrend = True
-                    self.logging.info("FGI-EMA{0:d}: {1:.1f}".format(ema_fast, fgi_ema_fast[-1]) 
-                        + " less than FGI-EMA{:d}: {:.1f}".format(ema_slow, fgi_ema_slow[-1])
-                        + "  -- downtrending",
-                        True
-                    )
-                else:
-                    asyncState.fgi_downtrend = False
-                    self.logging.info("FGI-EMA{0:d}: {1:.1f}".format(ema_fast, fgi_ema_fast[-1]) 
-                        + " greater than FGI-EMA{:d}: {:.1f}".format(ema_slow, fgi_ema_slow[-1])
-                        + "  -- uptrending",
-                        True
-                    )
-
-                # FGI downtrend = true if FGI drops >= 10 between actual and last day 
-                # OR >= 15 between actual and second to last day
-                if ((fgi_values[-2] - fgi_values[-1]) >= 10) or ((fgi_values[-3] - fgi_values[-1]) >= 15):
-                    asyncState.fgi_downtrend = True
-                    self.logging.info("FGI actual/yesterday/before yesterday: {:d}/{:d}/{:d}".format(fgi_values[-1], fgi_values[-2], fgi_values[-3]), 
-                        True
-                    )
-                    self.logging.info("Drop > 10 between actual vs. yesterday or drop > 15 between actual vs. before yesterday", 
-                        True
-                    )
-
-                asyncState.fgi_time_until_update = time_until_update
-
-            # request FGI once per day, because is is calculated only once per day 
-            await asyncio.sleep(time_until_update)
-
-    # Credits goes to @IamtheOnewhoKnocks from
-    # https://discord.gg/tradealts
-    def ema(self, data, period, smoothing=2):
-        # Calculate EMA without dependency for TA-Lib
-        ema = [sum(data[:period]) / period]
-
-        for price in data[period:]:
-            ema.append(
-                (price * (smoothing / (1 + period)))
-                + ema[-1] * (1 - (smoothing / (1 + period)))
-            )
-
-        for i in range(period - 1):
-            ema.insert(0, np.nan)
-
-        return ema
-
-    # Credits goes to @IamtheOnewhoKnocks from
-    # https://discord.gg/tradealts
-    @retry(wait=wait_fixed(2))
-    def btctechnical(self, symbol):
-        btcusdt = yf.download(
-            tickers=symbol, period="6h", interval="5m", progress=False
-        )
-        if len(btcusdt) > 0:
-            btcusdt = btcusdt.iloc[:, :5]
-            btcusdt.columns = ["Time", "Open", "High", "Low", "Close"]
-            btcusdt = btcusdt.astype(float)
-            btcusdt["EMA9"] = self.ema(btcusdt["Close"], 9)
-            btcusdt["EMA50"] = self.ema(btcusdt["Close"], 50)
-            btcusdt["per_5mins"] = (np.log(btcusdt["Close"].pct_change() + 1)) * 100
-            btcusdt["percentchange_15mins"] = (
-                np.log(btcusdt["Close"].pct_change(3) + 1)
-            ) * 100
-        else:
-            raise IOError("Downloading YFinance chart broken, retry....")
-
-        return btcusdt
-
-    # Credits goes to @IamtheOnewhoKnocks from
-    # https://discord.gg/tradealts
-    async def getbtcpulse(self, asyncState):
-
-        if asyncState.fgi_allows_trading:
-            self.logging.info("Starting btc-pulse", True)
-
-        while asyncState.fgi_allows_trading:
-            btcusdt = self.btctechnical("BTC-USD")
-            # if EMA 50 > EMA9 or <-1% drop then the sleep mode is activated
-            # else bool is false and while loop is broken
-            if (
-                btcusdt.percentchange_15mins[-1] < -1
-                or btcusdt.EMA50[-1] > btcusdt.EMA9[-1]
-            ):
-                self.logging.info("btc-pulse signaling downtrend")
-
-                # after 5mins getting the latest BTC data to see if it has had a sharp rise in previous 5 mins
-                await asyncio.sleep(300)
-                btcusdt = self.btctechnical("BTC-USD")
-
-                # this is the golden cross check fast moving EMA
-                # cuts slow moving EMA from bottom, if that is true then bool=false and break while loop
-                if (
-                    btcusdt.EMA9[-1] > btcusdt.EMA50[-1]
-                    and btcusdt.EMA50[-2] > btcusdt.EMA9[-2]
-                ):
-                    self.logging.info("btc-pulse signaling uptrend (golden cross check)")
-                    asyncState.btc_downtrend = False
-                else:
-                    asyncState.btc_downtrend = True
-
-            else:
-                self.logging.info("btc-pulse signaling uptrend")
-                asyncState.btc_downtrend = False
-
-            self.logging.info("Next btc-pulse check in 5m")
-            await asyncio.sleep(300)
+        return pairlist, pairtuple_sorted
