@@ -149,11 +149,9 @@ Everything is the same as with the other single mode, but the deals are started 
 
 **single=false deal_mode=signal**
 
-A multi bot will be created with the top 30 Symrank list (initical call to /symrank). A new deal will be started when a new signal is coming in. 
+A multi bot will be created with the first two incoming signals from the websocket who fit the configured signals. A new deal will be started when a new signal is coming in. 
 
-If it is a STOP/START signal which is not from an existing pair a random pair from the initial top 30 Symrank list is used for a new deal. 
-
-If it is a START signal from an existing pair or a freshly added pair, exactly that pair is used for a new deal.
+If it is a START signal from an existing pair, exactly that pair is used for a new deal.
 
 Pairs will be deleted from the list during a STOP signal and added with a START signal, if it fits the filters.
 
@@ -177,8 +175,6 @@ topcoin_limit | integer | NO | (3500) | Token pair has to be in the configured 
 topcoin_volume | integer | NO | (0) | Volume check against Coingecko (btc_min_vol means volume check directly in 3commas - not before like this setting). Only pairs with the given volume are traded. Default is 0 and means volume check is disabled
 topcoin_exchange | string | NO | (binance), gdax | Name of the exchange to check the volume. Because every exchange has another id, please contact me for your exchange and I will update this list here for configuration
 deal_mode | string | NO | ([{"options": {"time": "3m", "points": "100"}, "strategy": "rsi"}]) signal | Deal strategy how the script is creating new deals in multipair bot - for more see the "Deal Modes" section
-limit_initial_pairs | boolean |NO | (false), true | Limit initial pairs to the max number of deals (MAD) - bot chooses the top pairs
-random_pair | boolean | NO | (false), true | If true then random pairs from the symrank list will be used for new deals in multibot
 btc_pulse | boolean | NO | (false), true | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
 ext_botswitch | boolean | NO | (false), true | If enabled the automatic multibot enablement will be disabled and only triggered by external events - you must disable BTC Pulse if you enable this switch !!!
 token_denylist | array |YES | ([BUSD_USDT, USDC_USDT, USDT_USDT, USDT_USDP]) | Denylist of pairs which not be used by the bot for new deals

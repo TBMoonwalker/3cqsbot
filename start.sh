@@ -69,8 +69,6 @@ echo "[filter]" >> config.ini
 [ $TOPCOIN_LIMIT ] && echo "topcoin_limit = $TOPCOIN_LIMIT" >> config.ini
 [ $TOPCOIN_VOLUME ] && echo "topcoin_volume = $TOPCOIN_VOLUME" >> config.ini
 [ "$DEAL_MODE" ] && echo "deal_mode = ${DEAL_MODE}"  >> config.ini
-[ $LIMIT_INIT_PAIRS ] && echo "limit_init_pairs = $LIMIT_INIT_PAIRS" >> config.ini
-[ $RANDOM_PAIR ] && echo "random_pair = $RANDOM_PAIR" >> config.ini
 [ $BTC_PULSE ] && echo "btc_pulse = $BTC_PULSE" >> config.ini
 [ $EXT_BOTSWITCH ] && echo "ext_botswitch = $EXT_BOTSWITCH" >> config.ini
 [ "$DENYLIST" ] && echo "token_denylist = $DENYLIST" >> config.ini

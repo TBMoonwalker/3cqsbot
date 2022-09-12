@@ -46,7 +46,7 @@ class MultiBot:
 
         return bot
 
-    def adjustmad(self, pairs, mad):
+    def __adjustmad(self, pairs, mad):
         # Lower max active deals, when pairs are under mad
         if len(pairs) * self.attributes.get("sdsp") < mad:
             self.logging.debug(
@@ -60,7 +60,7 @@ class MultiBot:
 
         return mad
 
-    def payload(self, pairs, mad, new_bot):
+    def __payload(self, pairs, mad, new_bot):
 
         payload = {
             "name": self.prefix + "_" + self.subprefix + "_" + self.suffix,
@@ -151,35 +151,26 @@ class MultiBot:
                 if error:
                     self.logging.error(error["msg"])
 
-    def new_deal(self, bot, triggerpair):
+    def __new_deal(self, bot, pair):
         # Triggers a new deal
-        if triggerpair:
-            pair = triggerpair
-        else:
-            if self.attributes.get("random_pair", "true"):
-                pair = random.choice(bot["pairs"])
+        self.logging.info("Trigger new deal with pair " + pair)
+        error, data = self.p3cw.request(
+            entity="bots",
+            action="start_new_deal",
+            action_id=str(bot["id"]),
+            additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
+            payload={"pair": pair},
+        )
+
+        if error:
+            if bot["active_deals_count"] == bot["max_active_deals"]:
+                self.logging.info(
+                    "Max active deals of "
+                    + str(bot["max_active_deals"])
+                    + " reached, not adding a new one."
+                )
             else:
-                pair = ""
-
-        if pair:
-            self.logging.info("Trigger new deal with pair " + pair)
-            error, data = self.p3cw.request(
-                entity="bots",
-                action="start_new_deal",
-                action_id=str(bot["id"]),
-                additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-                payload={"pair": pair},
-            )
-
-            if error:
-                if bot["active_deals_count"] == bot["max_active_deals"]:
-                    self.logging.info(
-                        "Max active deals of "
-                        + str(bot["max_active_deals"])
-                        + " reached, not adding a new one."
-                    )
-                else:
-                    self.logging.error(error["msg"])
+                self.logging.error(error["msg"])
 
     def create(self):
         # Creates a multi bot with start signal
@@ -194,7 +185,7 @@ class MultiBot:
             pairs.append(pair)
 
         # Adapt mad if pairs are under value
-        mad = self.adjustmad(pairs, mad)
+        mad = self.__adjustmad(pairs, mad)
 
         if not bot:
             self.logging.info(
@@ -210,7 +201,7 @@ class MultiBot:
                 entity="bots",
                 action="create_bot",
                 additional_headers={"Forced-Mode": self.attributes.get("trade_mode")},
-                payload=self.payload(pairs, mad, new_bot=True),
+                payload=self.__payload(pairs, mad, new_bot=True),
             )
 
             if error:
@@ -257,7 +248,7 @@ class MultiBot:
 
             if pair_update:
                 # Adapt mad if pairs are under value
-                mad = self.adjustmad(bot["pairs"], mad)
+                mad = self.__adjustmad(bot["pairs"], mad)
                 self.logging.info(
                     "Adjusting mad to amount of included symrank pairs: " + str(mad)
                 )
@@ -269,7 +260,7 @@ class MultiBot:
                     additional_headers={
                         "Forced-Mode": self.attributes.get("trade_mode")
                     },
-                    payload=self.payload(bot["pairs"], mad, new_bot=False),
+                    payload=self.__payload(bot["pairs"], mad, new_bot=False),
                 )
 
                 if error:
@@ -280,4 +271,4 @@ class MultiBot:
 
             if not triggeronly:
                 if self.attributes.get("deal_mode") == "signal" and data:
-                    self.new_deal(data, triggerpair)
+                    self.__new_deal(data, triggerpair)

@@ -106,7 +106,7 @@ asyncState.fgi_time_until_update = 1
 ######################################################
 #                     Methods                        #
 ######################################################
-def run_once():
+def __run_once():
     asyncState.fh = open(os.path.realpath(__file__), "r")
     try:
         portalocker.lock(asyncState.fh, portalocker.LOCK_EX | portalocker.LOCK_NB)
@@ -117,10 +117,10 @@ def run_once():
 
 
 # Check for single instance run
-run_once()
+__run_once()
 
 
-def bot_data():
+def __bot_data():
 
     # Gets information about existing bot in 3Commas
     botlimit = attributes.get("system_bot_value", 300)
@@ -151,7 +151,7 @@ def bot_data():
     return bots
 
 
-def account_data():
+def __account_data():
 
     # Gets information about the used 3commas account (paper or real)
     account = {}
@@ -182,13 +182,13 @@ def account_data():
     return account
 
 
-def pair_data(data):
+def __pair_data(data):
     if data["symbol"] not in asyncState.pairData:
         asyncState.pairData.append(data["symbol"])
 
 
-def bot_type(signal, pair_output):
-    bot_output = bot_data()
+def __bot_type(signal, pair_output):
+    bot_output = __bot_data()
 
     if attributes.get("single"):
         bot = SingleBot(
@@ -213,7 +213,7 @@ def bot_type(signal, pair_output):
     return bot
 
 
-async def bot_switch():
+async def __bot_switch():
 
     while True:
 
@@ -232,7 +232,7 @@ async def bot_switch():
                         "Not activating old single bots (waiting for new signals)"
                     )
                 else:
-                    bot = MultiBot([], bot_data(), {}, 0, attributes, p3cw, logging)
+                    bot = MultiBot([], __bot_data(), {}, 0, attributes, p3cw, logging)
                     bot.enable()
 
         else:
@@ -243,16 +243,16 @@ async def bot_switch():
                 logging.debug("bot_active: " + str(asyncState.bot_active))
 
                 if attributes.get("single"):
-                    bot = SingleBot([], bot_data(), {}, attributes, p3cw, logging)
-                    bot.disable(bot_data(), True)
+                    bot = SingleBot([], __bot_data(), {}, attributes, p3cw, logging)
+                    bot.disable(__bot_data(), True)
                 else:
-                    bot = MultiBot([], bot_data(), {}, 0, attributes, p3cw, logging)
+                    bot = MultiBot([], __bot_data(), {}, 0, attributes, p3cw, logging)
                     bot.disable()
 
         await asyncio.sleep(60)
 
 
-def _handle_task_result(task: asyncio.Task) -> None:
+def __handle_task_result(task: asyncio.Task) -> None:
 
     try:
         task.result()
@@ -265,7 +265,7 @@ def _handle_task_result(task: asyncio.Task) -> None:
         )
 
 
-async def _websocket_connect():
+async def __websocket_connect():
     await sio.connect(
         attributes.get("websocket_url"),
         headers={
@@ -281,7 +281,7 @@ async def _websocket_connect():
 async def connect_error():
     logging.info("error from websocket server, trying to reconnect")
     await sio.sleep(10)
-    await _websocket_connect()
+    await __websocket_connect()
 
 
 @sio.event
@@ -311,7 +311,7 @@ async def my_message(data):
         # Right signal?
         if filters.signal():
 
-            bot = bot_type(data, [data["symbol"]])
+            bot = __bot_type(data, [data["symbol"]])
 
             # Check for stop signal
             if data["signal"] == "BOT_STOP":
@@ -341,24 +341,21 @@ async def my_message(data):
                                 logging.info(
                                     "Still filling initial pairs for multibot ...."
                                 )
-                                pair_data(data)
+                                __pair_data(data)
                             else:
                                 logging.info("Initial pairs for multibot filled.")
                                 asyncState.multiInit = "filled"
 
                         # Create new Multibot
                         if asyncState.multiInit == "filled":
-                            bot = bot_type(data, asyncState.pairData)
+                            bot = __bot_type(data, asyncState.pairData)
                             logging.debug("Bot create")
                             logging.debug(str(asyncState.pairData))
 
                             # Enable new multibot only on btc uptrend
-                            if bot.create() and (
-                                not asyncState.btc_downtrend
-                                or attributes.get("ext_botswitch", False)
-                            ):
+                            if bot.create() and not asyncState.btc_downtrend:
                                 # Bot object needs to be created again, to gather newly created Multibot
-                                bot = bot_type(data, asyncState.pairData)
+                                bot = __bot_type(data, asyncState.pairData)
                                 bot.enable()
                             else:
                                 logging.info(
@@ -382,37 +379,26 @@ async def my_message(data):
 
 async def main():
     conditions = Conditions(logging)
-    asyncState.accountData = account_data()
+    asyncState.accountData = __account_data()
 
     logging.info("*** 3CQS Bot started ***")
 
     # Connect to 3CQS websocket
-    await _websocket_connect()
+    await __websocket_connect()
 
-    # BTC-Pulse and External Bot cannot be activated at the same time
-    if attributes.get("btc_pulse", False) and attributes.get("ext_bot_active", False):
-        sys.tracebacklimit = 0
-        sys.exit(
-            "Check config.ini, btc_pulse and ext_bot_active both set to true - not allowed"
-        )
+    # Start background tasks for conditions
+    # BTC-Pulse
+    if attributes.get("btc_pulse", False):
+        btc_pulse = asyncio.create_task(conditions.btcpulse(asyncState))
+        btc_pulse.add_done_callback(__handle_task_result)
 
-    # Start background tasks for BTC Pulse
-    if attributes.get("btc_pulse", False) and not attributes.get(
-        "ext_bot_active", False
-    ):
-        btc_downtrendtask = asyncio.create_task(conditions.btcdowntrend(asyncState))
-        btc_downtrendtask.add_done_callback(_handle_task_result)
+        botswitch = asyncio.create_task(__bot_switch())
+        botswitch.add_done_callback(__handle_task_result)
 
-        switchtask = asyncio.create_task(bot_switch())
-        switchtask.add_done_callback(_handle_task_result)
+        asyncState.tasks.append(btc_pulse)
+        asyncState.tasks.append(botswitch)
 
-        asyncState.tasks.append(btc_downtrendtask)
-        asyncState.tasks.append(switchtask)
-
-        # await btc_downtrendtask
-        # await switchtask
-
-    # Start background tasks for FGI
+    # FGI
     if attributes.get("fearandgreed", False):
         fgi_task = asyncio.create_task(
             conditions.get_fgi(
@@ -421,11 +407,9 @@ async def main():
                 attributes.get("fgi_ema_slow", 50),
             )
         )
-        fgi_task.add_done_callback(_handle_task_result)
+        fgi_task.add_done_callback(__handle_task_result)
 
         asyncState.tasks.append(fgi_task)
-
-        # await fgi_task
 
     if asyncState.tasks:
         await asyncio.wait(asyncState.tasks)

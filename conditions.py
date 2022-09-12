@@ -16,7 +16,7 @@ class Conditions:
 
     # Credits goes to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts
-    def ema(self, data, period, smoothing=2):
+    def __ema(self, data, period, smoothing=2):
         # Calculate EMA without dependency for TA-Lib
         ema = [sum(data[:period]) / period]
 
@@ -34,7 +34,7 @@ class Conditions:
     # Credits goes to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts
     @retry(wait=wait_fixed(2))
-    def ticker(self, symbol):
+    def __ticker(self, symbol):
         btcusdt = yf.download(
             tickers=symbol, period="6h", interval="5m", progress=False
         )
@@ -42,8 +42,8 @@ class Conditions:
             btcusdt = btcusdt.iloc[:, :5]
             btcusdt.columns = ["Time", "Open", "High", "Low", "Close"]
             btcusdt = btcusdt.astype(float)
-            btcusdt["EMA9"] = self.ema(btcusdt["Close"], 9)
-            btcusdt["EMA50"] = self.ema(btcusdt["Close"], 50)
+            btcusdt["EMA9"] = self.__ema(btcusdt["Close"], 9)
+            btcusdt["EMA50"] = self.__ema(btcusdt["Close"], 50)
             btcusdt["per_5mins"] = (np.log(btcusdt["Close"].pct_change() + 1)) * 100
             btcusdt["percentchange_15mins"] = (
                 np.log(btcusdt["Close"].pct_change(3) + 1)
@@ -55,12 +55,12 @@ class Conditions:
 
     # Credits goes to @IamtheOnewhoKnocks from
     # https://discord.gg/tradealts
-    async def btcdowntrend(self, asyncState):
+    async def btcpulse(self, asyncState):
 
         self.logging.info("Condition: Starting BTC-Pulse")
 
         while True:
-            btcusdt = self.ticker("BTC-USD")
+            btcusdt = self.__ticker("BTC-USD")
             # if EMA 50 > EMA9 or <-1% drop then the sleep mode is activated
             # else bool is false and while loop is broken
             if (
@@ -71,7 +71,7 @@ class Conditions:
 
                 # after 5mins getting the latest BTC data to see if it has had a sharp rise in previous 5 mins
                 await asyncio.sleep(300)
-                btcusdt = self.ticker("BTC-USD")
+                btcusdt = self.__ticker("BTC-USD")
 
                 # this is the golden cross check fast moving EMA
                 # cuts slow moving EMA from bottom, if that is true then bool=false and break while loop
