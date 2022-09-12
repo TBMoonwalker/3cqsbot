@@ -296,7 +296,7 @@ class SingleBot:
             "active_safety_orders_count": self.attributes.get(
                 "max", "", self.asyncState.dca_conf
             ),
-            "cooldown": self.attributes.get("cooldown", 0, self.asyncState.dca_conf),
+            "cooldown": self.attributes.get("cooldown", 30, self.asyncState.dca_conf),
             "strategy_list": self.strategy(),
             "trailing_enabled": self.attributes.get(
                 "trailing", False, self.asyncState.dca_conf
@@ -305,7 +305,7 @@ class SingleBot:
                 "trailing_deviation", 0.2, self.asyncState.dca_conf
             ),
             "min_volume_btc_24h": self.attributes.get(
-                "btc_min_vol", 0, self.asyncState.dca_conf
+                "btc_min_vol", 100, self.asyncState.dca_conf
             ),
             "disable_after_deals_count": self.attributes.get(
                 "deals_count", 0, self.asyncState.dca_conf

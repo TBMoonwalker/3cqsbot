@@ -32,4 +32,4 @@ account_name = "Your paper account here - without quotes"
 single = false
 
 [filter]
-symrank_signal = triple100
+symrank_signal = quadruple100

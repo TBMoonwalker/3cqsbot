@@ -30,7 +30,7 @@ class MultiBot:
         self.logging = logging
         self.asyncState = asyncState
         self.signal = Signals(logging)
-        self.config_botid = str(self.attributes.get("botid", "", "dcabot"))
+        self.config_botid = str(self.attributes.get("botid", "", "3commas"))
         self.botname = (
             self.attributes.get(
                 "prefix",
@@ -268,7 +268,7 @@ class MultiBot:
             "active_safety_orders_count": self.attributes.get(
                 "max", "", self.asyncState.dca_conf
             ),
-            "cooldown": self.attributes.get("cooldown", 0, self.asyncState.dca_conf),
+            "cooldown": self.attributes.get("cooldown", 30, self.asyncState.dca_conf),
             "strategy_list": self.strategy(),
             "trailing_enabled": self.attributes.get(
                 "trailing", False, self.asyncState.dca_conf
@@ -277,10 +277,10 @@ class MultiBot:
                 "trailing_deviation", 0.2, self.asyncState.dca_conf
             ),
             "allowed_deals_on_same_pair": self.attributes.get(
-                "sdsp", "", self.asyncState.dca_conf
+                "sdsp", "1", self.asyncState.dca_conf
             ),
             "min_volume_btc_24h": self.attributes.get(
-                "btc_min_vol", 0, self.asyncState.dca_conf
+                "btc_min_vol", 100, self.asyncState.dca_conf
             ),
             "disable_after_deals_count": self.attributes.get(
                 "deals_count", 0, self.asyncState.dca_conf
@@ -395,9 +395,12 @@ class MultiBot:
             sys.exit("Aborting script. Please check for correct botid in config.ini!")
 
         # If no botid given and fgi_trading or fgi_pulse is set to true, then exit
-        if self.config_botid == "" and (self.attributes.get("fgi_trading", False) or self.attributes.get("fgi_pulse", False)):
+        if self.config_botid == "" and (
+            self.attributes.get("fgi_trading", False)
+            or self.attributes.get("fgi_pulse", False)
+        ):
             self.logging.error(
-                "Please add 'botid = xxxxxxx' to [dcabot] for using FGI. FGI guided DCA settings will only applied "
+                "Please add 'botid = xxxxxxx' to [3commas] for using FGI. FGI guided DCA settings will only applied "
                 + "to existent 3cqsbot. \n Script will be aborted if no 3cqsbot is found by botname"
             )
 
@@ -448,7 +451,10 @@ class MultiBot:
 
             # If FGI is used and botid is not set in [dcabot], which is mandatory to prevent creating new bots with different botids,
             # abort program for security reasons
-            if self.config_botid == "" and (self.attributes.get("fgi_trading", False) or self.attributes.get("fgi_pulse", False)):
+            if self.config_botid == "" and (
+                self.attributes.get("fgi_trading", False)
+                or self.attributes.get("fgi_pulse", False)
+            ):
                 self.logging.error(
                     "No botid set in [dcabot] and no 3cqsbot '"
                     + self.botname

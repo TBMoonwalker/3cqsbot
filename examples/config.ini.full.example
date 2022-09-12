@@ -19,11 +19,11 @@ secret = "Your secret from 3Commas here - without Quotes"
 #retries = 5
 #delay_between_retries = 2.0
 #system_bot_value = 300
-
-[dcabot]
 ### When using FGI in combination with multibot and if you want to use other bot names with suffix _aggressive, _moderate or _defensive, 
 ### then it is important to enter the botid of the existing 3cqsbot to prevent creation of a new one 
 #botid = 1234567
+
+[dcabot]
 prefix = 3CQSBOT
 subprefix = MULTI
 suffix = TA_SAFE
@@ -156,14 +156,6 @@ account_name = "Your paper account here - without quotes"
 single = False
 #delete_single_bots = False
 #singlebot_update = True
-### Futures trading only
-trade_future = False
-leverage_type = cross
-leverage_value = 2
-stop_loss_percent = 1
-stop_loss_type = stop_loss_and_disable_bot
-stop_loss_timeout_enabled = False
-stop_loss_timeout_seconds = 5
 
 [filter]
 ### possible symrank_signal: triple100, quadruple100, quadruple250, top30, svol, svoldouble, hvol, hvoldouble, uvol, xvol, all

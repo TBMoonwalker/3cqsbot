@@ -1133,6 +1133,7 @@ def report_funds_needed(dca_conf="dcabot"):
 
 def config_report():
 
+    logging.info("Debug mode: '" + str(attributes.get("debug", False)) + "'", True)
     if attributes.get("single"):
         logging.info("Bot mode: 'single pair'", True)
     else:
@@ -1148,12 +1149,13 @@ def config_report():
         + "'",
         True,
     )
-    logging.info(
-        "Continuous pair update for multibot with other deal_mode than 'signal': '"
-        + str(attributes.get("continuous_update", False))
-        + "'",
-        True,
-    )
+    if not attributes.get("single", False): 
+        logging.info(
+            "Avoid symrank calls with continuous pair update (also when bot is disabled) for multibot: '"
+            + str(attributes.get("continuous_update", False))
+            + "'",
+            True,
+        )
     logging.info("BTC pulse: '" + str(attributes.get("btc_pulse", False)) + "'", True)
     logging.info(
         "Topcoin filter: '" + str(attributes.get("topcoin_filter", False)) + "'", True
@@ -1439,7 +1441,7 @@ async def main():
             asyncState.bot_active = False
 
     ##### Wait for TG signals of 3C Quick Stats channel #####
-    logging.info("** Waiting for action **", True)
+    logging.info("** Waiting for 3CQS signals **", True)
     asyncState.receive_signals = True
     notification.send_notification()
 

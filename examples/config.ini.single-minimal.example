@@ -13,7 +13,9 @@ secret = "Your secret from 3Commas here - without Quotes"
 prefix = 3CQSBOT
 subprefix = SINGLE
 suffix = TA_SAFE
+single_count = 10
 mad = 1
+deal_mode = [{"strategy": "nonstop"}]
 tp = 1.5
 bo = 11
 so = 11
@@ -29,7 +31,6 @@ market = USDT
 trade_mode = paper
 account_name = "Your paper account here - without quotes"
 single = true
-single_count = 10
 
 [filter]
-symrank_signal = triple100
+symrank_signal = quadruple100
