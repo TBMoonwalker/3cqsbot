@@ -241,7 +241,7 @@ price_action_limit_max | number | NO | (100) | Bots will be created when the pri
 topcoin_filter | boolean | NO | (false), true | Disables the topcoin filter (default)
 topcoin_exchange | string | NO | (binance), gdax | Name of the exchange to check the volume. Because every exchange has another id, please contact me for your exchange and I will update this list here for configuration
 continuous_update | boolean | NO | (true), false | If set to true the multi bot is continuously updated with pairs independent of being activated or deactivated, e.g. by btc_pulse. The top30 symrank list is called once when bot is started.
-limit_pairs | boolean | NO | (false), true | Limit symrank pairs to the max number of deals (MAD) and sort them by trading volume for multi bot - top pairs are chosen
+limit_initial_pairs | boolean | NO | (false), true | Limit symrank pairs to the max number of deals (MAD) and sort them by trading volume for multi bot - top pairs are chosen
 random_pair | boolean | NO | (false), true | If true then random pairs from the symrank list will be used for new deals in multibot
 btc_pulse | boolean | NO | (false), true | Enable or disable the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
 fgi_pulse | boolean | NO | (false), true | Enable or disable the bots according to markets sentiment using EMA crossing
