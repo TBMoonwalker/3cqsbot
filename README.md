@@ -1,13 +1,15 @@
-# Based on TBMoonWalker's 3CQSBot v2 script - Improved by M1ch43l with following features added
+# Based on TBMoonWalker's 3CQSBot v2.1.4-alpha script - Improved by M1ch43l with adding following features v.2.5.0-alpha
 
-1. Implementation of sentiment trading according to Crypto Fear and Greed Index (FGI) with separate dca profiles including profile specific topcoin filter settings and amount of concurrent deals. New sections `[fgi_aggressive]`, `[fgi_moderate]` and `[fgi_defensive]` added for individual single/multi bot DCA configurations
-2. Implemented fgi_pulse trading, similar to btcpulse however using the crossing of EMA9 to EMA20 as default values to decide for trading
-3. Reporting for Telegram added, also extended reporting available for reporting every 3CQS signal
-4. For Multibot: if deal_mode `signal` is used, deals are triggered ONCE (no ASAP modus compared to single bot configuration)
-5. Symrank list sorting and limiting to maximum active deals (mad) according to trading volume if limit_symrank_pairs (old option name: limit_pairs) is set to True
-6. Pairs list is updated every 6 hours, to check on 3Commas for new or blacklisted coins
-7. White-list token implemented - trade only certain coins
-8. Improved error handling, if CoinGeckos or Yahoo Finance API requests are lagging
+1. Implementation of sentiment trading according to the Crypto Fear and Greed Index (FGI) with separate dca profiles including profile specific topcoin filter settings and amount of concurrent deals. New sections `[fgi_aggressive]`, `[fgi_moderate]` and `[fgi_defensive]` added for individual single/multi bot DCA configurations
+2. Implementation of fgi_pulse trading, similar to btc_pulse however using the crossing of EMA9 to EMA20 as default values to decide for trading
+3. Notification on Telegram: new deals are reported on your personal Telegram channel - no need to check your logs daily, also extended notification available for reporting every 3CQS signal
+4. Config und DCA setting reporting with funds needed, max. coverage and required change
+5. For Multibot: if deal_mode `signal` is used, deals are triggered ONCE (no ASAP mode compared to single bot configuration)
+6. For Multibot: Symrank list sorting according to trading volume and limiting to maximum active deals, e.g. when using ASAP like mode
+7. List of tradable pairs on 3Commas is updated every 6 hours to check for new or blacklisted coins
+8. White-list for pairs implemented - trade only certain coins
+9. Improved error handling if 3Commas, CoinGeckos or Yahoo Finance API requests are lagging
+10. Backwards compatiblity to v2.1.4 - use your old config
 
 ## Summary
 
@@ -239,7 +241,7 @@ price_action_limit_max | number | NO | (100) | Bots will be created when the pri
 topcoin_filter | boolean | NO | (false), true | Disables the topcoin filter (default)
 topcoin_exchange | string | NO | (binance), gdax | Name of the exchange to check the volume. Because every exchange has another id, please contact me for your exchange and I will update this list here for configuration
 continuous_update | boolean | NO | (true), false | If set to true the multi bot is continuously updated with pairs independent of being activated or deactivated, e.g. by btc_pulse. The top30 symrank list is called once when bot is started.
-limit_symrank_pairs | boolean | NO | (false), true | Limit symrank pairs to the max number of deals (MAD) and sort them by trading volume for multi bot - top pairs are chosen
+limit_pairs | boolean | NO | (false), true | Limit symrank pairs to the max number of deals (MAD) and sort them by trading volume for multi bot - top pairs are chosen
 random_pair | boolean | NO | (false), true | If true then random pairs from the symrank list will be used for new deals in multibot
 btc_pulse | boolean | NO | (false), true | Enable or disable the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
 fgi_pulse | boolean | NO | (false), true | Enable or disable the bots according to markets sentiment using EMA crossing
@@ -360,9 +362,12 @@ Note: **Please use 3cqsbot only on paper trading. Usage with real funds is at yo
 
 ### Fear and Greed Index
 
-This settings allows you to use the Crypto Fear and Greed index (FGI) to identify the sentiment of the corresponding market phase. The FGI is determined once a day on <https://alternative.me/crypto/fear-and-greed-index/>
+The use of the Crypto Fear and Greed index (FGI) helps you to identify the sentiment of the corresponding market phase and to use adapted DCA profiles. The FGI is determined once a day on <https://alternative.me/crypto/fear-and-greed-index/>
 ![Screenshot](FGI%20borders%20screenshot.png)
-How to use: when FGI is signaling "greed/very greed" (FGI values usually between 60-100) you may use aggressive DCA settings `[fgi_aggressive]`, e.g. Mars/Banshee/69er DCA settings covering a price drop of 20-40%.
+  
+The option fgi_trading activates FGI dependent DCA profile setting and trading.  
+
+When FGI is signaling "greed (FGI values 60-80)/very greed (80-100)" you may use aggressive DCA settings `[fgi_aggressive]`, e.g. Mars/Banshee/69er DCA settings covering a price drop of 20-40%. You can use less maximum active deals then usual because a drop is very likely and you do not want to sit on red bags for the next 6-9 months.
 
 In phases of fear (FGI values 0-30) over a longer time that may correspond to a beginning or consolidating bear market, the bot can switch to very defensive/conservative DCA settings `[fgi_defensive]`, eg. TA safer, ZachTech BitMan DCA settings covering a price drop of up to 60%.
 
@@ -380,10 +385,13 @@ Optionally, the multi pair bot can be renamed according to the prefix, subprefix
 
 For single bots the standard name (prefix, subprefix, suffix) defined in `[dcabot]` is used ensuring that the algo finds all single bots under standard name to switch them off when receiving the #STOP signal from 3CQS.
 
-### Fear and Greed Index Trading range
+### Fear and Greed Index trading range
 
-With the options ```fgi_trade_min = 10``` and ```fgi_trade_max = 100``` you can define the allowed trading range.
-Additionally, similar to btc-pulse a fast (9)/slow (20) EMA of FGI is used to determine up-/downtrending fear and greed. Fast EMA crossing up slow EMA allows the beginning of trading as long it is over ```fgi_trade_min```. You can customize the EMA values with the options ```fgi_ema_fast``` and ```fgi_ema_slow```.
+With the options ```fgi_trade_min = 10``` and ```fgi_trade_max = 90``` you can generally define the allowed trading range.
+
+### Fear and Greed Index pulse
+
+With the option fgi_pulse you can determine the trend direction of the market sentiment, in contrast to btc_pulse on a daily basis. When the sentiment is downtrending very fast (drop of >10% on one day or >15% on two days) trading is stopped, also if the fast (9) EMA is below the slow (20) EMA. Contrary, when fast EMA is crossing up the slow EMA line the market is uptrending and automated trading activities are started, dependent of your generally defined FGI trading range ```fgi_trade_min``` and ```fgi_trade_max```. You can customize the EMA values with the options ```fgi_ema_fast``` and ```fgi_ema_slow```.
 
 ### External bot switch
 

@@ -1145,11 +1145,11 @@ def config_report():
     )
     logging.info(
         "Sort and limit symrank pairs to mad: '"
-        + str(attributes.get("limit_symrank_pairs", False))
+        + str(attributes.get("limit_pairs", False))
         + "'",
         True,
     )
-    if not attributes.get("single", False): 
+    if not attributes.get("single", False):
         logging.info(
             "Avoid symrank calls with continuous pair update (also when bot is disabled) for multibot: '"
             + str(attributes.get("continuous_update", False))
