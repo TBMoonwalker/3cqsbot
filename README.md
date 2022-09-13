@@ -1,15 +1,15 @@
 # Based on TBMoonWalker's 3CQSBot v2.1.4-alpha script - Improved by M1ch43l with adding following features v.2.5.0-alpha
 
-1. Implementation of sentiment trading according to the Crypto Fear and Greed Index (FGI) with separate dca profiles including profile specific topcoin filter settings and amount of concurrent deals. New sections `[fgi_aggressive]`, `[fgi_moderate]` and `[fgi_defensive]` added for individual single/multi bot DCA configurations
+1. Implementation of sentiment trading according to the Crypto Fear and Greed Index (FGI) with separate DCA profiles including profile specific topcoin filter settings and amount of concurrent deals. New sections `[fgi_aggressive]`, `[fgi_moderate]` and `[fgi_defensive]` added for individual single/multi bot DCA configurations
 2. Implementation of fgi_pulse trading, similar to btc_pulse however using the crossing of EMA9 to EMA20 as default values to decide for trading
 3. Notification on Telegram: new deals are reported on your personal Telegram channel - no need to check your logs daily, also extended notification available for reporting every 3CQS signal
 4. Config und DCA setting reporting with funds needed, max. coverage and required change
-5. For Multibot: if deal_mode `signal` is used, deals are triggered ONCE (no ASAP mode compared to single bot configuration)
+5. For Multibot: if `deal_mode = signal` is used, deals are triggered ONCE (no ASAP mode compared to single bot configuration)
 6. For Multibot: Symrank list sorting according to trading volume and limiting to maximum active deals, e.g. when using ASAP like mode
-7. List of tradable pairs on 3Commas is updated every 6 hours to check for new or blacklisted coins
+7. List of tradeable pairs on 3Commas is updated every 6 hours to check for new or blacklisted coins
 8. White-list for pairs implemented - trade only certain coins
 9. Improved error handling if 3Commas, CoinGeckos or Yahoo Finance API requests are lagging
-10. Backwards compatiblity to v2.1.4 - use your old config
+10. Backwards compatibility to v2.1.4 - use your old config
 
 ## Summary
 
