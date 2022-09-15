@@ -124,8 +124,8 @@ class Conditions:
             raw_data = json.loads(response.text)
             for i in range(len(raw_data["data"])):
                 fgi_values.insert(0, int(raw_data["data"][i]["value"]))
-            fgi_ema_fast = self.ema(fgi_values, ema_fast)
-            fgi_ema_slow = self.ema(fgi_values, ema_slow)
+            fgi_ema_fast = self.__ema(fgi_values, ema_fast)
+            fgi_ema_slow = self.__ema(fgi_values, ema_slow)
             time_until_update = int(raw_data["data"][0]["time_until_update"])
             fmt = "{0.hours}h:{0.minutes}m:{0.seconds}s"
             # Web response sometimes slow, so proceed only if time_until_update for next web update > 10 sec

@@ -82,8 +82,8 @@ p3cw = Py3CW(
 
 # Initialize socket.io async client
 sio = socketio.AsyncClient(
-    logger=wslogger,
-    engineio_logger=wslogger,
+    logger=logging,
+    engineio_logger=logging,
     reconnection=True,
     reconnection_delay=attributes.get("websocket_reconnection_delay", 10000),
     reconnection_attempts=attributes.get("websocket_reconnection_attempts", 0),
