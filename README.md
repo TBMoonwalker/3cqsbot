@@ -182,8 +182,8 @@ token_denylist | array |YES | ([BUSD_USDT, USDC_USDT, USDT_USDT, USDT_USDP]) | 
 ### Signals
 Beneath you can see a list of all available 3CQS signals right now. You can combine them in your `symrank_signal` attribute like "symrank_signal = 1,2".
 
-ID | Name
------------- | ------------
+ID | Name
+------------ | ------------
 1 | SymRank Top 100 Triple Tracker
 2 | SymRank Top 30
 3 |	Hyper Volatility
@@ -205,9 +205,7 @@ ID | Name
 19|	SymScore Ultra Bearish (BETA)
 20|	SymScore X-Treme Bearish (BETA)
 99 | Use all signals
-
-#### all
-Pass through all signals
+all | Pass through all signals
 
 ### BTC Pulse
 BTC Pulse is a simple strategy which monitors BTC Price Action to start new deals or just put the bot to sleep ( no new deals but active deals keep running) based on:-
