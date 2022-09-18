@@ -773,9 +773,9 @@ async def bot_switch(interval_sec):
                         "Single bot mode activated - waiting for pair #start signals",
                         True,
                     )
-                elif attributes.get(
-                    "deal_mode", "", asyncState.dca_conf
-                ) == "signal" or attributes.get("continuous_update", False):
+                elif get_deal_mode() == "signal" or attributes.get(
+                    "continuous_update", False
+                ):
                     # listen continuously to 3cqs msgs on TG, avoid symrank calls
                     if asyncState.multibot == {}:
                         bot = MultiBot(
@@ -889,12 +889,19 @@ async def symrank():
             await asyncio.sleep(60)
 
 
+def get_deal_mode():
+    strategy = attributes.get("deal_mode", "test", asyncState.dca_conf)
+    if strategy == "test":
+        strategy = attributes.get("deal_mode", "")
+    return strategy
+
+
 @client.on(events.NewMessage(chats=attributes.get("chatroom", "3C Quick Stats")))
 async def my_event_handler(event):
     more_inform = attributes.get("extensive_notifications", False)
     tg_output = tg_data(parse_tg(event.raw_text))
     logging.debug("TG msg: " + str(tg_output))
-    dealmode_signal = attributes.get("deal_mode", "", asyncState.dca_conf) == "signal"
+    dealmode_signal = get_deal_mode() == "signal"
 
     if tg_output and asyncState.fgi_allows_trading and asyncState.receive_signals:
         account_output = asyncState.account_data
@@ -1145,11 +1152,11 @@ def config_report():
     )
     logging.info(
         "Sort and limit symrank pairs to mad: '"
-        + str(attributes.get("limit_symrank_pairs", False))
+        + str(attributes.get("limit_inital_pairs", False))
         + "'",
         True,
     )
-    if not attributes.get("single", False): 
+    if not attributes.get("single", False):
         logging.info(
             "Avoid symrank calls with continuous pair update (also when bot is disabled) for multibot: '"
             + str(attributes.get("continuous_update", False))
@@ -1398,9 +1405,7 @@ async def main():
 
         logging.info("DCA setting: '[" + asyncState.dca_conf + "]'", True)
         logging.info(
-            "Deal mode of DCA setting: '"
-            + attributes.get("deal_mode", "", asyncState.dca_conf)
-            + "'",
+            "Deal mode of DCA setting: '" + get_deal_mode() + "'",
             True,
         )
 
@@ -1445,7 +1450,7 @@ async def main():
     asyncState.receive_signals = True
     notification.send_notification()
 
-    if attributes.get("deal_mode", "", asyncState.dca_conf) != "signal":
+    if get_deal_mode() != "signal":
         while (
             asyncState.fgi_allows_trading
             and not asyncState.symrank_success

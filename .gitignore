@@ -4,5 +4,6 @@
 *.session-journal
 config.ini
 config.ini.old
+config.ini.new
 launch.json
 logs/*

@@ -242,14 +242,19 @@ class SingleBot:
 
         return
 
+    def get_deal_mode(self):
+        strategy = self.attributes.get("deal_mode", "test", self.asyncState.dca_conf)
+        if strategy == "test":
+            strategy = self.attributes.get("deal_mode", "")
+        return strategy
+
     def strategy(self):
-        if self.attributes.get("deal_mode", "", self.asyncState.dca_conf) == "signal":
+        deal_mode = self.get_deal_mode()
+        if deal_mode == "signal":
             strategy = [{"strategy": "nonstop"}]
         else:
             try:
-                strategy = json.loads(
-                    self.attributes.get("deal_mode", "", self.asyncState.dca_conf)
-                )
+                strategy = json.loads(deal_mode)
             except ValueError:
                 self.logging.error(
                     "Either missing ["

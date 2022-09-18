@@ -1,7 +1,10 @@
+
+### Every line marked with # is optional
+
 [general]
-timezone = Europe/Amsterdam
-debug = False
-logrotate = 7
+#timezone = Europe/Amsterdam
+#debug = False
+#logrotate = 7
 
 [telegram]
 api_id = "Your api id from Telegram here - without Quotes"
@@ -51,9 +54,9 @@ sdsp = 1
 #btc_min_vol = 100
 #cooldown = 30
 #deals_count = 1
-topcoin_volume = 100
-### not more then 3500 coins
-topcoin_limit = 500
+#topcoin_volume = 100
+### not more then 3500 coins for topcoin_limit
+#topcoin_limit = 500
 
 #[fgi_aggressive]
 ### aggressive DCA settings - copy all DCA parameters of [dcabot] without botid and modify accordingly

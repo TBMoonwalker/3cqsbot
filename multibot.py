@@ -153,11 +153,16 @@ class MultiBot:
             )
         return
 
-    def report_funds_needed(self, maxdeals):
+    def get_deal_mode(self):
+        strategy = self.attributes.get("deal_mode", "test", self.asyncState.dca_conf)
+        if strategy == "test":
+            strategy = self.attributes.get("deal_mode", "")
+        return strategy
 
+    def report_funds_needed(self, maxdeals):
+        deal_mode = self.get_deal_mode()
         self.logging.info(
-            "Deal start condition(s): "
-            + self.attributes.get("deal_mode", "", self.asyncState.dca_conf),
+            "Deal start condition(s): " + deal_mode,
             True,
         )
 
@@ -220,13 +225,12 @@ class MultiBot:
         return
 
     def strategy(self):
-        if self.attributes.get("deal_mode", "", self.asyncState.dca_conf) == "signal":
+        deal_mode = self.get_deal_mode()
+        if deal_mode == "signal":
             strategy = [{"strategy": "manual"}]
         else:
             try:
-                strategy = json.loads(
-                    self.attributes.get("deal_mode", "", self.asyncState.dca_conf)
-                )
+                strategy = json.loads(deal_mode)
             except ValueError:
                 self.logging.error(
                     "Either missing ["
@@ -632,9 +636,7 @@ class MultiBot:
         more_inform = self.attributes.get("extensive_notifications", False)
         # if dealmode is signal (aka strategy == manual for multibot),
         # preserve pair list of bot. 3cqs START signal triggers deal
-        dealmode_is_signal = (
-            self.attributes.get("deal_mode", "", self.asyncState.dca_conf) == "signal"
-        )
+        dealmode_is_signal = self.get_deal_mode() == "signal"
 
         # Check if data of 3cqsbot is given (dict format), else search for existing one in the list before creating a new one
         if not isinstance(self.bot_data, dict) and self.asyncState.multibot == {}:
@@ -722,7 +724,7 @@ class MultiBot:
         self.logging.debug("Pairs after topcoin filter " + str(pairs))
 
         # Run filters to adapt mad according to pair list - multibot creation with mad=1 possible
-        if self.attributes.get("limit_symrank_pairs", False):
+        if self.attributes.get("limit_inital_pairs", False):
             # Limit pairs to the maximal deals (mad)
             if self.attributes.get("mad") == 1:
                 maxpairs = 1
@@ -752,7 +754,7 @@ class MultiBot:
             )
 
         # Create new multibot
-        if self.asyncState.multibot["name"] == "" and mad > 0:
+        if self.asyncState.multibot == {} and mad > 0:
             self.logging.info(
                 "Creating multi bot '" + self.botname + "'",
                 True,
@@ -853,9 +855,7 @@ class MultiBot:
         # Updates multi bot with new pairs
         pair = ""
         mad = self.attributes.get("mad")
-        dealmode_is_signal = (
-            self.attributes.get("deal_mode", "", self.asyncState.dca_conf) == "signal"
-        )
+        dealmode_is_signal = self.get_deal_mode() == "signal"
 
         # Check if data of 3cqsbot is given (dict format), else search for existing one in the list before creating a new one
         if not isinstance(self.bot_data, dict) and self.asyncState.multibot == {}:
@@ -913,9 +913,9 @@ class MultiBot:
 
                         self.asyncState.multibot["pairs"].append(pair)
 
-                        # if limit_symrank_pairs_to_mad == True, add trigger pair to pairs_volume list and sort
+                        # if limit_inital_pairs == True, add trigger pair to pairs_volume list and sort
                         if (
-                            self.attributes.get("limit_symrank_pairs", False)
+                            self.attributes.get("limit_inital_pairs", False)
                             and self.asyncState.pairs_volume
                         ):
                             self.asyncState.pairs_volume.append(pair_volume)
