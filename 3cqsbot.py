@@ -63,6 +63,9 @@ logging.basicConfig(
     handlers=[handler],
 )
 
+# Logging level for socketio
+
+
 logging.info(f"Loaded configuration from '{datadir}/config.ini'")
 
 ######################################################
@@ -292,6 +295,7 @@ async def connect():
 @sio.event
 async def disconnect():
     logging.info("disconnected from websocket server")
+    await __websocket_connect()
 
 
 @sio.on("*")
