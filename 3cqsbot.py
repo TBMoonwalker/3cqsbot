@@ -295,6 +295,7 @@ async def connect():
 @sio.event
 async def disconnect():
     logging.info("disconnected from websocket server")
+    await sio.sleep(10)
     await __websocket_connect()
 
 
