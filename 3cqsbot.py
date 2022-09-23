@@ -327,6 +327,9 @@ async def my_message(data):
                     filters.exchange()
                     and filters.whitelist()
                     and filters.topcoin()
+                    and filters.volatility()
+                    and filters.price()
+                    and filters.symrank()
                     and not filters.denylist()
                 ):
 
@@ -368,16 +371,14 @@ async def my_message(data):
                             asyncState.multiInit = "initialized"
 
                     # Trigger bot if limits passed and pair is traded on the configured exchange
-                    if filters.volatility and filters.price and filters.symrank:
-
-                        if asyncState.btc_downtrend:
-                            # Continue to update Multibot pairlist in downtrend
-                            if not attributes.get("single"):
-                                logging.debug("Add new pair to multibot")
-                                bot.trigger(triggeronly=True)
-                        else:
-                            logging.debug("Trigger bot")
-                            bot.trigger()
+                    if asyncState.btc_downtrend:
+                        # Continue to update Multibot pairlist in downtrend
+                        if not attributes.get("single"):
+                            logging.debug("Add new pair to multibot")
+                            bot.trigger(triggeronly=True)
+                    else:
+                        logging.debug("Trigger bot")
+                        bot.trigger()
 
 
 async def main():
