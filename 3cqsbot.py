@@ -77,9 +77,9 @@ p3cw = Py3CW(
     key=attributes.get("key"),
     secret=attributes.get("secret"),
     request_options={
-        "request_timeout": attributes.get("timeout", 3),
-        "nr_of_retries": attributes.get("retries", 5),
-        "retry_backoff_factor": attributes.get("delay_between_retries", 2.0),
+        "request_timeout": attributes.get("timeout", 10),
+        "nr_of_retries": attributes.get("retries", 20),
+        "retry_backoff_factor": attributes.get("delay_between_retries", 5.0),
     },
 )
 
@@ -295,8 +295,6 @@ async def connect():
 @sio.event
 async def disconnect():
     logging.info("disconnected from websocket server")
-    await sio.sleep(10)
-    await __websocket_connect()
 
 
 @sio.on("*")

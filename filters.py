@@ -172,7 +172,7 @@ class Filters:
             market = [
                 value
                 for key, value in self.ws_data["volume_24h"][
-                    self.__get_exchange()
+                    self.__get_exchange().upper()
                 ].items()
                 if self.attributes.get("market") in key
             ]
