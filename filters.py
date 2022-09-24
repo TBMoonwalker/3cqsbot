@@ -116,9 +116,9 @@ class Filters:
                 + "' has price score "
                 + str(self.ws_data["price_action_score"])
                 + " and is between the price score filter limit of "
-                + str(self.attributes.get("price_action_limit_min"))
+                + str(self.attributes.get("price_action_limit_min", 0.1))
                 + " - "
-                + str(self.attributes.get("price_action_limit_max"))
+                + str(self.attributes.get("price_action_limit_max", 100))
             )
         else:
             self.logging.info(
@@ -127,9 +127,9 @@ class Filters:
                 + "' has price score "
                 + str(self.ws_data["price_action_score"])
                 + " and is below or over the price score filter limit of "
-                + str(self.attributes.get("price_action_limit_min"))
+                + str(self.attributes.get("price_action_limit_min", 0.1))
                 + " - "
-                + str(self.attributes.get("price_action_limit_max"))
+                + str(self.attributes.get("price_action_limit_max", 100))
             )
 
         return token_price
@@ -151,9 +151,9 @@ class Filters:
                 + "' has volatility score "
                 + str(self.ws_data["volatility_score"])
                 + " and is between the volatility score filter limit of "
-                + str(self.attributes.get("volatility_limit_min"))
+                + str(self.attributes.get("volatility_limit_min", 0.1))
                 + " - "
-                + str(self.attributes.get("volatility_limit_max"))
+                + str(self.attributes.get("volatility_limit_max", 100))
             )
         else:
             self.logging.info(
@@ -162,9 +162,9 @@ class Filters:
                 + "' has volatility score "
                 + str(self.ws_data["volatility_score"])
                 + " and is below or over the volatility score filter limit of "
-                + str(self.attributes.get("volatility_limit_min"))
+                + str(self.attributes.get("volatility_limit_min", 0.1))
                 + " - "
-                + str(self.attributes.get("volatility_limit_max"))
+                + str(self.attributes.get("volatility_limit_max", 100))
             )
 
         return token_volatility
