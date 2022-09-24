@@ -110,11 +110,26 @@ class Filters:
             "price_action_limit_max", 100
         ):
             token_price = True
+            self.logging.info(
+                "Filter: Signal passed because '"
+                + self.ws_data["symbol"]
+                + "' has price score "
+                + str(self.ws_data["price_action_score"])
+                + " and is between the price score filter limit of "
+                + str(self.attributes.get("price_action_limit_min"))
+                + " - "
+                + str(self.attributes.get("price_action_limit_max"))
+            )
         else:
             self.logging.info(
-                "Signal ignored because configured price score filter for symbol '"
+                "Filter: Signal ignored because symbol '"
                 + str(self.ws_data["symbol"])
-                + "' did not met "
+                + "' has price score "
+                + str(self.ws_data["price_action_score"])
+                + " and is below or over the price score filter limit of "
+                + str(self.attributes.get("price_action_limit_min"))
+                + " - "
+                + str(self.attributes.get("price_action_limit_max"))
             )
 
         return token_price
@@ -130,11 +145,26 @@ class Filters:
             "volatility_limit_max", 100
         ):
             token_volatility = True
+            self.logging.info(
+                "Filter: Signal passed because '"
+                + self.ws_data["symbol"]
+                + "' has volatility score "
+                + str(self.ws_data["volatility_score"])
+                + " and is between the volatility score filter limit of "
+                + str(self.attributes.get("volatility_limit_min"))
+                + " - "
+                + str(self.attributes.get("volatility_limit_max"))
+            )
         else:
             self.logging.info(
-                "Signal ignored because configured volatility score filter for symbol '"
+                "Filter: Signal ignored because symbol '"
                 + str(self.ws_data["symbol"])
-                + "' did not met "
+                + "' has volatility score "
+                + str(self.ws_data["volatility_score"])
+                + " and is below or over the volatility score filter limit of "
+                + str(self.attributes.get("volatility_limit_min"))
+                + " - "
+                + str(self.attributes.get("volatility_limit_max"))
             )
 
         return token_volatility
