@@ -269,22 +269,27 @@ def __handle_task_result(task: asyncio.Task) -> None:
 
 
 async def __websocket_connect():
-    await sio.connect(
-        attributes.get("websocket_url"),
-        headers={
-            "api-key": attributes.get("websocket_key"),
-            "user-agent": "3CQS Signal Client/" + attributes.get("websocket_version"),
-        },
-        transports=["websocket", "polling"],
-        socketio_path="/stream/v1/signals",
-    )
+    while True:
+        if not sio.connected:
+            logging.debug("Websocket initial connection/reconnection attempt")
+            await sio.connect(
+                attributes.get("websocket_url"),
+                headers={
+                    "api-key": attributes.get("websocket_key"),
+                    "user-agent": "3CQS Signal Client/"
+                    + attributes.get("websocket_version"),
+                },
+                transports=["websocket", "polling"],
+                socketio_path="/stream/v1/signals",
+            )
+        else:
+            logging.debug("Websocket still connected - no reconnect necessary")
+        await sio.sleep(30)
 
 
 @sio.event
 async def connect_error():
     logging.info("error from websocket server, trying to reconnect")
-    await sio.sleep(10)
-    await __websocket_connect()
 
 
 @sio.event
@@ -388,7 +393,10 @@ async def main():
     logging.info("*** 3CQS Bot started ***")
 
     # Connect to 3CQS websocket
-    await __websocket_connect()
+    websocket = asyncio.create_task(__websocket_connect())
+    websocket.add_done_callback(__handle_task_result)
+    asyncState.tasks.append(websocket)
+    # await __websocket_connect()
 
     # Start background tasks for conditions
     # BTC-Pulse
