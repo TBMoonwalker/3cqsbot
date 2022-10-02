@@ -29,6 +29,14 @@ class SingleBot:
         if self.ws_data:
             self.pair = self.attributes.get("market") + "_" + self.ws_data["symbol"]
 
+            if self.attributes.get("trade_future"):
+                pair = (
+                    self.attributes.get("market")
+                    + "_"
+                    + self.ws_data["symbol"]
+                    + self.attributes.get("market")
+                )
+
     def strategy(self):
         if self.attributes.get("deal_mode", "signal") == "signal":
             strategy = [{"strategy": "nonstop"}]
@@ -127,6 +135,8 @@ class SingleBot:
                     ),
                 }
             )
+
+        self.logging.debug("Payload: " + payload)
 
         return payload
 
