@@ -70,8 +70,19 @@ class Filters:
 
         pair = self.attributes.get("market") + "_" + self.ws_data["symbol"]
 
+        # Futures trading
+        if self.attributes.get("trade_future", False):
+            pair = (
+                self.attributes.get("market")
+                + "_"
+                + self.ws_data["symbol"]
+                + self.attributes.get("market")
+            )
+
+        self.logging.debug("Pair to trade: " + str(pair))
+        self.logging.debug("Pairs from exchange: " + str(pairs))
+
         if pair in pairs:
-            # if self.__get_exchange().upper() in self.ws_data["volume_24h"]:
             token_traded = True
         else:
             self.logging.info(
