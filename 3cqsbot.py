@@ -272,16 +272,19 @@ async def __websocket_connect():
     while True:
         if not sio.connected:
             logging.debug("Websocket initial connection/reconnection attempt")
-            await sio.connect(
-                attributes.get("websocket_url"),
-                headers={
-                    "api-key": attributes.get("websocket_key"),
-                    "user-agent": "3CQS Signal Client/"
-                    + attributes.get("websocket_version"),
-                },
-                transports=["websocket", "polling"],
-                socketio_path="/stream/v1/signals",
-            )
+            try:
+                await sio.connect(
+                    attributes.get("websocket_url"),
+                    headers={
+                        "api-key": attributes.get("websocket_key"),
+                        "user-agent": "3CQS Signal Client/"
+                        + attributes.get("websocket_version"),
+                    },
+                    transports=["websocket", "polling"],
+                    socketio_path="/stream/v1/signals",
+                )
+            except:
+                logging.debug("Websocket connection attempt failed - will retry")
         else:
             logging.debug("Websocket still connected - no reconnect necessary")
         await sio.sleep(30)
