@@ -305,7 +305,7 @@ def __handle_task_result(task: asyncio.Task) -> None:
 async def __websocket_connect():
     while True:
         if not sio.connected:
-            logging.debug("Websocket initial connection/reconnection attempt")
+            logging.debug("Websocket connection attempt")
             try:
                 await sio.connect(
                     attributes.get("websocket_url"),
@@ -318,10 +318,14 @@ async def __websocket_connect():
                     socketio_path="/stream/v1/signals",
                 )
             except:
-                logging.debug("Websocket connection attempt failed - will retry")
+                logging.debug("Websocket connection attempt failed")
+            finally:
+                logging.debug("Websocket connection retry in 30 seconds")
+
         else:
             logging.debug("Websocket still connected - no reconnect necessary")
-        await sio.sleep(30)
+
+        await asyncio.sleep(30)
 
 
 @sio.event
