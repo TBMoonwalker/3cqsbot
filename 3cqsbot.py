@@ -98,6 +98,7 @@ asyncState.btc_downtrend = False
 asyncState.bot_active = True
 asyncState.fh = 0
 asyncState.accountData = {}
+asyncState.allowedPairs = []
 asyncState.pairData = []
 asyncState.multiInit = "empty"
 asyncState.tasks = []
@@ -188,6 +189,39 @@ def __account_data():
 def __pair_data(data):
     if data["symbol"] not in asyncState.pairData:
         asyncState.pairData.append(data["symbol"])
+
+
+def __allowed_pairs(account):
+    pairs = []
+
+    error, data = p3cw.request(
+        entity="accounts",
+        action="market_pairs",
+        additional_headers={"Forced-Mode": attributes.get("trade_mode")},
+        payload={"market_code": account["market_code"]},
+    )
+
+    if error:
+        logging.debug(error["msg"])
+        sys.tracebacklimit = 0
+        sys.exit("Problem fetching pair data from 3commas api - stopping!")
+
+    error, blacklist_data = p3cw.request(entity="bots", action="pairs_black_list")
+
+    if error:
+        logging.debug(error["msg"])
+        sys.tracebacklimit = 0
+        sys.exit("Problem fetching pairs blacklist data from 3commas api - stopping!")
+
+    for pair in data:
+        if attributes.get("market") in pair:
+            if (
+                pair not in attributes.get("token_denylist")
+                and pair not in blacklist_data["pairs"]
+            ):
+                pairs.append(pair)
+
+    return pairs
 
 
 def __bot_type(signal, pair_output):
@@ -332,9 +366,10 @@ async def my_message(data):
 
                 # Continue only if we can trade the right signal on the configured exchange
                 if (
-                    filters.exchange()
+                    filters.exchange(asyncState.allowedPairs)
                     and filters.whitelist()
-                    and filters.topcoin()
+                    and filters.topcoin_limit()
+                    and filters.topcoin_volume()
                     and filters.volatility()
                     and filters.price()
                     and filters.symrank()
@@ -392,6 +427,7 @@ async def my_message(data):
 async def main():
     conditions = Conditions(logging)
     asyncState.accountData = __account_data()
+    asyncState.allowedPairs = __allowed_pairs(asyncState.accountData)
 
     logging.info("*** 3CQS Bot started ***")
 

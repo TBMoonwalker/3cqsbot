@@ -63,12 +63,15 @@ class Filters:
 
         return token_denylisted
 
-    def exchange(self):
+    def exchange(self, pairs):
 
         # Filter: Check if symbol is traded on configured exchange
         token_traded = False
 
-        if self.__get_exchange().upper() in self.ws_data["volume_24h"]:
+        pair = self.attributes.get("market") + "_" + self.ws_data["symbol"]
+
+        if pair in pairs:
+            # if self.__get_exchange().upper() in self.ws_data["volume_24h"]:
             token_traded = True
         else:
             self.logging.info(
@@ -169,12 +172,12 @@ class Filters:
 
         return token_volatility
 
-    def topcoin(self):
+    def topcoin_limit(self):
 
-        # Filter: Check if marketcap and volume is within configured range
-        token_topcoin = True
+        # Filter: Check if marketcap is within configured range
+        token_topcoin_limit = True
 
-        if self.attributes.get("topcoin_filter", False):
+        if self.attributes.get("topcoin_limit", False):
 
             # Topcoin marketcap
             if self.ws_data["market_cap_rank"] <= self.attributes.get("topcoin_limit"):
@@ -187,7 +190,7 @@ class Filters:
                     + str(self.attributes.get("topcoin_limit"))
                 )
             else:
-                token_topcoin = False
+                token_topcoin_limit = False
                 self.logging.info(
                     "Signal ignored because "
                     + self.ws_data["symbol"]
@@ -196,6 +199,15 @@ class Filters:
                     + " and is over the marketcap filter limit of #"
                     + str(self.attributes.get("topcoin_limit"))
                 )
+
+        return token_topcoin_limit
+
+    def topcoin_volume(self):
+
+        # Filter: Check if marketcap and volume is within configured range
+        token_topcoin_volume = True
+
+        if self.attributes.get("topcoin_volume", False):
 
             # Topcoin volume
             # Check if pair is traded on exchange
@@ -207,48 +219,46 @@ class Filters:
                 if self.attributes.get("market") in key
             ]
 
-            if token_topcoin:
-                if market:
-                    volume = self.ws_data["volume_24h"][self.__get_exchange()][
-                        self.attributes.get("market")
-                    ]
+            if market:
+                volume = self.ws_data["volume_24h"][self.__get_exchange()][
+                    self.attributes.get("market")
+                ]
 
-                    if self.__convert_volume(volume) >= self.__convert_volume(
-                        self.attributes.get("topcoin_volume")
-                    ):
-                        token_topcoin = True
-                        self.logging.info(
-                            "Signal passed because symbol "
-                            + self.ws_data["symbol"]
-                            + " daily volume is "
-                            + volume
-                            + " USD"
-                            + " and over the configured value of "
-                            + self.attributes.get("topcoin_volume")
-                            + " USD"
-                        )
-                    else:
-                        token_topcoin = False
-                        self.logging.info(
-                            "Signal ignored because symbol "
-                            + self.ws_data["symbol"]
-                            + " daily volume is "
-                            + volume
-                            + " USD"
-                            + " and under the configured value of "
-                            + self.attributes.get("topcoin_volume")
-                            + " USD"
-                        )
+                if self.__convert_volume(volume) >= self.__convert_volume(
+                    self.attributes.get("topcoin_volume")
+                ):
+                    token_topcoin_volume = True
+                    self.logging.info(
+                        "Signal passed because symbol "
+                        + self.ws_data["symbol"]
+                        + " daily volume is "
+                        + volume
+                        + " USD"
+                        + " and over the configured value of "
+                        + self.attributes.get("topcoin_volume")
+                        + " USD"
+                    )
                 else:
-                    token_topcoin = False
+                    token_topcoin_volume = False
                     self.logging.info(
                         "Signal ignored because symbol "
                         + self.ws_data["symbol"]
-                        + " is not traded in "
-                        + self.attributes.get("market")
+                        + " daily volume is "
+                        + volume
+                        + " USD"
+                        + " and under the configured value of "
+                        + self.attributes.get("topcoin_volume")
+                        + " USD"
                     )
+            else:
+                token_topcoin_volume = False
+                self.logging.info(
+                    "Signal ignored because symbol "
+                    + self.ws_data["symbol"]
+                    + " has no volume information in websocket signal"
+                )
 
-        return token_topcoin
+        return token_topcoin_volume
 
     def __convert_volume(self, volume):
         volume_length = int(len(volume)) - 1
