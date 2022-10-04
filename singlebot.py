@@ -29,8 +29,8 @@ class SingleBot:
         if self.ws_data:
             self.pair = self.attributes.get("market") + "_" + self.ws_data["symbol"]
 
-            if self.attributes.get("trade_future"):
-                pair = (
+            if self.attributes.get("trade_future", False):
+                self.pair = (
                     self.attributes.get("market")
                     + "_"
                     + self.ws_data["symbol"]
@@ -109,7 +109,7 @@ class SingleBot:
             "strategy_list": self.strategy(),
             "trailing_enabled": self.attributes.get("trailing", False),
             "trailing_deviation": self.attributes.get("trailing_deviation", 0.2),
-            "min_volume_btc_24h": self.attributes.get("btc_min_vol"),
+            "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0),
             "disable_after_deals_count": self.attributes.get("deals_count", 0),
         }
 
@@ -123,20 +123,31 @@ class SingleBot:
         if self.attributes.get("trade_future", False):
             payload.update(
                 {
+                    "strategy": self.attributes.get("strategy"),
                     "leverage_type": self.attributes.get("leverage_type"),
                     "leverage_custom_value": self.attributes.get("leverage_value"),
-                    "stop_loss_percentage": self.attributes.get("stop_loss_percent"),
-                    "stop_loss_type": self.attributes.get("stop_loss_type"),
+                    "stop_loss_percentage": self.attributes.get("stop_loss_percent", 0),
+                    "stop_loss_type": self.attributes.get("stop_loss_type", "None"),
                     "stop_loss_timeout_enabled": self.attributes.get(
-                        "stop_loss_timeout_enabled"
+                        "stop_loss_timeout_enabled", False
                     ),
                     "stop_loss_timeout_in_seconds": self.attributes.get(
-                        "stop_loss_timeout_seconds"
+                        "stop_loss_timeout_seconds", 0
                     ),
                 }
             )
 
-        self.logging.debug("Payload: " + payload)
+        # Disable not mandatory attributes
+        if payload["min_volume_btc_24h"] == 0:
+            payload.pop("min_volume_btc_24h")
+
+        if payload["stop_loss_percentage"] == 0:
+            payload.pop("stop_loss_percentage")
+            payload.pop("stop_loss_type")
+            payload.pop("stop_loss_timeout_enabled")
+            payload.pop("stop_loss_timeout_in_seconds")
+
+        self.logging.debug("Payload: " + str(payload))
 
         return payload
 
@@ -312,6 +323,12 @@ class SingleBot:
                                 self.create()
                                 deal_lock = True
                             else:
+                                self.logging.debug("Deal Count: " + str(running_deals))
+                                self.logging.debug(
+                                    "Single Count: "
+                                    + self.attributes.get("single_count")
+                                )
+                                self.logging.debug("Deal Lock: " + str(deal_lock))
                                 self.logging.info(
                                     "Blocking new deals, because last enabled bot can potentially reach max deals!"
                                 )

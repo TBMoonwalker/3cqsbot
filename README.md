@@ -130,6 +130,7 @@ singlebot_update | boolean | NO | (true), false | If set to true, singlebots
 trailing | boolean | NO | (false), true | Trailing profit enabled
 trailing_deviation | number | NO | (0.2) | Deviation of trailing profit
 trade_future | boolean | NO | (false), true | Enable futures trading
+strategy | string | NO | (short), long | Strategy for futures trading
 leverage_type | string | NO | (cross), custom, not_specified, isolated | Different leverage types for futures trading from 3commas
 leverage_value | integer | NO | (2) | Leverage value for futures trading
 stop_loss_percent | integer | NO | (1) | Stop loss value in percent for futures trading

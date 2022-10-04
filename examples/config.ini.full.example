@@ -51,6 +51,7 @@ account_name = "Your paper account here - without quotes"
 #trailing_deviation = 0.2
 # Futures trading only
 trade_future = false
+strategy = long
 leverage_type = cross
 leverage_value = 2
 stop_loss_percent = 1

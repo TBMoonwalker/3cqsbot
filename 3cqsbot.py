@@ -177,6 +177,8 @@ def __account_data():
                 account.update({"market_code": str(accounts["market_code"])})
                 account.update({"exchange": str(accounts["exchange_name"])})
 
+                logging.debug("Account Data: " + str(account))
+
         if "id" not in account:
             sys.tracebacklimit = 0
             sys.exit(

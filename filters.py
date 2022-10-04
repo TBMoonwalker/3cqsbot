@@ -291,5 +291,7 @@ class Filters:
         # Paper trading is statically mapped to Binance
         if self.account["exchange"] == "Paper trading account":
             exchange = "BINANCE"
+        elif "binance_futures" in self.account["market_code"]:
+            exchange = "BINANCE"
 
         return exchange
