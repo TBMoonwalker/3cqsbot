@@ -326,7 +326,7 @@ class SingleBot:
                                 self.logging.debug("Deal Count: " + str(running_deals))
                                 self.logging.debug(
                                     "Single Count: "
-                                    + self.attributes.get("single_count")
+                                    + str(self.attributes.get("single_count"))
                                 )
                                 self.logging.debug("Deal Lock: " + str(deal_lock))
                                 self.logging.info(
