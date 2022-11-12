@@ -91,11 +91,12 @@ class SingleBot:
         return len(bots)
 
     def payload(self, pair, new_bot):
+
+        # Mandatory attributes
         payload = {
             "name": self.prefix + "_" + self.subprefix + "_" + pair + "_" + self.suffix,
             "account_id": self.account_data["id"],
             "pairs": pair,
-            "max_active_deals": self.attributes.get("mad"),
             "base_order_volume": self.attributes.get("bo"),
             "take_profit": self.attributes.get("tp"),
             "safety_order_volume": self.attributes.get("so"),
@@ -105,21 +106,16 @@ class SingleBot:
             "safety_order_step_percentage": self.attributes.get("sos"),
             "take_profit_type": "total",
             "active_safety_orders_count": self.attributes.get("max"),
-            "cooldown": self.attributes.get("cooldown", 0),
             "strategy_list": self.strategy(),
             "trailing_enabled": self.attributes.get("trailing", False),
-            "trailing_deviation": self.attributes.get("trailing_deviation", 0.2),
-            "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0),
-            "disable_after_deals_count": self.attributes.get("deals_count", 0),
         }
 
-        if new_bot:
-            if payload["disable_after_deals_count"] == 0:
-                self.logging.info(
-                    "This is a new bot and deal_count set to 0, removing from payload"
-                )
-                payload.pop("disable_after_deals_count")
+        if not new_bot:
+            payload.update(
+                {"disable_after_deals_count": self.attributes.get("deals_count", 0)}
+            )
 
+        # Futures options
         if self.attributes.get("trade_future", False):
             payload.update(
                 {
@@ -137,15 +133,49 @@ class SingleBot:
                 }
             )
 
-        # Disable not mandatory attributes
-        if payload["min_volume_btc_24h"] == 0:
-            payload.pop("min_volume_btc_24h")
+            if payload["stop_loss_percentage"] == 0:
+                payload.pop("stop_loss_percentage")
+                payload.pop("stop_loss_type")
+                payload.pop("stop_loss_timeout_enabled")
+                payload.pop("stop_loss_timeout_in_seconds")
 
-        if payload["stop_loss_percentage"] == 0:
-            payload.pop("stop_loss_percentage")
-            payload.pop("stop_loss_type")
-            payload.pop("stop_loss_timeout_enabled")
-            payload.pop("stop_loss_timeout_in_seconds")
+        # Handle non mandatory attributes
+        if self.attributes.get("mad", 1) > 1:
+            payload.update(
+                {
+                    "max_active_deals": self.attributes.get("mad"),
+                }
+            )
+
+        if self.attributes.get("btc_min_vol", 0) > 0:
+            payload.update(
+                {
+                    "min_volume_btc_24h": self.attributes.get("btc_min_vol", 0),
+                }
+            )
+
+        if self.attributes.get("cooldown", 0) > 0:
+            payload.update(
+                {
+                    "cooldown": self.attributes.get("cooldown", 0),
+                }
+            )
+
+        if self.attributes.get("trailing_deviation", 0.0) > 0:
+            payload.update(
+                {
+                    "trailing_deviation": self.attributes.get(
+                        "trailing_deviation", 0.2
+                    ),
+                }
+            )
+
+        if self.attributes.get("deals_count", 0) > 0:
+            payload.update(
+                {
+                    "disable_after_deals_count": self.attributes.get("deals_count", 0),
+                }
+            )
 
         self.logging.debug("Payload: " + str(payload))
 
@@ -322,6 +352,7 @@ class SingleBot:
                             ) and not deal_lock:
                                 self.create()
                                 deal_lock = True
+                                self.logging.debug("Deal lock is set to true")
                             else:
                                 self.logging.debug("Deal Count: " + str(running_deals))
                                 self.logging.debug(

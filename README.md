@@ -77,7 +77,7 @@ so | number | YES | (11) | Safety order volume
 os | number | YES | (1.05) | Safety order volume scale
 ss | number | YES | (1) | Safety order step scale
 sos | number | YES | (2.4) | Price deviation to open safety orders
-mad | integer | YES | (3) | Max active deals for a bot
+mad | integer | NO | (1) | Max active deals for a bot
 max | integer | YES | (1) | Max active safety trades count
 mstc | integer | YES | (25) | Max safety trades count
 sdsp | integer | NO | (1) | Simultaneous deals per same pair (only Multibot)
@@ -128,8 +128,8 @@ btc_pulse | boolean | NO | (false), true | Activates or deactivates the bots ac
 delete_single_bots | boolean | NO | (false), true | If set to true, bots without an active deal will be deleted in single bot configuration
 singlebot_update | boolean | NO | (true), false | If set to true, singlebots settings will be updated when enabled again (new settings only work after restart of the script)
 trailing | boolean | NO | (false), true | Trailing profit enabled
-trailing_deviation | number | NO | (0.2) | Deviation of trailing profit
-trade_future | boolean | NO | (false), true | Enable futures trading
+trailing_deviation | number | NO | (0.0) | Deviation of trailing profit
+trade_future | boolean | NO | (false), true | Enable futures trading (only Singlebot)
 strategy | string | NO | (short), long | Strategy for futures trading
 leverage_type | string | NO | (cross), custom, not_specified, isolated | Different leverage types for futures trading from 3commas
 leverage_value | integer | NO | (2) | Leverage value for futures trading
@@ -173,11 +173,9 @@ price_action_limit_min | number | NO | (0.1) | Bots will be created when the pri
 price_action_limit_max | number | NO | (100) | Bots will be created when the price_action value is under this limit
 topcoin_filter | boolean | NO | (false), true | Disables the topcoin filter (default)
 topcoin_limit | integer | NO | (3500) | Token pair has to be in the configured topcoin limit to be traded by the bot
-topcoin_volume | integer | NO | (0) | Volume check against Coingecko (btc_min_vol means volume check directly in 3commas - not before like this setting). Only pairs with the given volume are traded. Default is 0 and means volume check is disabled
-topcoin_exchange | string | NO | (binance), gdax | Name of the exchange to check the volume. Because every exchange has another id, please contact me for your exchange and I will update this list here for configuration
+topcoin_volume | integer | NO | (0) | Examples: 3M (3 Millions) - Volume check from websocket data (for volume data in 3Commas use the btc_min_vol attribute))
 deal_mode | string | NO | ([{"options": {"time": "3m", "points": "100"}, "strategy": "rsi"}]) signal | Deal strategy how the script is creating new deals in multipair bot - for more see the "Deal Modes" section
 btc_pulse | boolean | NO | (false), true | Activates or deactivates the bots according to Bitcoins behaviour. If Bitcoin is going down, the bot will be disabled
-ext_botswitch | boolean | NO | (false), true | If enabled the automatic multibot enablement will be disabled and only triggered by external events - you must disable BTC Pulse if you enable this switch !!!
 token_denylist | array |YES | ([BUSD_USDT, USDC_USDT, USDT_USDT, USDT_USDP]) | Denylist of pairs which not be used by the bot for new deals
 
 ### Signals

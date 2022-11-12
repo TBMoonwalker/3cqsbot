@@ -46,7 +46,8 @@ trade_mode = paper
 account_name = "Your paper account here - without quotes"
 #delete_single_bots = false
 #singlebot_update = true
-# Binance only
+# Binance only†´%-5Ü^   
+´   
 #trailing = false
 #trailing_deviation = 0.2
 # Futures trading only
@@ -76,7 +77,7 @@ symrank_signal = 1
 #topcoin_filter = False
 # warning to not use this attribute for large bots!
 # set it to 0 if you want to disable it
-# topcoin_volume = 300
+#topcoin_volume = 3M
 # not more then 3500
 #topcoin_limit = 3500
 #topcoin_exchange = binance
