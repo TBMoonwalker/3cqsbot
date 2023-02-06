@@ -46,8 +46,7 @@ trade_mode = paper
 account_name = "Your paper account here - without quotes"
 #delete_single_bots = false
 #singlebot_update = true
-# Binance only†´%-5Ü^   
-´   
+# Binance only
 #trailing = false
 #trailing_deviation = 0.2
 # Futures trading only
